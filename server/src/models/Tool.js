@@ -11,6 +11,12 @@ const toolSchema = new mongoose.Schema(
     },
     quantityTotal: { type: Number, required: true, min: 0 },
     quantityAvailable: { type: Number, required: true, min: 0 },
+    lastReturnCondition: {
+      type: String,
+      enum: ['Good', 'Fair', 'Damaged', 'Missing'],
+      default: null,
+    },
+    lastReturnedAt: { type: Date, default: null },
     status: {
       type: String,
       required: true,

@@ -59,6 +59,16 @@ export default function ToolsPage() {
       { key: 'status', header: 'Status' },
       { key: 'flag', header: 'Flag' },
       {
+        key: 'lastReturnCondition',
+        header: 'Last Return',
+        render: (t) => t.lastReturnCondition || '',
+      },
+      {
+        key: 'lastReturnedAt',
+        header: 'Returned At',
+        render: (t) => (t.lastReturnedAt ? formatDateTime(t.lastReturnedAt) : ''),
+      },
+      {
         key: 'updateQty',
         header: 'Update Qty',
         render: (t) => (

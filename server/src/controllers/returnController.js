@@ -31,6 +31,9 @@ async function returnTool(req, res) {
   record.returnCondition = condition;
   await record.save();
 
+  tool.lastReturnCondition = condition;
+  tool.lastReturnedAt = record.returnedAt;
+
   if (condition === 'Good' || condition === 'Fair') {
     tool.quantityAvailable = Math.min(tool.quantityAvailable + 1, tool.quantityTotal);
     if (tool.flag !== 'Missing') {
