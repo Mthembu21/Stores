@@ -1,0 +1,118 @@
+const { ApiError } = require('../utils/ApiError');
+const { Tool } = require('../models/Tool');
+
+async function listTools(req, res) {
+  const tools = await Tool.find({}).sort({ createdAt: -1 });
+  res.json({ tools });
+}
+
+async function createTool(req, res) {
+  const {
+    toolName,
+    toolCode,
+    category,
+    quantityTotal,
+    quantityAvailable,
+    status,
+  } = req.body;
+
+  if (!toolName || !toolCode || !category || quantityTotal === undefined) {
+    throw new ApiError(400, 'Missing required fields');
+  }
+
+  const exists = await Tool.findOne({ toolCode: String(toolCode).trim() });
+  if (exists) {
+    throw new ApiError(409, 'Tool Code already exists');
+  }
+
+  const qtyTotalNum = Number(quantityTotal);
+  const qtyAvailNum = quantityAvailable === undefined ? qtyTotalNum : Number(quantityAvailable);
+
+  if (Number.isNaN(qtyTotalNum) || qtyTotalNum < 0) {
+    throw new ApiError(400, 'Invalid Quantity Total');
+  }
+  if (Number.isNaN(qtyAvailNum) || qtyAvailNum < 0 || qtyAvailNum > qtyTotalNum) {
+    throw new ApiError(400, 'Invalid Quantity Available');
+  }
+
+  const tool = await Tool.create({
+    toolName,
+    toolCode: String(toolCode).trim(),
+    category,
+    quantityTotal: qtyTotalNum,
+    quantityAvailable: qtyAvailNum,
+    status: status || (qtyAvailNum > 0 ? 'Available' : 'Borrowed'),
+  });
+
+  res.status(201).json({ tool });
+}
+
+async function updateTool(req, res) {
+  const { id } = req.params;
+  const tool = await Tool.findById(id);
+  if (!tool) {
+    throw new ApiError(404, 'Tool not found');
+  }
+
+  const {
+    toolName,
+    toolCode,
+    category,
+    quantityTotal,
+    quantityAvailable,
+    status,
+    flag,
+  } = req.body;
+
+  if (toolCode && String(toolCode).trim() !== tool.toolCode) {
+    const exists = await Tool.findOne({ toolCode: String(toolCode).trim() });
+    if (exists) {
+      throw new ApiError(409, 'Tool Code already exists');
+    }
+    tool.toolCode = String(toolCode).trim();
+  }
+
+  if (toolName !== undefined) tool.toolName = toolName;
+  if (category !== undefined) tool.category = category;
+  if (status !== undefined) tool.status = status;
+  if (flag !== undefined) tool.flag = flag;
+
+  if (quantityTotal !== undefined) {
+    const q = Number(quantityTotal);
+    if (Number.isNaN(q) || q < 0) throw new ApiError(400, 'Invalid Quantity Total');
+    tool.quantityTotal = q;
+    if (tool.quantityAvailable > q) {
+      tool.quantityAvailable = q;
+    }
+  }
+
+  if (quantityAvailable !== undefined) {
+    const a = Number(quantityAvailable);
+    if (Number.isNaN(a) || a < 0 || a > tool.quantityTotal) {
+      throw new ApiError(400, 'Invalid Quantity Available');
+    }
+    tool.quantityAvailable = a;
+  }
+
+  if (tool.quantityAvailable === 0 && tool.status === 'Available') {
+    tool.status = 'Borrowed';
+  }
+  if (tool.quantityAvailable > 0 && tool.status === 'Borrowed') {
+    tool.status = 'Available';
+  }
+
+  await tool.save();
+  res.json({ tool });
+}
+
+async function deleteTool(req, res) {
+  const { id } = req.params;
+  const tool = await Tool.findById(id);
+  if (!tool) {
+    throw new ApiError(404, 'Tool not found');
+  }
+  await tool.deleteOne();
+  res.json({ ok: true });
+}
+
+module.exports = { listTools, createTool, updateTool, deleteTool };
