@@ -30,11 +30,22 @@ export default function SpecialToolsPage() {
   const techUsers = useMemo(() => users.filter((u) => u.role !== 'Admin'), [users]);
 
   const [markToolId, setMarkToolId] = useState('');
+  const [markToolSearch, setMarkToolSearch] = useState('');
   const [markSpecial, setMarkSpecial] = useState(true);
   const [calibrationEnabled, setCalibrationEnabled] = useState(false);
   const [calibrationIntervalDays, setCalibrationIntervalDays] = useState('90');
   const [inspectionEnabled, setInspectionEnabled] = useState(false);
   const [inspectionIntervalDays, setInspectionIntervalDays] = useState('365');
+
+  const filteredMarkTools = useMemo(() => {
+    const q = markToolSearch.trim().toLowerCase();
+    if (!q) return allTools;
+    return allTools.filter((t) => {
+      const name = String(t.toolName || '').toLowerCase();
+      const code = String(t.toolCode || '').toLowerCase();
+      return name.includes(q) || code.includes(q);
+    });
+  }, [allTools, markToolSearch]);
 
   const [assignToolId, setAssignToolId] = useState('');
   const [assignTechnicianId, setAssignTechnicianId] = useState('');
@@ -95,9 +106,15 @@ export default function SpecialToolsPage() {
         >
           <div className="md:col-span-2">
             <label className="text-sm font-medium text-slate-700">Tool</label>
-            <select className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" value={markToolId} onChange={(e) => setMarkToolId(e.target.value)} required>
+            <input
+              className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+              value={markToolSearch}
+              onChange={(e) => setMarkToolSearch(e.target.value)}
+              placeholder="Search tool name or code…"
+            />
+            <select className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2" value={markToolId} onChange={(e) => setMarkToolId(e.target.value)} required>
               <option value="">Select tool…</option>
-              {allTools.map((t) => (
+              {filteredMarkTools.map((t) => (
                 <option key={t._id} value={t._id}>
                   {t.toolName} ({t.toolCode})
                 </option>

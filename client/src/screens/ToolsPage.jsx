@@ -419,7 +419,7 @@ export default function ToolsPage() {
         ) : toolsError ? (
           <div className="rounded-xl bg-white shadow-soft p-4 text-sm text-slate-600">Could not load tools</div>
         ) : (
-          <Table emptyLabel="No tools" columns={toolColumns} rows={filteredTools} />
+          <Table emptyLabel="No tools" columns={toolColumns} rows={filteredTools} maxHeight="520px" />
         )}
       </div>
 

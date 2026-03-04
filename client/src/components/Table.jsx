@@ -1,4 +1,4 @@
-export function Table({ columns, rows, emptyLabel = 'No data', getRowClassName }) {
+export function Table({ columns, rows, emptyLabel = 'No data', getRowClassName, maxHeight }) {
   if (!rows || rows.length === 0) {
     return (
       <div className="rounded-xl bg-white shadow-soft p-4 text-sm text-slate-600">
@@ -9,7 +9,7 @@ export function Table({ columns, rows, emptyLabel = 'No data', getRowClassName }
 
   return (
     <div className="rounded-xl bg-white shadow-soft overflow-hidden">
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto" style={maxHeight ? { maxHeight, overflowY: 'auto' } : undefined}>
         <table className="min-w-full text-sm">
           <thead className="bg-slate-50">
             <tr>
