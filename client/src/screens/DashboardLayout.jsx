@@ -34,6 +34,7 @@ export default function DashboardLayout() {
           <nav className="mt-6 space-y-2">
             <SideLink to="/">Dashboard</SideLink>
             <SideLink to="/tools">Tools</SideLink>
+            <SideLink to="/special-tools">Special Tools</SideLink>
             <SideLink to="/users">Users</SideLink>
           </nav>
 

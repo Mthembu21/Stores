@@ -62,6 +62,11 @@ async function updateTool(req, res) {
     quantityAvailable,
     status,
     flag,
+    isSpecialTool,
+    calibrationEnabled,
+    calibrationIntervalDays,
+    inspectionEnabled,
+    inspectionIntervalDays,
   } = req.body;
 
   if (toolCode && String(toolCode).trim() !== tool.toolCode) {
@@ -76,6 +81,32 @@ async function updateTool(req, res) {
   if (category !== undefined) tool.category = category;
   if (status !== undefined) tool.status = status;
   if (flag !== undefined) tool.flag = flag;
+
+  if (isSpecialTool !== undefined) {
+    tool.isSpecialTool = Boolean(isSpecialTool);
+    if (!tool.isSpecialTool) {
+      tool.specialStatus = 'None';
+      tool.assignedToTechnicianId = null;
+      tool.currentAssignmentId = null;
+      tool.assignmentStartAt = null;
+      tool.assignmentEndAt = null;
+      tool.assignmentPausedAt = null;
+    }
+  }
+
+  if (calibrationEnabled !== undefined) tool.calibrationEnabled = Boolean(calibrationEnabled);
+  if (calibrationIntervalDays !== undefined) {
+    const v = calibrationIntervalDays === null ? null : Number(calibrationIntervalDays);
+    if (v !== null && (Number.isNaN(v) || v < 1)) throw new ApiError(400, 'Invalid Calibration Interval');
+    tool.calibrationIntervalDays = v;
+  }
+
+  if (inspectionEnabled !== undefined) tool.inspectionEnabled = Boolean(inspectionEnabled);
+  if (inspectionIntervalDays !== undefined) {
+    const v = inspectionIntervalDays === null ? null : Number(inspectionIntervalDays);
+    if (v !== null && (Number.isNaN(v) || v < 1)) throw new ApiError(400, 'Invalid Inspection Interval');
+    tool.inspectionIntervalDays = v;
+  }
 
   if (quantityTotal !== undefined) {
     const q = Number(quantityTotal);

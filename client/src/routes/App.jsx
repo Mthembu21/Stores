@@ -4,6 +4,7 @@ import DashboardLayout from '../screens/DashboardLayout';
 import DashboardHome from '../screens/DashboardHome';
 import UsersPage from '../screens/UsersPage';
 import ToolsPage from '../screens/ToolsPage';
+import SpecialToolsPage from '../screens/SpecialToolsPage';
 import { RequireAuth } from './RequireAuth';
 
 export default function App() {
@@ -22,6 +23,7 @@ export default function App() {
         <Route index element={<DashboardHome />} />
         <Route path="users" element={<UsersPage />} />
         <Route path="tools" element={<ToolsPage />} />
+        <Route path="special-tools" element={<SpecialToolsPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

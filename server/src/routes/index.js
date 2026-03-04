@@ -7,6 +7,7 @@ const { borrowRoutes } = require('./borrowRoutes');
 const { returnRoutes } = require('./returnRoutes');
 const { ppeRoutes } = require('./ppeRoutes');
 const { dashboardRoutes } = require('./dashboardRoutes');
+const { specialToolRoutes } = require('./specialToolRoutes');
 
 const router = express.Router();
 
@@ -21,5 +22,6 @@ router.use('/borrow', borrowRoutes);
 router.use('/return', returnRoutes);
 router.use('/ppe', ppeRoutes);
 router.use('/dashboard', dashboardRoutes);
+router.use('/special-tools', specialToolRoutes);
 
 module.exports = router;
