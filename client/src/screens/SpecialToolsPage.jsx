@@ -65,6 +65,10 @@ export default function SpecialToolsPage() {
   const [returnAt, setReturnAt] = useState(() => new Date().toISOString().slice(0, 16));
   const [returnRef, setReturnRef] = useState('');
 
+  const [recordToolId, setRecordToolId] = useState('');
+  const [recordLastCalibrationAt, setRecordLastCalibrationAt] = useState('');
+  const [recordLastInspectionAt, setRecordLastInspectionAt] = useState('');
+
   const cols = useMemo(
     () => [
       { key: 'toolName', header: 'Tool' },
@@ -73,7 +77,9 @@ export default function SpecialToolsPage() {
       { key: 'specialStatus', header: 'Special Status' },
       { key: 'assignedTo', header: 'Assigned To', render: (t) => t.assignedToTechnicianId?.fullName || '' },
       { key: 'assignmentEndAt', header: 'Assignment End', render: (t) => (t.assignmentEndAt ? formatDateTime(t.assignmentEndAt) : '') },
+      { key: 'lastCalibrationAt', header: 'Last Cal', render: (t) => (t.lastCalibrationAt ? formatDateTime(t.lastCalibrationAt) : '') },
       { key: 'nextCalibrationDueAt', header: 'Next Cal Due', render: (t) => (t.nextCalibrationDueAt ? formatDateTime(t.nextCalibrationDueAt) : '') },
+      { key: 'lastInspectionAt', header: 'Last Insp', render: (t) => (t.lastInspectionAt ? formatDateTime(t.lastInspectionAt) : '') },
       { key: 'nextInspectionDueAt', header: 'Next Insp Due', render: (t) => (t.nextInspectionDueAt ? formatDateTime(t.nextInspectionDueAt) : '') },
     ],
     []
@@ -87,11 +93,57 @@ export default function SpecialToolsPage() {
       </div>
 
       <div className="rounded-xl bg-white shadow-soft p-6">
+        <div className="text-sm font-semibold text-epiroc-blue">Record last Calibration / Inspection (backdate)</div>
+        <form
+          className="mt-4 grid grid-cols-1 md:grid-cols-4 gap-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            updateTool.mutate({
+              id: recordToolId,
+              patch: {
+                lastCalibrationAt: recordLastCalibrationAt ? new Date(recordLastCalibrationAt).toISOString() : null,
+                lastInspectionAt: recordLastInspectionAt ? new Date(recordLastInspectionAt).toISOString() : null,
+              },
+            });
+          }}
+        >
+          <div className="md:col-span-2">
+            <label className="text-sm font-medium text-slate-700">Tool</label>
+            <select className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" value={recordToolId} onChange={(e) => setRecordToolId(e.target.value)} required>
+              <option value="">Select special tool…</option>
+              {specialTools.map((t) => (
+                <option key={t._id} value={t._id}>
+                  {t.toolName} ({t.toolCode})
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="text-sm font-medium text-slate-700">Last calibration</label>
+            <input className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" type="datetime-local" value={recordLastCalibrationAt} onChange={(e) => setRecordLastCalibrationAt(e.target.value)} />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-slate-700">Last inspection</label>
+            <input className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" type="datetime-local" value={recordLastInspectionAt} onChange={(e) => setRecordLastInspectionAt(e.target.value)} />
+          </div>
+          <div className="md:col-span-4">
+            <button className="rounded-xl bg-epiroc-yellow px-4 py-2 font-semibold text-epiroc-black shadow-soft hover:brightness-95 disabled:opacity-60" type="submit" disabled={updateTool.isPending}>
+              {updateTool.isPending ? 'Saving…' : 'Save dates'}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div className="rounded-xl bg-white shadow-soft p-6">
         <div className="text-sm font-semibold text-epiroc-blue">Mark tool as Special Tool</div>
         <form
           className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4"
           onSubmit={(e) => {
             e.preventDefault();
+            if (!markToolId) {
+              window.alert('Please select a tool from the search results');
+              return;
+            }
             updateTool.mutate({
               id: markToolId,
               patch: {
@@ -109,17 +161,38 @@ export default function SpecialToolsPage() {
             <input
               className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
               value={markToolSearch}
-              onChange={(e) => setMarkToolSearch(e.target.value)}
+              onChange={(e) => {
+                const v = e.target.value;
+                setMarkToolSearch(v);
+                if (!v.trim()) setMarkToolId('');
+              }}
               placeholder="Search tool name or code…"
             />
-            <select className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2" value={markToolId} onChange={(e) => setMarkToolId(e.target.value)} required>
-              <option value="">Select tool…</option>
-              {filteredMarkTools.map((t) => (
-                <option key={t._id} value={t._id}>
-                  {t.toolName} ({t.toolCode})
-                </option>
-              ))}
-            </select>
+            {!!markToolSearch.trim() && (
+              <div className="mt-2 max-h-56 overflow-y-auto rounded-xl border border-slate-200">
+                {filteredMarkTools.slice(0, 20).map((t) => (
+                  <button
+                    key={t._id}
+                    type="button"
+                    className={`block w-full text-left px-3 py-2 text-sm hover:bg-slate-50 ${
+                      markToolId === t._id ? 'bg-slate-50' : ''
+                    }`.trim()}
+                    onClick={() => {
+                      setMarkToolId(t._id);
+                      setMarkToolSearch(`${t.toolName} (${t.toolCode})`);
+                    }}
+                  >
+                    {t.toolName} ({t.toolCode})
+                  </button>
+                ))}
+                {filteredMarkTools.length === 0 && (
+                  <div className="px-3 py-2 text-sm text-slate-600">No matching tools</div>
+                )}
+              </div>
+            )}
+            {!!markToolId && (
+              <div className="mt-2 text-xs text-slate-600">Selected</div>
+            )}
           </div>
 
           <div>

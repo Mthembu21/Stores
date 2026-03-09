@@ -1,6 +1,8 @@
 const { ApiError } = require('../utils/ApiError');
 const { Tool } = require('../models/Tool');
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 async function listTools(req, res) {
   const tools = await Tool.find({}).sort({ createdAt: -1 });
   res.json({ tools });
@@ -65,8 +67,10 @@ async function updateTool(req, res) {
     isSpecialTool,
     calibrationEnabled,
     calibrationIntervalDays,
+    lastCalibrationAt,
     inspectionEnabled,
     inspectionIntervalDays,
+    lastInspectionAt,
   } = req.body;
 
   if (toolCode && String(toolCode).trim() !== tool.toolCode) {
@@ -101,11 +105,31 @@ async function updateTool(req, res) {
     tool.calibrationIntervalDays = v;
   }
 
+  if (lastCalibrationAt !== undefined) {
+    tool.lastCalibrationAt = lastCalibrationAt === null ? null : new Date(lastCalibrationAt);
+  }
+
   if (inspectionEnabled !== undefined) tool.inspectionEnabled = Boolean(inspectionEnabled);
   if (inspectionIntervalDays !== undefined) {
     const v = inspectionIntervalDays === null ? null : Number(inspectionIntervalDays);
     if (v !== null && (Number.isNaN(v) || v < 1)) throw new ApiError(400, 'Invalid Inspection Interval');
     tool.inspectionIntervalDays = v;
+  }
+
+  if (lastInspectionAt !== undefined) {
+    tool.lastInspectionAt = lastInspectionAt === null ? null : new Date(lastInspectionAt);
+  }
+
+  if (tool.calibrationEnabled && tool.calibrationIntervalDays && tool.lastCalibrationAt) {
+    tool.nextCalibrationDueAt = new Date(new Date(tool.lastCalibrationAt).getTime() + Number(tool.calibrationIntervalDays) * DAY_MS);
+  } else {
+    tool.nextCalibrationDueAt = null;
+  }
+
+  if (tool.inspectionEnabled && tool.inspectionIntervalDays && tool.lastInspectionAt) {
+    tool.nextInspectionDueAt = new Date(new Date(tool.lastInspectionAt).getTime() + Number(tool.inspectionIntervalDays) * DAY_MS);
+  } else {
+    tool.nextInspectionDueAt = null;
   }
 
   if (quantityTotal !== undefined) {
