@@ -69,6 +69,72 @@ export default function SpecialToolsPage() {
   const [recordLastCalibrationAt, setRecordLastCalibrationAt] = useState('');
   const [recordLastInspectionAt, setRecordLastInspectionAt] = useState('');
 
+  const ALERT_DAYS = 30;
+  const nowMs = Date.now();
+
+  function daysUntil(date) {
+    if (!date) return null;
+    const ms = new Date(date).getTime() - nowMs;
+    return Math.ceil(ms / (24 * 60 * 60 * 1000));
+  }
+
+  function badge(label, tone) {
+    const cls =
+      tone === 'danger'
+        ? 'bg-red-100 text-red-700 border-red-200'
+        : tone === 'warning'
+          ? 'bg-amber-100 text-amber-800 border-amber-200'
+          : 'bg-slate-100 text-slate-700 border-slate-200';
+    return <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold ${cls}`}>{label}</span>;
+  }
+
+  const specialToolsWithAlerts = useMemo(() => {
+    return specialTools.map((t) => {
+      const calDays = daysUntil(t.nextCalibrationDueAt);
+      const inspDays = daysUntil(t.nextInspectionDueAt);
+
+      const calState =
+        calDays === null
+          ? 'none'
+          : calDays < 0
+            ? 'overdue'
+            : calDays <= ALERT_DAYS
+              ? 'soon'
+              : 'ok';
+
+      const inspState =
+        inspDays === null
+          ? 'none'
+          : inspDays < 0
+            ? 'overdue'
+            : inspDays <= ALERT_DAYS
+              ? 'soon'
+              : 'ok';
+
+      const rowState = calState === 'overdue' || inspState === 'overdue' ? 'overdue' : calState === 'soon' || inspState === 'soon' ? 'soon' : 'ok';
+
+      return { ...t, __calDays: calDays, __inspDays: inspDays, __rowState: rowState };
+    });
+  }, [specialTools, nowMs]);
+
+  const dueSummary = useMemo(() => {
+    let calOverdue = 0;
+    let calSoon = 0;
+    let inspOverdue = 0;
+    let inspSoon = 0;
+    for (const t of specialToolsWithAlerts) {
+      if (t.__calDays !== null) {
+        if (t.__calDays < 0) calOverdue += 1;
+        else if (t.__calDays <= ALERT_DAYS) calSoon += 1;
+      }
+      if (t.__inspDays !== null) {
+        if (t.__inspDays < 0) inspOverdue += 1;
+        else if (t.__inspDays <= ALERT_DAYS) inspSoon += 1;
+      }
+    }
+    return { calOverdue, calSoon, inspOverdue, inspSoon };
+  }, [specialToolsWithAlerts]);
+
   const cols = useMemo(
     () => [
       { key: 'toolName', header: 'Tool' },
@@ -77,8 +143,32 @@ export default function SpecialToolsPage() {
       { key: 'specialStatus', header: 'Special Status' },
       { key: 'assignedTo', header: 'Assigned To', render: (t) => t.assignedToTechnicianId?.fullName || '' },
       { key: 'assignmentEndAt', header: 'Assignment End', render: (t) => (t.assignmentEndAt ? formatDateTime(t.assignmentEndAt) : '') },
+      {
+        key: 'calAlert',
+        header: 'Calibration',
+        render: (t) => {
+          if (!t.nextCalibrationDueAt) return '';
+          const d = t.__calDays;
+          if (d === null) return '';
+          if (d < 0) return badge(`${Math.abs(d)}d overdue`, 'danger');
+          if (d <= ALERT_DAYS) return badge(`${d}d left`, 'warning');
+          return badge(`${d}d left`, 'neutral');
+        },
+      },
       { key: 'lastCalibrationAt', header: 'Last Cal', render: (t) => (t.lastCalibrationAt ? formatDateTime(t.lastCalibrationAt) : '') },
       { key: 'nextCalibrationDueAt', header: 'Next Cal Due', render: (t) => (t.nextCalibrationDueAt ? formatDateTime(t.nextCalibrationDueAt) : '') },
+      {
+        key: 'inspAlert',
+        header: 'Inspection',
+        render: (t) => {
+          if (!t.nextInspectionDueAt) return '';
+          const d = t.__inspDays;
+          if (d === null) return '';
+          if (d < 0) return badge(`${Math.abs(d)}d overdue`, 'danger');
+          if (d <= ALERT_DAYS) return badge(`${d}d left`, 'warning');
+          return badge(`${d}d left`, 'neutral');
+        },
+      },
       { key: 'lastInspectionAt', header: 'Last Insp', render: (t) => (t.lastInspectionAt ? formatDateTime(t.lastInspectionAt) : '') },
       { key: 'nextInspectionDueAt', header: 'Next Insp Due', render: (t) => (t.nextInspectionDueAt ? formatDateTime(t.nextInspectionDueAt) : '') },
     ],
@@ -92,46 +182,23 @@ export default function SpecialToolsPage() {
         <div className="text-sm text-slate-600">Assign, dispatch and track special tools (calibration/inspection pauses assignment).</div>
       </div>
 
-      <div className="rounded-xl bg-white shadow-soft p-6">
-        <div className="text-sm font-semibold text-epiroc-blue">Record last Calibration / Inspection (backdate)</div>
-        <form
-          className="mt-4 grid grid-cols-1 md:grid-cols-4 gap-4"
-          onSubmit={(e) => {
-            e.preventDefault();
-            updateTool.mutate({
-              id: recordToolId,
-              patch: {
-                lastCalibrationAt: recordLastCalibrationAt ? new Date(recordLastCalibrationAt).toISOString() : null,
-                lastInspectionAt: recordLastInspectionAt ? new Date(recordLastInspectionAt).toISOString() : null,
-              },
-            });
-          }}
-        >
-          <div className="md:col-span-2">
-            <label className="text-sm font-medium text-slate-700">Tool</label>
-            <select className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" value={recordToolId} onChange={(e) => setRecordToolId(e.target.value)} required>
-              <option value="">Select special tool…</option>
-              {specialTools.map((t) => (
-                <option key={t._id} value={t._id}>
-                  {t.toolName} ({t.toolCode})
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="text-sm font-medium text-slate-700">Last calibration</label>
-            <input className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" type="datetime-local" value={recordLastCalibrationAt} onChange={(e) => setRecordLastCalibrationAt(e.target.value)} />
-          </div>
-          <div>
-            <label className="text-sm font-medium text-slate-700">Last inspection</label>
-            <input className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" type="datetime-local" value={recordLastInspectionAt} onChange={(e) => setRecordLastInspectionAt(e.target.value)} />
-          </div>
-          <div className="md:col-span-4">
-            <button className="rounded-xl bg-epiroc-yellow px-4 py-2 font-semibold text-epiroc-black shadow-soft hover:brightness-95 disabled:opacity-60" type="submit" disabled={updateTool.isPending}>
-              {updateTool.isPending ? 'Saving…' : 'Save dates'}
-            </button>
-          </div>
-        </form>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="rounded-xl bg-white shadow-soft p-4">
+          <div className="text-xs font-semibold text-slate-600">Calibration overdue</div>
+          <div className="mt-1 text-2xl font-semibold text-epiroc-blue">{dueSummary.calOverdue}</div>
+        </div>
+        <div className="rounded-xl bg-white shadow-soft p-4">
+          <div className="text-xs font-semibold text-slate-600">Calibration due in {ALERT_DAYS}d</div>
+          <div className="mt-1 text-2xl font-semibold text-epiroc-blue">{dueSummary.calSoon}</div>
+        </div>
+        <div className="rounded-xl bg-white shadow-soft p-4">
+          <div className="text-xs font-semibold text-slate-600">Inspection overdue</div>
+          <div className="mt-1 text-2xl font-semibold text-epiroc-blue">{dueSummary.inspOverdue}</div>
+        </div>
+        <div className="rounded-xl bg-white shadow-soft p-4">
+          <div className="text-xs font-semibold text-slate-600">Inspection due in {ALERT_DAYS}d</div>
+          <div className="mt-1 text-2xl font-semibold text-epiroc-blue">{dueSummary.inspSoon}</div>
+        </div>
       </div>
 
       <div className="rounded-xl bg-white shadow-soft p-6">
@@ -384,8 +451,56 @@ export default function SpecialToolsPage() {
         ) : specialError ? (
           <div className="rounded-xl bg-white shadow-soft p-4 text-sm text-slate-600">Could not load special tools</div>
         ) : (
-          <Table emptyLabel="No special tools" columns={cols} rows={specialTools} />
+          <Table
+            emptyLabel="No special tools"
+            columns={cols}
+            rows={specialToolsWithAlerts}
+            getRowClassName={(t) => (t.__rowState === 'overdue' ? 'bg-red-50' : t.__rowState === 'soon' ? 'bg-amber-50' : '')}
+            maxHeight="520px"
+          />
         )}
+      </div>
+
+      <div className="rounded-xl bg-white shadow-soft p-6">
+        <div className="text-sm font-semibold text-epiroc-blue">Record last Calibration / Inspection (backdate)</div>
+        <form
+          className="mt-4 grid grid-cols-1 md:grid-cols-4 gap-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            updateTool.mutate({
+              id: recordToolId,
+              patch: {
+                lastCalibrationAt: recordLastCalibrationAt ? new Date(recordLastCalibrationAt).toISOString() : null,
+                lastInspectionAt: recordLastInspectionAt ? new Date(recordLastInspectionAt).toISOString() : null,
+              },
+            });
+          }}
+        >
+          <div className="md:col-span-2">
+            <label className="text-sm font-medium text-slate-700">Tool</label>
+            <select className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" value={recordToolId} onChange={(e) => setRecordToolId(e.target.value)} required>
+              <option value="">Select special tool…</option>
+              {specialTools.map((t) => (
+                <option key={t._id} value={t._id}>
+                  {t.toolName} ({t.toolCode})
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="text-sm font-medium text-slate-700">Last calibration</label>
+            <input className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" type="datetime-local" value={recordLastCalibrationAt} onChange={(e) => setRecordLastCalibrationAt(e.target.value)} />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-slate-700">Last inspection</label>
+            <input className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" type="datetime-local" value={recordLastInspectionAt} onChange={(e) => setRecordLastInspectionAt(e.target.value)} />
+          </div>
+          <div className="md:col-span-4">
+            <button className="rounded-xl bg-epiroc-yellow px-4 py-2 font-semibold text-epiroc-black shadow-soft hover:brightness-95 disabled:opacity-60" type="submit" disabled={updateTool.isPending}>
+              {updateTool.isPending ? 'Saving…' : 'Save dates'}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
