@@ -476,11 +476,20 @@ export default function SpecialToolsPage() {
       </div>
 
       <div className="rounded-xl bg-white shadow-soft p-6">
-        <div className="text-sm font-semibold text-epiroc-blue">Record last Calibration / Inspection (backdate)</div>
+        <div className="text-sm font-semibold text-epiroc-blue">Record Historical Calibration / Inspection Dates</div>
+        <div className="mt-2 text-sm text-slate-600">Enter past calibration/inspection dates for tools that were serviced before being added to the system. The system will automatically calculate the next due dates.</div>
         <form
           className="mt-4 max-w-5xl mx-auto space-y-4"
           onSubmit={(e) => {
             e.preventDefault();
+            if (!recordToolId) {
+              window.alert('Please select a tool');
+              return;
+            }
+            if (!recordLastCalibrationAt && !recordLastInspectionAt) {
+              window.alert('Please enter at least one calibration or inspection date');
+              return;
+            }
             updateTool.mutate({
               id: recordToolId,
               patch: {
@@ -493,28 +502,77 @@ export default function SpecialToolsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
               <label className="text-sm font-medium text-slate-700">Tool</label>
-              <select className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" value={recordToolId} onChange={(e) => setRecordToolId(e.target.value)} required>
+              <select className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" value={recordToolId} onChange={(e) => {
+                setRecordToolId(e.target.value);
+                // Reset dates when tool changes
+                setRecordLastCalibrationAt('');
+                setRecordLastInspectionAt('');
+              }} required>
                 <option value="">Select special tool…</option>
                 {specialTools.map((t) => (
                   <option key={t._id} value={t._id}>
-                    {t.toolName} ({t.toolCode})
+                    {t.toolName} ({t.toolCode}) 
+                    {t.calibrationEnabled && ` • Cal: ${t.calibrationIntervalDays}d`}
+                    {t.inspectionEnabled && ` • Insp: ${t.inspectionIntervalDays}d`}
                   </option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="text-sm font-medium text-slate-700">Last calibration</label>
-              <input className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" type="datetime-local" value={recordLastCalibrationAt} onChange={(e) => setRecordLastCalibrationAt(e.target.value)} />
+              <label className="text-sm font-medium text-slate-700">Last Calibration Date</label>
+              <input 
+                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" 
+                type="datetime-local" 
+                value={recordLastCalibrationAt} 
+                onChange={(e) => setRecordLastCalibrationAt(e.target.value)}
+                max={new Date().toISOString().slice(0, 16)}
+              />
+              {recordToolId && (() => {
+                const tool = specialTools.find(t => t._id === recordToolId);
+                return tool?.calibrationEnabled ? (
+                  <div className="mt-1 text-xs text-slate-600">
+                    Interval: {tool.calibrationIntervalDays} days
+                    {recordLastCalibrationAt && (
+                      <span className="block text-blue-600 font-medium">
+                        Next due: {new Date(new Date(recordLastCalibrationAt).getTime() + tool.calibrationIntervalDays * 24 * 60 * 60 * 1000).toLocaleDateString()}
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  <div className="mt-1 text-xs text-amber-600">Calibration not enabled for this tool</div>
+                );
+              })()}
             </div>
             <div>
-              <label className="text-sm font-medium text-slate-700">Last inspection</label>
-              <input className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" type="datetime-local" value={recordLastInspectionAt} onChange={(e) => setRecordLastInspectionAt(e.target.value)} />
+              <label className="text-sm font-medium text-slate-700">Last Inspection Date</label>
+              <input 
+                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" 
+                type="datetime-local" 
+                value={recordLastInspectionAt} 
+                onChange={(e) => setRecordLastInspectionAt(e.target.value)}
+                max={new Date().toISOString().slice(0, 16)}
+              />
+              {recordToolId && (() => {
+                const tool = specialTools.find(t => t._id === recordToolId);
+                return tool?.inspectionEnabled ? (
+                  <div className="mt-1 text-xs text-slate-600">
+                    Interval: {tool.inspectionIntervalDays} days
+                    {recordLastInspectionAt && (
+                      <span className="block text-blue-600 font-medium">
+                        Next due: {new Date(new Date(recordLastInspectionAt).getTime() + tool.inspectionIntervalDays * 24 * 60 * 60 * 1000).toLocaleDateString()}
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  <div className="mt-1 text-xs text-amber-600">Inspection not enabled for this tool</div>
+                );
+              })()}
             </div>
           </div>
 
           <div className="flex justify-center">
             <button className="rounded-xl bg-epiroc-yellow px-6 py-2 font-semibold text-epiroc-black shadow-soft hover:brightness-95 disabled:opacity-60" type="submit" disabled={updateTool.isPending}>
-              {updateTool.isPending ? 'Saving…' : 'Save dates'}
+              {updateTool.isPending ? 'Saving…' : 'Save Historical Dates'}
             </button>
           </div>
         </form>
