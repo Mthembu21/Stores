@@ -97,14 +97,20 @@ export default function SpecialToolsPage() {
   }
 
   function loadToolForEdit(toolId) {
+    console.log('loadToolForEdit called with toolId:', toolId);
     const tool = specialTools.find(t => t._id === toolId);
+    console.log('Found tool:', tool);
     if (tool) {
+      console.log('Setting edit form state...');
       setEditToolId(toolId);
       setEditSpecial(Boolean(tool.isSpecialTool));
       setEditCalibrationEnabled(Boolean(tool.calibrationEnabled));
       setEditCalibrationIntervalDays(tool.calibrationIntervalDays?.toString() || '');
       setEditInspectionEnabled(Boolean(tool.inspectionEnabled));
       setEditInspectionIntervalDays(tool.inspectionIntervalDays?.toString() || '');
+      console.log('Edit form state set successfully');
+    } else {
+      console.log('Tool not found!');
     }
   }
 
@@ -159,13 +165,17 @@ export default function SpecialToolsPage() {
     () => [
       { 
         key: 'toolName', 
-        header: 'Tool', 
+        header: 'Tool (Click to Edit)', 
         render: (t) => (
           <button 
-            onClick={() => loadToolForEdit(t._id)}
-            className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
+            onClick={() => {
+              console.log('Clicked tool:', t.toolName, 'ID:', t._id);
+              loadToolForEdit(t._id);
+            }}
+            className="text-blue-600 hover:text-blue-800 hover:underline font-medium cursor-pointer bg-transparent border-0 p-0 text-left rounded hover:bg-blue-50 px-2 py-1 -mx-2 -my-1 transition-colors"
+            title={`Click to edit ${t.toolName}`}
           >
-            {t.toolName}
+            ✏️ {t.toolName}
           </button>
         )
       },
