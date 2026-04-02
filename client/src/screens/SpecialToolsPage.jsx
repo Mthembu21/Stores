@@ -38,8 +38,12 @@ export default function SpecialToolsPage() {
   
   // Debug allTools to see structure
   console.log('All tools debug:', allTools);
-  console.log('Special tools filtered:', specialTools);
+  console.log('All tools length:', allTools.length);
+  console.log('First 3 tools:', allTools.slice(0, 3));
+  console.log('Special tools filtered:', allTools.filter(t => t.isSpecialTool));
+  console.log('Tools with isSpecial field:', allTools.filter(t => t.isSpecial));
   console.log('Sample tool structure:', allTools[0]);
+  console.log('Sample tool keys:', allTools[0] ? Object.keys(allTools[0]) : 'No tools');
   
   const users = usersData?.users || [];
   const dispatches = dispatchesData?.dispatches || [];
@@ -115,25 +119,18 @@ export default function SpecialToolsPage() {
 
   function loadToolForEdit(toolId) {
     console.log('loadToolForEdit called with toolId:', toolId);
-    console.log('displayTools:', displayTools);
-    console.log('specialToolsWithAlerts:', specialToolsWithAlerts);
-    console.log('displayTools length:', displayTools.length);
     
-    // Use displayTools since that's what the table is actually using
-    let tool = displayTools.find(t => t._id === toolId);
-    console.log('Search by _id result in displayTools:', tool);
+    // Use the exact same data that table is using
+    const allTools = toolsData?.tools || [];
+    const specialTools = allTools.filter(t => t.isSpecialTool);
     
-    if (!tool) {
-      // Try searching by id (some APIs use id instead of _id)
-      tool = displayTools.find(t => t.id === toolId);
-      console.log('Search by id result in displayTools:', tool);
-    }
+    console.log('All tools available:', allTools.length);
+    console.log('Special tools found:', specialTools.length);
+    console.log('Searching for tool ID:', toolId);
     
-    if (!tool) {
-      // Try string comparison
-      tool = displayTools.find(t => String(t._id) === String(toolId));
-      console.log('Search by string _id result in displayTools:', tool);
-    }
+    // Search in the filtered special tools
+    let tool = specialTools.find(t => t._id === toolId);
+    console.log('Found tool:', tool);
     
     if (tool) {
       console.log('Setting edit form state...');
@@ -145,17 +142,17 @@ export default function SpecialToolsPage() {
       setEditInspectionIntervalDays(tool.inspectionIntervalDays?.toString() || '');
       console.log('Edit form state set successfully');
     } else {
-      console.log('Tool not found with any search method!');
-      if (Array.isArray(displayTools)) {
-        console.log('Available tool IDs in displayTools:', displayTools.map(t => ({ name: t.toolName, _id: t._id, id: t.id })));
-      } else {
-        console.log('displayTools is not an array, it is:', typeof displayTools, displayTools);
-      }
+      console.log('Tool not found!');
+      console.log('Available special tool IDs:', specialTools.map(t => ({ name: t.toolName, _id: t._id })));
     }
   }
 
   const specialToolsWithAlerts = useMemo(() => {
-    return displayTools.map((t) => {
+    // Use the same filtering as loadToolForEdit
+    const allTools = toolsData?.tools || [];
+    const specialTools = allTools.filter(t => t.isSpecialTool);
+    
+    return specialTools.map((t) => {
       const calDays = daysUntil(t.nextCalibrationDueAt);
       const inspDays = daysUntil(t.nextInspectionDueAt);
 
@@ -181,7 +178,7 @@ export default function SpecialToolsPage() {
 
       return { ...t, __calDays: calDays, __inspDays: inspDays, __rowState: rowState };
     });
-  }, [displayTools, nowMs]);
+  }, [toolsData, nowMs]);
 
   const dueSummary = useMemo(() => {
     let calOverdue = 0;
