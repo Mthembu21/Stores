@@ -120,16 +120,14 @@ export default function SpecialToolsPage() {
   function loadToolForEdit(toolId) {
     console.log('loadToolForEdit called with toolId:', toolId);
     
-    // Use the exact same data that table is using
-    const allTools = toolsData?.tools || [];
-    const specialTools = allTools.filter(t => t.isSpecialTool);
+    // Use the exact same data that the table is using
+    const tableData = specialToolsWithAlerts;
     
-    console.log('All tools available:', allTools.length);
-    console.log('Special tools found:', specialTools.length);
+    console.log('Table data length:', tableData.length);
     console.log('Searching for tool ID:', toolId);
     
-    // Search in the filtered special tools
-    let tool = specialTools.find(t => t._id === toolId);
+    // Search in the table data
+    const tool = tableData.find(t => t._id === toolId);
     console.log('Found tool:', tool);
     
     if (tool) {
@@ -142,8 +140,8 @@ export default function SpecialToolsPage() {
       setEditInspectionIntervalDays(tool.inspectionIntervalDays?.toString() || '');
       console.log('Edit form state set successfully');
     } else {
-      console.log('Tool not found!');
-      console.log('Available special tool IDs:', specialTools.map(t => ({ name: t.toolName, _id: t._id })));
+      console.log('Tool not found in table data!');
+      console.log('Available tool IDs in table:', tableData.map(t => ({ name: t.toolName, _id: t._id })));
     }
   }
 
@@ -152,7 +150,11 @@ export default function SpecialToolsPage() {
     const allTools = toolsData?.tools || [];
     const specialTools = allTools.filter(t => t.isSpecialTool);
     
-    return specialTools.map((t) => {
+    console.log('specialToolsWithAlerts - allTools length:', allTools.length);
+    console.log('specialToolsWithAlerts - specialTools length:', specialTools.length);
+    console.log('specialToolsWithAlerts - first special tool:', specialTools[0]);
+    
+    const result = specialTools.map((t) => {
       const calDays = daysUntil(t.nextCalibrationDueAt);
       const inspDays = daysUntil(t.nextInspectionDueAt);
 
@@ -178,6 +180,11 @@ export default function SpecialToolsPage() {
 
       return { ...t, __calDays: calDays, __inspDays: inspDays, __rowState: rowState };
     });
+    
+    console.log('specialToolsWithAlerts - final result length:', result.length);
+    console.log('specialToolsWithAlerts - sample result:', result[0]);
+    
+    return result;
   }, [toolsData, nowMs]);
 
   const dueSummary = useMemo(() => {
