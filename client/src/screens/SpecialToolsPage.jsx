@@ -28,7 +28,7 @@ export default function SpecialToolsPage() {
   const returnDispatch = useReturnDispatch();
 
   const allTools = toolsData?.tools || [];
-  const specialTools = specialData?.tools || [];
+  const specialTools = Array.isArray(specialData) ? specialData : [];
   // If specialTools API is empty, use allTools filtered by special status
   const displayTools = specialTools.length > 0 ? specialTools : allTools.filter(t => t.isSpecialTool);
   
