@@ -662,15 +662,25 @@ export default function SpecialToolsPage() {
         <div className="text-sm font-semibold text-epiroc-blue">Edit Special Tool Settings</div>
         <div className="mt-2 text-sm text-slate-600">Click on any tool name in the table above to load its current settings, then modify as needed.</div>
         {editToolId ? (
-          <div className="mt-4 p-4 bg-blue-50 rounded-xl border border-blue-200">
-            <div className="text-sm font-medium text-blue-800 mb-2">
-              Currently editing: {specialTools.find(t => t._id === editToolId)?.toolName} ({specialTools.find(t => t._id === editToolId)?.toolCode})
+          <>
+            <div className="mt-4 p-4 bg-blue-50 rounded-xl border border-blue-200">
+              <div className="text-sm font-medium text-blue-800 mb-2">
+                ✏️ Currently editing: {specialTools.find(t => t._id === editToolId)?.toolName} ({specialTools.find(t => t._id === editToolId)?.toolCode})
+              </div>
+              <div className="text-xs text-blue-600">
+                Modify the settings below and click "Update Tool Settings" to save changes
+              </div>
             </div>
-          </div>
+            <div className="mt-4 p-3 bg-amber-50 rounded-xl border border-amber-200">
+              <div className="text-xs text-amber-800">
+                💡 Tip: Changes will take effect immediately after saving
+              </div>
+            </div>
+          </>
         ) : (
           <div className="mt-4 p-4 bg-amber-50 rounded-xl border border-amber-200">
             <div className="text-sm text-amber-800">
-              Click on a tool name in the table above to load it for editing
+              📋 Click on a tool name in the table above to load it for editing
             </div>
           </div>
         )}
