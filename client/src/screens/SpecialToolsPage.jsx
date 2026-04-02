@@ -13,14 +13,15 @@ import { formatDateTime } from '../utils/format';
 
 export default function SpecialToolsPage() {
   const { data: toolsData } = useTools();
-  const { data: specialData, isLoading: specialLoading, isError: specialError } = useSpecialTools();
+  // Temporarily disable specialTools API due to connection issues
+  // const { data: specialData, isLoading: specialLoading, isError: specialError } = useSpecialTools();
   const { data: usersData } = useUsers();
   const { data: dispatchesData } = useSpecialToolDispatches('Open');
 
-  // Debug API states
-  console.log('API Debug - specialLoading:', specialLoading);
-  console.log('API Debug - specialError:', specialError);
-  console.log('API Debug - specialData:', specialData);
+  // Debug API states - commented out since API is failing
+  // console.log('API Debug - specialLoading:', specialLoading);
+  // console.log('API Debug - specialError:', specialError);
+  // console.log('API Debug - specialData:', specialData);
 
   const updateTool = useUpdateTool();
   const assignTool = useAssignSpecialTool();
@@ -28,14 +29,13 @@ export default function SpecialToolsPage() {
   const returnDispatch = useReturnDispatch();
 
   const allTools = toolsData?.tools || [];
-  const specialTools = Array.isArray(specialData) ? specialData : [];
-  // If specialTools API is empty, use allTools filtered by special status
-  const displayTools = specialTools.length > 0 ? specialTools : allTools.filter(t => t.isSpecialTool);
+  // Use allTools filtered by special status since specialTools API is failing
+  const specialTools = allTools.filter(t => t.isSpecialTool);
+  const displayTools = specialTools; // Always use filtered allTools
   
   // Debug allTools to see structure
   console.log('All tools debug:', allTools);
-  console.log('Special tools in allTools:', allTools.filter(t => t.isSpecialTool));
-  console.log('Tools with isSpecial field:', allTools.filter(t => t.isSpecial));
+  console.log('Special tools filtered:', specialTools);
   console.log('Sample tool structure:', allTools[0]);
   
   const users = usersData?.users || [];
