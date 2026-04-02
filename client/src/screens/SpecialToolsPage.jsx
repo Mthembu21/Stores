@@ -29,6 +29,8 @@ export default function SpecialToolsPage() {
 
   const allTools = toolsData?.tools || [];
   const specialTools = specialData?.tools || [];
+  // If specialTools API is empty, use allTools filtered by special status
+  const displayTools = specialTools.length > 0 ? specialTools : allTools.filter(t => t.isSpecialTool);
   const users = usersData?.users || [];
   const dispatches = dispatchesData?.dispatches || [];
 
@@ -145,7 +147,7 @@ export default function SpecialToolsPage() {
   }
 
   const specialToolsWithAlerts = useMemo(() => {
-    return specialTools.map((t) => {
+    return displayTools.map((t) => {
       const calDays = daysUntil(t.nextCalibrationDueAt);
       const inspDays = daysUntil(t.nextInspectionDueAt);
 
@@ -171,7 +173,7 @@ export default function SpecialToolsPage() {
 
       return { ...t, __calDays: calDays, __inspDays: inspDays, __rowState: rowState };
     });
-  }, [specialTools, nowMs]);
+  }, [displayTools, nowMs]);
 
   const dueSummary = useMemo(() => {
     let calOverdue = 0;
