@@ -98,8 +98,27 @@ export default function SpecialToolsPage() {
 
   function loadToolForEdit(toolId) {
     console.log('loadToolForEdit called with toolId:', toolId);
-    const tool = specialTools.find(t => t._id === toolId);
-    console.log('Found tool:', tool);
+    console.log('specialData raw:', specialData);
+    console.log('specialTools array:', specialTools);
+    console.log('specialTools length:', specialTools.length);
+    console.log('specialTools type:', typeof specialTools);
+    
+    // Try to find tool with different approaches
+    let tool = specialTools.find(t => t._id === toolId);
+    console.log('Search by _id result:', tool);
+    
+    if (!tool) {
+      // Try searching by id (some APIs use id instead of _id)
+      tool = specialTools.find(t => t.id === toolId);
+      console.log('Search by id result:', tool);
+    }
+    
+    if (!tool) {
+      // Try string comparison
+      tool = specialTools.find(t => String(t._id) === String(toolId));
+      console.log('Search by string _id result:', tool);
+    }
+    
     if (tool) {
       console.log('Setting edit form state...');
       setEditToolId(toolId);
@@ -110,7 +129,12 @@ export default function SpecialToolsPage() {
       setEditInspectionIntervalDays(tool.inspectionIntervalDays?.toString() || '');
       console.log('Edit form state set successfully');
     } else {
-      console.log('Tool not found!');
+      console.log('Tool not found with any search method!');
+      if (Array.isArray(specialTools)) {
+        console.log('Available tool IDs:', specialTools.map(t => ({ name: t.toolName, _id: t._id, id: t.id })));
+      } else {
+        console.log('specialTools is not an array, it is:', typeof specialTools, specialTools);
+      }
     }
   }
 
