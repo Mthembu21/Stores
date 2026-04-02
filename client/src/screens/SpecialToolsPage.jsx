@@ -17,6 +17,11 @@ export default function SpecialToolsPage() {
   const { data: usersData } = useUsers();
   const { data: dispatchesData } = useSpecialToolDispatches('Open');
 
+  // Debug API states
+  console.log('API Debug - specialLoading:', specialLoading);
+  console.log('API Debug - specialError:', specialError);
+  console.log('API Debug - specialData:', specialData);
+
   const updateTool = useUpdateTool();
   const assignTool = useAssignSpecialTool();
   const dispatchTool = useDispatchSpecialTool();
