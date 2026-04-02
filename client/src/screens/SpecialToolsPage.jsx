@@ -15,16 +15,16 @@ import {
 import { formatDateTime } from '../utils/format';
 
 export default function SpecialToolsPage() {
-  const { data: toolsData } = useTools();
+  const { data: toolsData, isLoading: toolsLoading, isError: toolsError } = useTools();
   // Temporarily disable specialTools API due to connection issues
   // const { data: specialData, isLoading: specialLoading, isError: specialError } = useSpecialTools();
   const { data: usersData } = useUsers();
   const { data: dispatchesData } = useSpecialToolDispatches('Open');
 
-  // Debug API states - commented out since API is failing
-  // console.log('API Debug - specialLoading:', specialLoading);
-  // console.log('API Debug - specialError:', specialError);
-  // console.log('API Debug - specialData:', specialData);
+  // Debug tools API
+  console.log('Tools API - Loading:', toolsLoading);
+  console.log('Tools API - Error:', toolsError);
+  console.log('Tools API - Data:', toolsData);
 
   const updateTool = useUpdateTool();
   const assignTool = useAssignSpecialTool();
@@ -538,19 +538,14 @@ export default function SpecialToolsPage() {
 
       <div className="space-y-3">
         <div className="text-sm font-semibold text-epiroc-blue">Special tools list</div>
-        {specialLoading ? (
-          <div className="rounded-xl bg-white shadow-soft p-4 text-sm text-slate-600">Loading…</div>
-        ) : specialError ? (
-          <div className="rounded-xl bg-white shadow-soft p-4 text-sm text-slate-600">Could not load special tools</div>
-        ) : (
-          <Table
-            emptyLabel="No special tools"
-            columns={cols}
-            rows={specialToolsWithAlerts}
-            getRowClassName={(t) => (t.__rowState === 'overdue' ? 'bg-red-50' : t.__rowState === 'soon' ? 'bg-amber-50' : '')}
-            maxHeight="520px"
-          />
-        )}
+        {/* Since we're using allTools filtered by special status, no loading/error state needed */}
+        <Table
+          emptyLabel="No special tools found"
+          columns={cols}
+          rows={specialToolsWithAlerts}
+          getRowClassName={(t) => (t.__rowState === 'overdue' ? 'bg-red-50' : t.__rowState === 'soon' ? 'bg-amber-50' : '')}
+          maxHeight="520px"
+        />
       </div>
 
       <div className="rounded-xl bg-white shadow-soft p-6">
