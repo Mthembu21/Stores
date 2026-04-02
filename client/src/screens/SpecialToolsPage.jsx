@@ -1,55 +1,263 @@
-// Keep displayTools as only special tools
-const displayTools = allTools.filter(t => t.isSpecialTool);
+import { useMemo, useState } from 'react';
+import { Table } from '../components/Table';
+import { useUsers } from '../services/users';
+import { useTools, useUpdateTool } from '../services/tools';
+import {
+  useAssignSpecialTool,
+  useDispatchSpecialTool,
+  useReturnDispatch,
+  useSpecialToolDispatches,
+  // useSpecialTools, // disabled API
+} from '../services/specialTools';
+import { formatDateTime } from '../utils/format';
 
-// specialToolsWithAlerts calculates alerts based on displayTools
-const specialToolsWithAlerts = useMemo(() => {
-  return displayTools.map(t => {
-    const calDays = daysUntil(t.nextCalibrationDueAt);
-    const inspDays = daysUntil(t.nextInspectionDueAt);
+export default function SpecialToolsPage() {
+  const { data: toolsData } = useTools();
+  const { data: usersData } = useUsers();
+  const { data: dispatchesData } = useSpecialToolDispatches('Open');
 
-    const calState =
-      calDays === null
-        ? 'none'
-        : calDays < 0
-          ? 'overdue'
-          : calDays <= ALERT_DAYS
-            ? 'soon'
-            : 'ok';
+  // API disabled, simulate loading/error
+  const specialLoading = false;
+  const specialError = false;
 
-    const inspState =
-      inspDays === null
-        ? 'none'
-        : inspDays < 0
-          ? 'overdue'
-          : inspDays <= ALERT_DAYS
-            ? 'soon'
-            : 'ok';
+  const updateTool = useUpdateTool();
+  const assignTool = useAssignSpecialTool();
+  const dispatchTool = useDispatchSpecialTool();
+  const returnDispatch = useReturnDispatch();
 
-    const rowState = calState === 'overdue' || inspState === 'overdue'
-      ? 'overdue'
-      : calState === 'soon' || inspState === 'soon'
-        ? 'soon'
-        : 'ok';
+  const allTools = toolsData?.tools || [];
+  const specialTools = allTools.filter(t => t.isSpecialTool);
+  const displayTools = specialTools; 
 
-    return { ...t, __calDays: calDays, __inspDays: inspDays, __rowState: rowState };
+  const users = usersData?.users || [];
+  const dispatches = dispatchesData?.dispatches || [];
+
+  const techUsers = useMemo(() => users.filter((u) => u.role !== 'Admin'), [users]);
+
+  // --- Mark tool form state ---
+  const [markToolId, setMarkToolId] = useState('');
+  const [markToolSearch, setMarkToolSearch] = useState('');
+  const [markSpecial, setMarkSpecial] = useState(true);
+  const [calibrationEnabled, setCalibrationEnabled] = useState(false);
+  const [calibrationIntervalDays, setCalibrationIntervalDays] = useState('90');
+  const [inspectionEnabled, setInspectionEnabled] = useState(false);
+  const [inspectionIntervalDays, setInspectionIntervalDays] = useState('365');
+
+  const filteredMarkTools = useMemo(() => {
+    const q = markToolSearch.trim().toLowerCase();
+    if (!q) return allTools;
+    return allTools.filter((t) => {
+      const name = String(t.toolName || '').toLowerCase();
+      const code = String(t.toolCode || '').toLowerCase();
+      return name.includes(q) || code.includes(q);
+    });
+  }, [allTools, markToolSearch]);
+
+  // --- Assign tool form state ---
+  const [assignToolId, setAssignToolId] = useState('');
+  const [assignTechnicianId, setAssignTechnicianId] = useState('');
+  const [assignDurationDays, setAssignDurationDays] = useState('365');
+
+  // --- Dispatch tool form state ---
+  const [dispatchToolId, setDispatchToolId] = useState('');
+  const [dispatchType, setDispatchType] = useState('Calibration');
+  const [dispatchSentAt, setDispatchSentAt] = useState(() => new Date().toISOString().slice(0, 16));
+  const [dispatchExpectedAt, setDispatchExpectedAt] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 7);
+    return d.toISOString().slice(0, 16);
   });
-}, [displayTools, nowMs]);
+  const [dispatchRef, setDispatchRef] = useState('');
 
-// loadToolForEdit still searches allTools
-function loadToolForEdit(toolId) {
-  const tool = allTools.find(t => t._id === toolId || t.id === toolId);
-  if (!tool) {
-    console.log('Tool not found!', toolId);
-    return;
+  // --- Return dispatch form state ---
+  const [returnDispatchId, setReturnDispatchId] = useState('');
+  const [returnAt, setReturnAt] = useState(() => new Date().toISOString().slice(0, 16));
+  const [returnRef, setReturnRef] = useState('');
+
+  // --- Record historical calibration/inspection ---
+  const [recordToolId, setRecordToolId] = useState('');
+  const [recordLastCalibrationAt, setRecordLastCalibrationAt] = useState('');
+  const [recordLastInspectionAt, setRecordLastInspectionAt] = useState('');
+
+  // --- Edit special tool state ---
+  const [editToolId, setEditToolId] = useState('');
+  const [editSpecial, setEditSpecial] = useState(true);
+  const [editCalibrationEnabled, setEditCalibrationEnabled] = useState(false);
+  const [editCalibrationIntervalDays, setEditCalibrationIntervalDays] = useState('');
+  const [editInspectionEnabled, setEditInspectionEnabled] = useState(false);
+  const [editInspectionIntervalDays, setEditInspectionIntervalDays] = useState('');
+
+  const ALERT_DAYS = 30;
+  const nowMs = Date.now();
+
+  function daysUntil(date) {
+    if (!date) return null;
+    const ms = new Date(date).getTime() - nowMs;
+    return Math.ceil(ms / (24 * 60 * 60 * 1000));
   }
 
-  setEditToolId(tool._id);
-  setEditSpecial(Boolean(tool.isSpecialTool));
-  setEditCalibrationEnabled(Boolean(tool.calibrationEnabled));
-  setEditCalibrationIntervalDays(tool.calibrationIntervalDays?.toString() || '');
-  setEditInspectionEnabled(Boolean(tool.inspectionEnabled));
-  setEditInspectionIntervalDays(tool.inspectionIntervalDays?.toString() || '');
-  console.log('Loaded tool for edit:', tool);
+  function badge(label, tone) {
+    const cls =
+      tone === 'danger'
+        ? 'bg-red-100 text-red-700 border-red-200'
+        : tone === 'warning'
+        ? 'bg-amber-100 text-amber-800 border-amber-200'
+        : 'bg-slate-100 text-slate-700 border-slate-200';
+    return <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold ${cls}`}>{label}</span>;
+  }
+
+  const specialToolsWithAlerts = useMemo(() => {
+    return displayTools.map((t) => {
+      const calDays = daysUntil(t.nextCalibrationDueAt);
+      const inspDays = daysUntil(t.nextInspectionDueAt);
+
+      const calState =
+        calDays === null
+          ? 'none'
+          : calDays < 0
+          ? 'overdue'
+          : calDays <= ALERT_DAYS
+          ? 'soon'
+          : 'ok';
+
+      const inspState =
+        inspDays === null
+          ? 'none'
+          : inspDays < 0
+          ? 'overdue'
+          : inspDays <= ALERT_DAYS
+          ? 'soon'
+          : 'ok';
+
+      const rowState =
+        calState === 'overdue' || inspState === 'overdue'
+          ? 'overdue'
+          : calState === 'soon' || inspState === 'soon'
+          ? 'soon'
+          : 'ok';
+
+      return { ...t, __calDays: calDays, __inspDays: inspDays, __rowState: rowState };
+    });
+  }, [displayTools, nowMs]);
+
+  const dueSummary = useMemo(() => {
+    let calOverdue = 0;
+    let calSoon = 0;
+    let inspOverdue = 0;
+    let inspSoon = 0;
+    for (const t of specialToolsWithAlerts) {
+      if (t.__calDays !== null) {
+        if (t.__calDays < 0) calOverdue += 1;
+        else if (t.__calDays <= ALERT_DAYS) calSoon += 1;
+      }
+      if (t.__inspDays !== null) {
+        if (t.__inspDays < 0) inspOverdue += 1;
+        else if (t.__inspDays <= ALERT_DAYS) inspSoon += 1;
+      }
+    }
+    return { calOverdue, calSoon, inspOverdue, inspSoon };
+  }, [specialToolsWithAlerts]);
+
+  function loadToolForEdit(toolId) {
+    const tool = specialToolsWithAlerts.find(t => t._id === toolId || t.id === toolId || String(t._id) === String(toolId));
+    if (tool) {
+      setEditToolId(toolId);
+      setEditSpecial(Boolean(tool.isSpecialTool));
+      setEditCalibrationEnabled(Boolean(tool.calibrationEnabled));
+      setEditCalibrationIntervalDays(tool.calibrationIntervalDays?.toString() || '');
+      setEditInspectionEnabled(Boolean(tool.inspectionEnabled));
+      setEditInspectionIntervalDays(tool.inspectionIntervalDays?.toString() || '');
+    }
+  }
+
+  const cols = useMemo(
+    () => [
+      { 
+        key: 'toolName', 
+        header: 'Tool (Click to Edit)', 
+        render: (t) => (
+          <button onClick={() => loadToolForEdit(t._id)} className="text-blue-600 hover:text-blue-800 hover:underline font-medium cursor-pointer bg-transparent border-0 p-0 text-left rounded hover:bg-blue-50 px-2 py-1 -mx-2 -my-1 transition-colors">
+            ✏️ {t.toolName}
+          </button>
+        )
+      },
+      { key: 'toolCode', header: 'Code' },
+      { key: 'category', header: 'Category' },
+      { key: 'specialStatus', header: 'Special Status' },
+      { key: 'assignedTo', header: 'Assigned To', render: (t) => t.assignedToTechnicianId?.fullName || '' },
+      { key: 'assignmentEndAt', header: 'Assignment End', render: (t) => (t.assignmentEndAt ? formatDateTime(t.assignmentEndAt) : '') },
+      { key: 'calAlert', header: 'Calibration', render: (t) => {
+          if (!t.nextCalibrationDueAt) return '';
+          const d = t.__calDays;
+          if (d === null) return '';
+          if (d < 0) return badge(`${Math.abs(d)}d overdue`, 'danger');
+          if (d <= ALERT_DAYS) return badge(`${d}d left`, 'warning');
+          return badge(`${d}d left`, 'neutral');
+        }
+      },
+      { key: 'lastCalibrationAt', header: 'Last Cal', render: (t) => (t.lastCalibrationAt ? formatDateTime(t.lastCalibrationAt) : '') },
+      { key: 'nextCalibrationDueAt', header: 'Next Cal Due', render: (t) => (t.nextCalibrationDueAt ? formatDateTime(t.nextCalibrationDueAt) : '') },
+      { key: 'inspAlert', header: 'Inspection', render: (t) => {
+          if (!t.nextInspectionDueAt) return '';
+          const d = t.__inspDays;
+          if (d === null) return '';
+          if (d < 0) return badge(`${Math.abs(d)}d overdue`, 'danger');
+          if (d <= ALERT_DAYS) return badge(`${d}d left`, 'warning');
+          return badge(`${d}d left`, 'neutral');
+        }
+      },
+      { key: 'lastInspectionAt', header: 'Last Insp', render: (t) => (t.lastInspectionAt ? formatDateTime(t.lastInspectionAt) : '') },
+      { key: 'nextInspectionDueAt', header: 'Next Insp Due', render: (t) => (t.nextInspectionDueAt ? formatDateTime(t.nextInspectionDueAt) : '') },
+    ],
+    []
+  );
+
+  return (
+    <div className="space-y-6 max-w-6xl mx-auto w-full">
+      <div>
+        <div className="text-2xl font-semibold text-epiroc-blue">Special Tools</div>
+        <div className="text-sm text-slate-600">Assign, dispatch and track special tools (calibration/inspection pauses assignment).</div>
+      </div>
+
+      {/* Due summary cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className="rounded-xl bg-white shadow-soft p-4">
+          <div className="text-xs font-semibold text-slate-600">Calibration overdue</div>
+          <div className="mt-1 text-2xl font-semibold text-epiroc-blue">{dueSummary.calOverdue}</div>
+        </div>
+        <div className="rounded-xl bg-white shadow-soft p-4">
+          <div className="text-xs font-semibold text-slate-600">Calibration due in {ALERT_DAYS}d</div>
+          <div className="mt-1 text-2xl font-semibold text-epiroc-blue">{dueSummary.calSoon}</div>
+        </div>
+        <div className="rounded-xl bg-white shadow-soft p-4">
+          <div className="text-xs font-semibold text-slate-600">Inspection overdue</div>
+          <div className="mt-1 text-2xl font-semibold text-epiroc-blue">{dueSummary.inspOverdue}</div>
+        </div>
+        <div className="rounded-xl bg-white shadow-soft p-4">
+          <div className="text-xs font-semibold text-slate-600">Inspection due in {ALERT_DAYS}d</div>
+          <div className="mt-1 text-2xl font-semibold text-epiroc-blue">{dueSummary.inspSoon}</div>
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="space-y-3">
+        <div className="text-sm font-semibold text-epiroc-blue">Special tools list</div>
+        {specialLoading ? (
+          <div className="rounded-xl bg-white shadow-soft p-4 text-sm text-slate-600">Loading…</div>
+        ) : specialError ? (
+          <div className="rounded-xl bg-white shadow-soft p-4 text-sm text-slate-600">Could not load special tools</div>
+        ) : (
+          <Table
+            emptyLabel="No special tools"
+            columns={cols}
+            rows={specialToolsWithAlerts}
+            getRowClassName={(t) => (t.__rowState === 'overdue' ? 'bg-red-50' : t.__rowState === 'soon' ? 'bg-amber-50' : '')}
+            maxHeight="520px"
+          />
+        )}
+      </div>
+    </div>
+  );
 }
 
 
