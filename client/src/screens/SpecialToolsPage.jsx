@@ -657,24 +657,27 @@ export default function SpecialToolsPage() {
 
       {/* Edit Special Tool Settings Modal - Only shows when tool is clicked */}
       {editToolId && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-soft p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <div className="text-sm font-semibold text-epiroc-blue">Edit Special Tool Settings</div>
-              <button 
-                onClick={() => {
-                  setEditToolId('');
-                  setEditSpecial(true);
-                  setEditCalibrationEnabled(false);
-                  setEditCalibrationIntervalDays('');
-                  setEditInspectionEnabled(false);
-                  setEditInspectionIntervalDays('');
-                }}
-                className="text-slate-400 hover:text-slate-600 text-xl font-bold"
-              >
-                ×
-              </button>
-            </div>
+        <>
+          {console.log('Modal showing because editToolId is set to:', editToolId)}
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl shadow-soft p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-4">
+                <div className="text-sm font-semibold text-epiroc-blue">Edit Special Tool Settings</div>
+                <button 
+                  onClick={() => {
+                    console.log('Closing modal via X button');
+                    setEditToolId('');
+                    setEditSpecial(true);
+                    setEditCalibrationEnabled(false);
+                    setEditCalibrationIntervalDays('');
+                    setEditInspectionEnabled(false);
+                    setEditInspectionIntervalDays('');
+                  }}
+                  className="text-slate-400 hover:text-slate-600 text-xl font-bold"
+                >
+                  ×
+                </button>
+              </div>
             
             <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
               <div className="text-sm font-medium text-blue-800 mb-2">
@@ -717,6 +720,7 @@ export default function SpecialToolsPage() {
                   },
                   onSuccess: () => {
                     // Close modal after successful update
+                    console.log('Closing modal after successful update');
                     setEditToolId('');
                     setEditSpecial(true);
                     setEditCalibrationEnabled(false);
@@ -812,6 +816,7 @@ export default function SpecialToolsPage() {
                 <button 
                   type="button"
                   onClick={() => {
+                    console.log('Closing modal via Cancel button');
                     setEditToolId('');
                     setEditSpecial(true);
                     setEditCalibrationEnabled(false);
@@ -827,7 +832,21 @@ export default function SpecialToolsPage() {
             </form>
           </div>
         </div>
+        </>
       )}
+      
+      {/* Temporary debug button - remove this after testing */}
+      <div className="fixed bottom-4 right-4 z-40">
+        <button 
+          onClick={() => {
+            console.log('Manually clearing editToolId, was:', editToolId);
+            setEditToolId('');
+          }}
+          className="bg-red-500 text-white px-3 py-1 rounded text-sm"
+        >
+          Clear Modal (Debug)
+        </button>
+      </div>
     </div>
   );
 }
