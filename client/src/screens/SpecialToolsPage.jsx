@@ -1021,11 +1021,6 @@ export default function SpecialToolsPage() {
   const { data: usersData } = useUsers();
   const { data: dispatchesData } = useSpecialToolDispatches('Open');
 
-  const updateTool = useUpdateTool();
-  const assignTool = useAssignSpecialTool();
-  const dispatchTool = useDispatchSpecialTool();
-  const returnDispatch = useReturnDispatch();
-
   const [editToolId, setEditToolId] = useState('');
 
   if (toolsLoading) return <div>Loading...</div>;
@@ -1039,18 +1034,32 @@ export default function SpecialToolsPage() {
 
   const ALERT_DAYS = 30;
 
+  const getTechnicianName = (tool) => {
+    if (tool.assignedTo?.fullName) return tool.assignedTo.fullName;
+    if (tool.currentAssignment?.technician?.fullName) return tool.currentAssignment.technician.fullName;
+    if (tool.technician?.fullName) return tool.technician.fullName;
+
+    if (tool.assignedToTechnicianId && users.length > 0) {
+      const techId = String(tool.assignedToTechnicianId);
+      const technician = users.find(u => String(u._id || u.id) === techId);
+      return technician?.fullName || 'Assigned';
+    }
+
+    return 'Unassigned';
+  };
+
+  // Precompute alert info (days until calibration/inspection)
   const specialToolsWithAlerts = useMemo(() => {
     const now = Date.now();
 
     const daysUntil = (date) => {
       if (!date) return null;
-      const ms = new Date(date).getTime() - now;
-      return Math.ceil(ms / (24 * 60 * 60 * 1000));
+      return Math.ceil((new Date(date).getTime() - now) / (24 * 60 * 60 * 1000));
     };
 
-    return specialTools.map((t) => {
-      const calDays = daysUntil(t.nextCalibrationDueAt);
-      const inspDays = daysUntil(t.nextInspectionDueAt);
+    return specialTools.map(tool => {
+      const calDays = daysUntil(tool.nextCalibrationDueAt);
+      const inspDays = daysUntil(tool.nextInspectionDueAt);
 
       const rowState =
         calDays < 0 || inspDays < 0
@@ -1059,61 +1068,43 @@ export default function SpecialToolsPage() {
           ? 'soon'
           : 'ok';
 
-      return { ...t, __calDays: calDays, __inspDays: inspDays, __rowState: rowState };
+      return { ...tool, __calDays: calDays, __inspDays: inspDays, __rowState: rowState };
     });
   }, [specialTools]);
 
-  // ✅ Move function outside of useMemo
-  const getTechnicianName = (t) => {
-    if (t.assignedTo?.fullName) return t.assignedTo.fullName;
-    if (t.currentAssignment?.technician?.fullName) return t.currentAssignment.technician.fullName;
-    if (t.technician?.fullName) return t.technician.fullName;
-
-    if (t.assignedToTechnicianId && users.length > 0) {
-      const techId = String(t.assignedToTechnicianId);
-      const technician = users.find(u => String(u._id || u.id) === techId);
-      return technician?.fullName || 'Assigned';
-    }
-
-    return 'Unassigned';
-  };
-
-  // ✅ useMemo only for columns, no objects/functions inside deps
-  const cols = useMemo(
-    () => [
-      {
-        key: 'toolName',
-        header: 'Tool',
-        render: (t) => <button onClick={() => setEditToolId(t._id)}>✏️ {t.toolName}</button>,
-      },
-      { key: 'toolCode', header: 'Code' },
-      { key: 'category', header: 'Category' },
-      { key: 'specialStatus', header: 'Status' },
-      {
-        key: 'assignedTo',
-        header: 'Assigned To',
-        render: (t) => getTechnicianName(t),
-      },
-      {
-        key: 'assignmentEndAt',
-        header: 'End',
-        render: (t) => (t.assignmentEndAt ? formatDateTime(t.assignmentEndAt) : ''),
-      },
-    ],
-    [] // ✅ safe: no changing references in deps
-  );
+  // Columns array, no inline functions with changing references
+  const columns = useMemo(() => [
+    {
+      key: 'toolName',
+      header: 'Tool',
+      render: (tool) => <button onClick={() => setEditToolId(tool._id)}>✏️ {tool.toolName}</button>,
+    },
+    { key: 'toolCode', header: 'Code' },
+    { key: 'category', header: 'Category' },
+    { key: 'specialStatus', header: 'Status' },
+    {
+      key: 'assignedTo',
+      header: 'Assigned To',
+      render: (tool) => getTechnicianName(tool),
+    },
+    {
+      key: 'assignmentEndAt',
+      header: 'End',
+      render: (tool) => (tool.assignmentEndAt ? formatDateTime(tool.assignmentEndAt) : ''),
+    },
+  ], [users]); // ✅ safe: only users array dependency
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto w-full">
-      <div className="text-2xl font-semibold">Special Tools</div>
+      <h1 className="text-2xl font-semibold">Special Tools</h1>
 
       <Table
-        columns={cols}
+        columns={columns}
         rows={specialToolsWithAlerts}
-        getRowClassName={(t) =>
-          t.__rowState === 'overdue'
+        getRowClassName={(tool) =>
+          tool.__rowState === 'overdue'
             ? 'bg-red-50'
-            : t.__rowState === 'soon'
+            : tool.__rowState === 'soon'
             ? 'bg-yellow-50'
             : ''
         }
