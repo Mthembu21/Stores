@@ -119,15 +119,30 @@ export default function SpecialToolsPage() {
     console.log('loadToolForEdit called with toolId:', toolId);
     console.log('Current editToolId before setting:', editToolId);
     
-    // Use the exact same data that the table is using
+    // Try multiple data sources to find the tool
     const tableData = specialToolsWithAlerts;
+    const allTools = toolsData?.tools || [];
+    const specialTools = allTools.filter(t => t.isSpecialTool);
     
     console.log('Table data length:', tableData.length);
-    console.log('Searching for tool ID:', toolId);
+    console.log('All tools length:', allTools.length);
+    console.log('Special tools length:', specialTools.length);
     
-    // Search in the table data
-    const tool = tableData.find(t => t._id === toolId);
-    console.log('Found tool:', tool);
+    // Search in table data first
+    let tool = tableData.find(t => t._id === toolId);
+    console.log('Found in table data:', tool);
+    
+    // If not found, search in special tools
+    if (!tool) {
+      tool = specialTools.find(t => t._id === toolId);
+      console.log('Found in special tools:', tool);
+    }
+    
+    // If still not found, search in all tools
+    if (!tool) {
+      tool = allTools.find(t => t._id === toolId);
+      console.log('Found in all tools:', tool);
+    }
     
     if (tool) {
       console.log('Setting edit form state...');
@@ -140,8 +155,19 @@ export default function SpecialToolsPage() {
       console.log('Edit form state set successfully');
       console.log('editToolId after setting should be:', toolId);
     } else {
-      console.log('Tool not found in table data!');
+      console.log('Tool not found in any data source!');
       console.log('Available tool IDs in table:', tableData.map(t => ({ name: t.toolName, _id: t._id })));
+      console.log('Available tool IDs in special tools:', specialTools.map(t => ({ name: t.toolName, _id: t._id })));
+      console.log('Available tool IDs in all tools:', allTools.slice(0, 5).map(t => ({ name: t.toolName, _id: t._id })));
+      
+      // For testing: set editToolId anyway to show modal
+      console.log('Setting editToolId anyway for testing...');
+      setEditToolId(toolId);
+      setEditSpecial(true);
+      setEditCalibrationEnabled(false);
+      setEditCalibrationIntervalDays('90');
+      setEditInspectionEnabled(false);
+      setEditInspectionIntervalDays('365');
     }
     console.log('=== END CLICK DEBUG ===');
   }
