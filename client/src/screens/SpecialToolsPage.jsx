@@ -1,6 +1,3 @@
-
-
-
 import { useMemo, useState } from 'react';
 import { Table } from '../components/Table';
 import { useUsers } from '../services/users';
@@ -658,155 +655,179 @@ export default function SpecialToolsPage() {
         </form>
       </div>
 
-      <div className="rounded-xl bg-white shadow-soft p-6">
-        <div className="text-sm font-semibold text-epiroc-blue">Edit Special Tool Settings</div>
-        <div className="mt-2 text-sm text-slate-600">Click on any tool name in the table above to load its current settings, then modify as needed.</div>
-        {editToolId ? (
-          <>
-            <div className="mt-4 p-4 bg-blue-50 rounded-xl border border-blue-200">
+      {/* Edit Special Tool Settings Modal - Only shows when tool is clicked */}
+      {editToolId && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-soft p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <div className="text-sm font-semibold text-epiroc-blue">Edit Special Tool Settings</div>
+              <button 
+                onClick={() => {
+                  setEditToolId('');
+                  setEditSpecial(true);
+                  setEditCalibrationEnabled(false);
+                  setEditCalibrationIntervalDays('');
+                  setEditInspectionEnabled(false);
+                  setEditInspectionIntervalDays('');
+                }}
+                className="text-slate-400 hover:text-slate-600 text-xl font-bold"
+              >
+                ×
+              </button>
+            </div>
+            
+            <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
               <div className="text-sm font-medium text-blue-800 mb-2">
-                ✏️ Currently editing: {specialTools.find(t => t._id === editToolId)?.toolName} ({specialTools.find(t => t._id === editToolId)?.toolCode})
+                Currently editing: {specialTools.find(t => t._id === editToolId)?.toolName} ({specialTools.find(t => t._id === editToolId)?.toolCode})
               </div>
               <div className="text-xs text-blue-600">
                 Modify the settings below and click "Update Tool Settings" to save changes
               </div>
             </div>
-            <div className="mt-4 p-3 bg-amber-50 rounded-xl border border-amber-200">
-              <div className="text-xs text-amber-800">
-                💡 Tip: Changes will take effect immediately after saving
-              </div>
-            </div>
-          </>
-        ) : (
-          <div className="mt-4 p-4 bg-amber-50 rounded-xl border border-amber-200">
-            <div className="text-sm text-amber-800">
-              📋 Click on a tool name in the table above to load it for editing
-            </div>
-          </div>
-        )}
-        <form
-          className="mt-4 max-w-4xl mx-auto space-y-4"
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (!editToolId) {
-              window.alert('Please click on a tool name in table above to load it for editing');
-              return;
-            }
-            
-            // Validate calibration interval if enabled
-            if (editCalibrationEnabled && (!editCalibrationIntervalDays || Number(editCalibrationIntervalDays) < 1)) {
-              window.alert('Please enter a valid calibration interval (minimum 1 day)');
-              return;
-            }
-            
-            // Validate inspection interval if enabled
-            if (editInspectionEnabled && (!editInspectionIntervalDays || Number(editInspectionIntervalDays) < 1)) {
-              window.alert('Please enter a valid inspection interval (minimum 1 day)');
-              return;
-            }
-            
-            updateTool.mutate({
-              id: editToolId,
-              patch: {
-                isSpecialTool: editSpecial,
-                calibrationEnabled: editCalibrationEnabled,
-                calibrationIntervalDays: editCalibrationEnabled ? Number(editCalibrationIntervalDays) : null,
-                inspectionEnabled: editInspectionEnabled,
-                inspectionIntervalDays: editInspectionEnabled ? Number(editInspectionIntervalDays) : null,
-              },
-              onSuccess: () => {
-                // Clear form after successful update
-                setEditToolId('');
-                setEditSpecial(true);
-                setEditCalibrationEnabled(false);
-                setEditCalibrationIntervalDays('');
-                setEditInspectionEnabled(false);
-                setEditInspectionIntervalDays('');
-              }
-            });
-          }}
-        >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium text-slate-700">Special Tool Status</label>
-              <select 
-                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" 
-                value={editSpecial ? 'yes' : 'no'} 
-                onChange={(e) => setEditSpecial(e.target.value === 'yes')}
-              >
-                <option value="yes">Yes</option>
-                <option value="no">No</option>
-              </select>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-slate-700">Calibration enabled</label>
-              <select 
-                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" 
-                value={editCalibrationEnabled ? 'yes' : 'no'} 
-                onChange={(e) => setEditCalibrationEnabled(e.target.value === 'yes')}
-              >
-                <option value="no">No</option>
-                <option value="yes">Yes</option>
-              </select>
-            </div>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium text-slate-700">Calibration interval (days)</label>
-              <input 
-                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" 
-                type="number" 
-                min="1" 
-                value={editCalibrationIntervalDays} 
-                onChange={(e) => setEditCalibrationIntervalDays(e.target.value)} 
-                disabled={!editCalibrationEnabled} 
-                placeholder="e.g., 20, 30, 90"
-              />
-              {editCalibrationEnabled && editCalibrationIntervalDays && (
-                <div className="mt-1 text-xs text-blue-600">
-                  Calibration reminder every {editCalibrationIntervalDays} days
+            <form
+              className="mt-4 space-y-4"
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!editToolId) {
+                  window.alert('Please click on a tool name in table above to load it for editing');
+                  return;
+                }
+                
+                // Validate calibration interval if enabled
+                if (editCalibrationEnabled && (!editCalibrationIntervalDays || Number(editCalibrationIntervalDays) < 1)) {
+                  window.alert('Please enter a valid calibration interval (minimum 1 day)');
+                  return;
+                }
+                
+                // Validate inspection interval if enabled
+                if (editInspectionEnabled && (!editInspectionIntervalDays || Number(editInspectionIntervalDays) < 1)) {
+                  window.alert('Please enter a valid inspection interval (minimum 1 day)');
+                  return;
+                }
+                
+                updateTool.mutate({
+                  id: editToolId,
+                  patch: {
+                    isSpecialTool: editSpecial,
+                    calibrationEnabled: editCalibrationEnabled,
+                    calibrationIntervalDays: editCalibrationEnabled ? Number(editCalibrationIntervalDays) : null,
+                    inspectionEnabled: editInspectionEnabled,
+                    inspectionIntervalDays: editInspectionEnabled ? Number(editInspectionIntervalDays) : null,
+                  },
+                  onSuccess: () => {
+                    // Close modal after successful update
+                    setEditToolId('');
+                    setEditSpecial(true);
+                    setEditCalibrationEnabled(false);
+                    setEditCalibrationIntervalDays('');
+                    setEditInspectionEnabled(false);
+                    setEditInspectionIntervalDays('');
+                  }
+                });
+              }}
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-slate-700">Special Tool Status</label>
+                  <select 
+                    className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" 
+                    value={editSpecial ? 'yes' : 'no'} 
+                    onChange={(e) => setEditSpecial(e.target.value === 'yes')}
+                  >
+                    <option value="yes">Yes</option>
+                    <option value="no">No</option>
+                  </select>
                 </div>
-              )}
-            </div>
-            <div>
-              <label className="text-sm font-medium text-slate-700">Inspection enabled</label>
-              <select 
-                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" 
-                value={editInspectionEnabled ? 'yes' : 'no'} 
-                onChange={(e) => setEditInspectionEnabled(e.target.value === 'yes')}
-              >
-                <option value="no">No</option>
-                <option value="yes">Yes</option>
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <label className="text-sm font-medium text-slate-700">Inspection interval (days)</label>
-            <input 
-              className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" 
-              type="number" 
-              min="1" 
-              value={editInspectionIntervalDays} 
-              onChange={(e) => setEditInspectionIntervalDays(e.target.value)} 
-              disabled={!editInspectionEnabled} 
-              placeholder="e.g., 30, 60, 365"
-            />
-            {editInspectionEnabled && editInspectionIntervalDays && (
-              <div className="mt-1 text-xs text-blue-600">
-                Inspection reminder every {editInspectionIntervalDays} days
+                <div>
+                  <label className="text-sm font-medium text-slate-700">Calibration enabled</label>
+                  <select 
+                    className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" 
+                    value={editCalibrationEnabled ? 'yes' : 'no'} 
+                    onChange={(e) => setEditCalibrationEnabled(e.target.value === 'yes')}
+                  >
+                    <option value="no">No</option>
+                    <option value="yes">Yes</option>
+                  </select>
+                </div>
               </div>
-            )}
-          </div>
 
-          <div className="flex justify-center">
-            <button className="rounded-xl bg-epiroc-yellow px-6 py-2 font-semibold text-epiroc-black shadow-soft hover:brightness-95 disabled:opacity-60" type="submit" disabled={updateTool.isPending}>
-              {updateTool.isPending ? 'Updating…' : 'Update Tool Settings'}
-            </button>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-slate-700">Calibration interval (days)</label>
+                  <input 
+                    className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" 
+                    type="number" 
+                    min="1" 
+                    value={editCalibrationIntervalDays} 
+                    onChange={(e) => setEditCalibrationIntervalDays(e.target.value)} 
+                    disabled={!editCalibrationEnabled} 
+                    placeholder="e.g., 20, 30, 90"
+                  />
+                  {editCalibrationEnabled && editCalibrationIntervalDays && (
+                    <div className="mt-1 text-xs text-blue-600">
+                      Calibration reminder every {editCalibrationIntervalDays} days
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-slate-700">Inspection enabled</label>
+                  <select 
+                    className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" 
+                    value={editInspectionEnabled ? 'yes' : 'no'} 
+                    onChange={(e) => setEditInspectionEnabled(e.target.value === 'yes')}
+                  >
+                    <option value="no">No</option>
+                    <option value="yes">Yes</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-slate-700">Inspection interval (days)</label>
+                <input 
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" 
+                  type="number" 
+                  min="1" 
+                  value={editInspectionIntervalDays} 
+                  onChange={(e) => setEditInspectionIntervalDays(e.target.value)} 
+                  disabled={!editInspectionEnabled} 
+                  placeholder="e.g., 30, 60, 365"
+                />
+                {editInspectionEnabled && editInspectionIntervalDays && (
+                  <div className="mt-1 text-xs text-blue-600">
+                    Inspection reminder every {editInspectionIntervalDays} days
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-center gap-4">
+                <button 
+                  className="rounded-xl bg-epiroc-yellow px-6 py-2 font-semibold text-epiroc-black shadow-soft hover:brightness-95 disabled:opacity-60" 
+                  type="submit" 
+                  disabled={updateTool.isPending}
+                >
+                  {updateTool.isPending ? 'Updating...' : 'Update Tool Settings'}
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => {
+                    setEditToolId('');
+                    setEditSpecial(true);
+                    setEditCalibrationEnabled(false);
+                    setEditCalibrationIntervalDays('');
+                    setEditInspectionEnabled(false);
+                    setEditInspectionIntervalDays('');
+                  }}
+                  className="rounded-xl bg-slate-200 px-6 py-2 font-semibold text-slate-700 hover:bg-slate-300"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
           </div>
-        </form>
-      </div>
+        </div>
+      )}
     </div>
   );
 }
