@@ -22,6 +22,11 @@ export default function SpecialToolsPage() {
   console.log('Tools API - Loading:', toolsLoading);
   console.log('Tools API - Error:', toolsError);
   console.log('Tools API - Data:', toolsData);
+  
+  // Debug users API
+  console.log('Users API - Data:', usersData);
+  console.log('Users array length:', users.length);
+  console.log('Sample users:', users.slice(0, 3));
 
   const updateTool = useUpdateTool();
   const assignTool = useAssignSpecialTool();
@@ -29,6 +34,8 @@ export default function SpecialToolsPage() {
   const returnDispatch = useReturnDispatch();
 
   const allTools = toolsData?.tools || [];
+  const users = usersData?.users || [];
+  const dispatches = dispatchesData?.dispatches || [];
   // Use allTools filtered by special status since specialTools API is failing
   const specialTools = allTools.filter(t => t.isSpecialTool);
   const displayTools = specialTools; // Always use filtered allTools
@@ -42,9 +49,6 @@ export default function SpecialToolsPage() {
   console.log('Sample tool structure:', allTools[0]);
   console.log('Sample tool keys:', allTools[0] ? Object.keys(allTools[0]) : 'No tools');
   
-  const users = usersData?.users || [];
-  const dispatches = dispatchesData?.dispatches || [];
-
   const techUsers = useMemo(() => users.filter((u) => u.role !== 'Admin'), [users]);
 
   const [markToolId, setMarkToolId] = useState('');
