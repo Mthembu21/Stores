@@ -264,11 +264,28 @@ export default function SpecialToolsPage() {
       { key: 'category', header: 'Category' },
       { key: 'specialStatus', header: 'Special Status' },
       { key: 'assignedTo', header: 'Assigned To', render: (t) => {
+          // Debug: Show the lookup process
+          console.log('=== ASSIGNMENT DEBUG ===');
+          console.log('Tool:', t.toolName);
+          console.log('assignedToTechnicianId:', t.assignedToTechnicianId);
+          console.log('Users array:', users);
+          console.log('Users array length:', users.length);
+          console.log('Sample user structure:', users[0]);
+          
           // Look up technician name from users data using the assignedToTechnicianId
           if (t.assignedToTechnicianId) {
-            const technician = users.find(u => u.id === t.assignedToTechnicianId);
+            // Try both 'id' and '_id' fields
+            let technician = users.find(u => u.id === t.assignedToTechnicianId);
+            if (!technician) {
+              technician = users.find(u => u._id === t.assignedToTechnicianId);
+            }
+            console.log('Found technician:', technician);
             if (technician) {
+              console.log('Returning technician name:', technician.fullName);
               return technician.fullName;
+            } else {
+              console.log('No technician found with ID:', t.assignedToTechnicianId);
+              console.log('Available user IDs:', users.map(u => ({ id: u.id, _id: u._id, name: u.fullName })));
             }
           }
           
@@ -284,6 +301,8 @@ export default function SpecialToolsPage() {
           }
           
           // If no assignment, show unassigned
+          console.log('No assignment found, returning Unassigned');
+          console.log('=== END ASSIGNMENT DEBUG ===');
           return 'Unassigned';
         }},
       { key: 'assignmentEndAt', header: 'Assignment End', render: (t) => (t.assignmentEndAt ? formatDateTime(t.assignmentEndAt) : '') },
