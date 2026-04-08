@@ -259,7 +259,23 @@ export default function SpecialToolsPage() {
       { key: 'toolCode', header: 'Code' },
       { key: 'category', header: 'Category' },
       { key: 'specialStatus', header: 'Special Status' },
-      { key: 'assignedTo', header: 'Assigned To', render: (t) => t.assignedToTechnicianId?.fullName || '' },
+      { key: 'assignedTo', header: 'Assigned To', render: (t) => {
+          // Try different possible assignment data structures
+          if (t.assignedToTechnicianId?.fullName) {
+            return t.assignedToTechnicianId.fullName;
+          }
+          if (t.assignedTo?.fullName) {
+            return t.assignedTo.fullName;
+          }
+          if (t.currentAssignment?.technician?.fullName) {
+            return t.currentAssignment.technician.fullName;
+          }
+          if (t.technician?.fullName) {
+            return t.technician.fullName;
+          }
+          // If no assignment, show unassigned
+          return 'Unassigned';
+        }},
       { key: 'assignmentEndAt', header: 'Assignment End', render: (t) => (t.assignmentEndAt ? formatDateTime(t.assignmentEndAt) : '') },
       {
         key: 'calAlert',
