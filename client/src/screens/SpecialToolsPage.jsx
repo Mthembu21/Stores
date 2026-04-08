@@ -579,15 +579,15 @@ export default function SpecialToolsPage() {
       <div className="space-y-3">
         <div className="text-sm font-semibold text-epiroc-blue">Special tools list</div>
         {/* Special Tools Search Bar */}
-        <div className="mb-4">
+        <div className="mb-4 p-3 bg-blue-50 rounded-xl border border-blue-200">
           <div className="max-w-md mx-auto">
             <div className="relative">
               <input
                 type="text"
                 value={specialToolsSearch}
                 onChange={(e) => setSpecialToolsSearch(e.target.value)}
-                placeholder="Search special tools by name or code..."
-                className="w-full rounded-xl border border-slate-200 px-4 py-2 pr-10 text-sm"
+                placeholder="🔍 Search special tools by name or code..."
+                className="w-full rounded-xl border border-slate-300 px-4 py-2 pr-10 text-sm focus:border-blue-400 focus:ring-2 focus:ring-blue-200"
               />
               {specialToolsSearch && (
                 <button
