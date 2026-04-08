@@ -18,6 +18,21 @@ export default function UsersPage() {
   const [contactNumber, setContactNumber] = useState('');
   const [password, setPassword] = useState('');
 
+  // Search state
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Filter users based on search
+  const filteredUsers = useMemo(() => {
+    if (!searchQuery.trim()) return users;
+    const query = searchQuery.toLowerCase();
+    return users.filter(user => 
+      user.fullName.toLowerCase().includes(query) ||
+      user.employeeNumber.toLowerCase().includes(query) ||
+      user.role.toLowerCase().includes(query) ||
+      user.department.toLowerCase().includes(query)
+    );
+  }, [users, searchQuery]);
+
   const columns = useMemo(
     () => [
       { key: 'fullName', header: 'Name' },
@@ -30,7 +45,7 @@ export default function UsersPage() {
         header: '',
         render: (u) => (
           <button
-            className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+            className="rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
             onClick={() => deleteUser.mutate(u.id)}
             disabled={deleteUser.isPending}
             type="button"
@@ -44,7 +59,7 @@ export default function UsersPage() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-6xl mx-auto w-full">
       <div>
         <div className="text-2xl font-semibold text-epiroc-blue">Users</div>
         <div className="text-sm text-slate-600">Create technicians, interns and apprentices.</div>
@@ -53,7 +68,7 @@ export default function UsersPage() {
       <div className="rounded-xl bg-white shadow-soft p-6">
         <div className="text-sm font-semibold text-epiroc-blue">Create user</div>
         <form
-          className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4"
+          className="mt-4 max-w-4xl mx-auto space-y-4"
           onSubmit={(e) => {
             e.preventDefault();
             createUser.mutate(
@@ -71,74 +86,76 @@ export default function UsersPage() {
             );
           }}
         >
-          <div>
-            <label className="text-sm font-medium text-slate-700">Full name</label>
-            <input
-              className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              required
-            />
-          </div>
-          <div>
-            <label className="text-sm font-medium text-slate-700">Employee number</label>
-            <input
-              className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
-              value={employeeNumber}
-              onChange={(e) => setEmployeeNumber(e.target.value)}
-              required
-            />
-          </div>
-          <div>
-            <label className="text-sm font-medium text-slate-700">Role</label>
-            <select
-              className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-            >
-              {roles.map((r) => (
-                <option key={r} value={r}>
-                  {r}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="text-sm font-medium text-slate-700">Department</label>
-            <input
-              className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
-              value={department}
-              onChange={(e) => setDepartment(e.target.value)}
-              required
-            />
-          </div>
-          <div>
-            <label className="text-sm font-medium text-slate-700">Contact number</label>
-            <input
-              className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
-              value={contactNumber}
-              onChange={(e) => setContactNumber(e.target.value)}
-              required
-            />
-          </div>
-          <div>
-            <label className="text-sm font-medium text-slate-700">Password</label>
-            <input
-              className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium text-slate-700">Full name</label>
+              <input
+                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-slate-700">Employee number</label>
+              <input
+                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                value={employeeNumber}
+                onChange={(e) => setEmployeeNumber(e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-slate-700">Role</label>
+              <select
+                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+              >
+                {roles.map((r) => (
+                  <option key={r} value={r}>
+                    {r}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-slate-700">Department</label>
+              <input
+                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                value={department}
+                onChange={(e) => setDepartment(e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-slate-700">Contact number</label>
+              <input
+                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                value={contactNumber}
+                onChange={(e) => setContactNumber(e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-slate-700">Password</label>
+              <input
+                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
           </div>
 
-          <div className="md:col-span-2">
+          <div className="flex justify-center">
             <button
-              className="rounded-xl bg-epiroc-yellow px-4 py-2 font-semibold text-epiroc-black shadow-soft hover:brightness-95 disabled:opacity-60"
+              className="rounded-xl bg-epiroc-yellow px-6 py-2 font-semibold text-epiroc-black shadow-soft hover:brightness-95 disabled:opacity-60"
               type="submit"
               disabled={createUser.isPending}
             >
-              {createUser.isPending ? 'Creating…' : 'Create user'}
+              {createUser.isPending ? 'Creating user...' : 'Create user'}
             </button>
           </div>
         </form>
@@ -146,12 +163,41 @@ export default function UsersPage() {
 
       <div className="space-y-3">
         <div className="text-sm font-semibold text-epiroc-blue">All users</div>
+        
+        {/* Search Bar */}
+        <div className="p-3 bg-blue-50 rounded-xl border border-blue-200">
+          <div className="max-w-md mx-auto">
+            <div className="relative">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search users by name, employee number, role, or department..."
+                className="w-full rounded-xl border border-slate-300 px-4 py-2 pr-10 text-sm focus:border-blue-400 focus:ring-2 focus:ring-blue-200"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600"
+                >
+                  ×
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
         {isLoading ? (
-          <div className="rounded-xl bg-white shadow-soft p-4 text-sm text-slate-600">Loading…</div>
+          <div className="rounded-xl bg-white shadow-soft p-4 text-sm text-slate-600">Loading users...</div>
         ) : isError ? (
           <div className="rounded-xl bg-white shadow-soft p-4 text-sm text-slate-600">Could not load users</div>
         ) : (
-          <Table emptyLabel="No users" columns={columns} rows={users} />
+          <Table 
+            emptyLabel="No users found" 
+            columns={columns} 
+            rows={filteredUsers}
+            maxHeight="500px"
+          />
         )}
       </div>
     </div>
