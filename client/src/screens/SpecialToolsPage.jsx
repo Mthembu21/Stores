@@ -1003,6 +1003,7 @@
 // }
 
 
+
 import { useMemo, useState } from 'react';
 import { Table } from '../components/Table';
 import { useUsers } from '../services/users';
@@ -1036,33 +1037,6 @@ export default function SpecialToolsPage() {
 
   const specialTools = allTools.filter(t => t.isSpecialTool);
 
-  // ✅ FIXED TECHNICIAN DISPLAY
-  const getTechnicianName = (t) => {
-    if (typeof t.assignedToTechnicianId === 'object' && t.assignedToTechnicianId !== null) {
-      return t.assignedToTechnicianId.fullName || 'Assigned';
-    }
-
-    if (t.assignedTo?.fullName) return t.assignedTo.fullName;
-    if (t.currentAssignment?.technician?.fullName) return t.currentAssignment.technician.fullName;
-    if (t.technician?.fullName) return t.technician.fullName;
-
-    if (t.assignedToTechnicianId && users.length > 0) {
-      const techId = String(t.assignedToTechnicianId);
-
-      const technician = users.find(
-        (u) => String(u._id || u.id) === techId
-      );
-
-      if (technician) {
-        return technician.fullName || technician.name || 'Assigned';
-      }
-
-      return 'Assigned (User not found)';
-    }
-
-    return 'Unassigned';
-  };
-
   const ALERT_DAYS = 30;
 
   const specialToolsWithAlerts = useMemo(() => {
@@ -1089,17 +1063,28 @@ export default function SpecialToolsPage() {
     });
   }, [specialTools]);
 
-  // ✅ FIXED useMemo deps
+  // ✅ Move function outside of useMemo
+  const getTechnicianName = (t) => {
+    if (t.assignedTo?.fullName) return t.assignedTo.fullName;
+    if (t.currentAssignment?.technician?.fullName) return t.currentAssignment.technician.fullName;
+    if (t.technician?.fullName) return t.technician.fullName;
+
+    if (t.assignedToTechnicianId && users.length > 0) {
+      const techId = String(t.assignedToTechnicianId);
+      const technician = users.find(u => String(u._id || u.id) === techId);
+      return technician?.fullName || 'Assigned';
+    }
+
+    return 'Unassigned';
+  };
+
+  // ✅ useMemo only for columns, no objects/functions inside deps
   const cols = useMemo(
     () => [
       {
         key: 'toolName',
         header: 'Tool',
-        render: (t) => (
-          <button onClick={() => setEditToolId(t._id)}>
-            ✏️ {t.toolName}
-          </button>
-        ),
+        render: (t) => <button onClick={() => setEditToolId(t._id)}>✏️ {t.toolName}</button>,
       },
       { key: 'toolCode', header: 'Code' },
       { key: 'category', header: 'Category' },
@@ -1115,7 +1100,7 @@ export default function SpecialToolsPage() {
         render: (t) => (t.assignmentEndAt ? formatDateTime(t.assignmentEndAt) : ''),
       },
     ],
-    [users] // ✅ FIXED
+    [] // ✅ safe: no changing references in deps
   );
 
   return (
@@ -1134,7 +1119,6 @@ export default function SpecialToolsPage() {
         }
       />
 
-      {/* ✅ FIXED MODAL */}
       {editToolId && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
           <div className="bg-white p-6 rounded-xl">
@@ -1146,4 +1130,3 @@ export default function SpecialToolsPage() {
     </div>
   );
 }
-
