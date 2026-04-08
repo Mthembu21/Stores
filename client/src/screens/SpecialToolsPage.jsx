@@ -55,6 +55,9 @@ export default function SpecialToolsPage() {
   const [inspectionEnabled, setInspectionEnabled] = useState(false);
   const [inspectionIntervalDays, setInspectionIntervalDays] = useState('365');
 
+  // Special tools search state
+  const [specialToolsSearch, setSpecialToolsSearch] = useState('');
+
   const filteredMarkTools = useMemo(() => {
     const q = markToolSearch.trim().toLowerCase();
     if (!q) return allTools;
@@ -86,6 +89,9 @@ export default function SpecialToolsPage() {
   const [recordToolId, setRecordToolId] = useState('');
   const [recordLastCalibrationAt, setRecordLastCalibrationAt] = useState('');
   const [recordLastInspectionAt, setRecordLastInspectionAt] = useState('');
+
+  // Historical form search state
+  const [historicalSearch, setHistoricalSearch] = useState('');
 
   // Edit Special Tool form state
   const [editToolId, setEditToolId] = useState('');
@@ -572,11 +578,39 @@ export default function SpecialToolsPage() {
 
       <div className="space-y-3">
         <div className="text-sm font-semibold text-epiroc-blue">Special tools list</div>
+        {/* Special Tools Search Bar */}
+        <div className="mb-4">
+          <div className="max-w-md mx-auto">
+            <div className="relative">
+              <input
+                type="text"
+                value={specialToolsSearch}
+                onChange={(e) => setSpecialToolsSearch(e.target.value)}
+                placeholder="Search special tools by name or code..."
+                className="w-full rounded-xl border border-slate-200 px-4 py-2 pr-10 text-sm"
+              />
+              {specialToolsSearch && (
+                <button
+                  onClick={() => setSpecialToolsSearch('')}
+                  className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600"
+                >
+                  ×
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
         {/* Since we're using allTools filtered by special status, no loading/error state needed */}
         <Table
           emptyLabel="No special tools found"
           columns={cols}
-          rows={specialToolsWithAlerts}
+          rows={specialToolsWithAlerts.filter(tool => {
+            const searchLower = specialToolsSearch.toLowerCase();
+            const nameMatch = String(tool.toolName || '').toLowerCase().includes(searchLower);
+            const codeMatch = String(tool.toolCode || '').toLowerCase().includes(searchLower);
+            return !specialToolsSearch || nameMatch || codeMatch;
+          })}
           getRowClassName={(t) => (t.__rowState === 'overdue' ? 'bg-red-50' : t.__rowState === 'soon' ? 'bg-amber-50' : '')}
           maxHeight="520px"
         />
@@ -585,6 +619,30 @@ export default function SpecialToolsPage() {
       <div className="rounded-xl bg-white shadow-soft p-6">
         <div className="text-sm font-semibold text-epiroc-blue">Record Historical Calibration / Inspection Dates</div>
         <div className="mt-2 text-sm text-slate-600">Enter past calibration/inspection dates for tools that were serviced before being added to the system. The system will automatically calculate the next due dates.</div>
+        
+        {/* Historical Form Search Bar */}
+        <div className="mb-4">
+          <div className="max-w-md mx-auto">
+            <div className="relative">
+              <input
+                type="text"
+                value={historicalSearch}
+                onChange={(e) => setHistoricalSearch(e.target.value)}
+                placeholder="Search special tools by name or code..."
+                className="w-full rounded-xl border border-slate-200 px-4 py-2 pr-10 text-sm"
+              />
+              {historicalSearch && (
+                <button
+                  onClick={() => setHistoricalSearch('')}
+                  className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600"
+                >
+                  ×
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
         <form
           className="mt-4 max-w-5xl mx-auto space-y-4"
           onSubmit={(e) => {
@@ -616,7 +674,12 @@ export default function SpecialToolsPage() {
                 setRecordLastInspectionAt('');
               }} required>
                 <option value="">Select special tool…</option>
-                {specialTools.map((t) => (
+                {specialTools.filter(tool => {
+                  const searchLower = historicalSearch.toLowerCase();
+                  const nameMatch = String(tool.toolName || '').toLowerCase().includes(searchLower);
+                  const codeMatch = String(tool.toolCode || '').toLowerCase().includes(searchLower);
+                  return !historicalSearch || nameMatch || codeMatch;
+                }).map((t) => (
                   <option key={t._id} value={t._id}>
                     {t.toolName} ({t.toolCode}) 
                     {t.calibrationEnabled && ` • Cal: ${t.calibrationIntervalDays}d`}
