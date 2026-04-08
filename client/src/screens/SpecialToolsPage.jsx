@@ -243,7 +243,7 @@ export default function SpecialToolsPage() {
     console.log('specialToolsWithAlerts - sample result:', result[0]);
     
     return result;
-  }, [toolsData]);
+  }, [toolsData, ALERT_DAYS, nowMs]);
 
   const dueSummary = useMemo(() => {
     let calOverdue = 0;
@@ -261,7 +261,7 @@ export default function SpecialToolsPage() {
       }
     }
     return { calOverdue, calSoon, inspOverdue, inspSoon };
-  }, [specialToolsWithAlerts]);
+  }, [specialToolsWithAlerts, ALERT_DAYS]);
 
   const cols = useMemo(
     () => [
