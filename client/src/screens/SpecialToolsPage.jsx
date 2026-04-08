@@ -115,7 +115,9 @@ export default function SpecialToolsPage() {
   }
 
   function loadToolForEdit(toolId) {
+    console.log('=== CLICK DEBUG ===');
     console.log('loadToolForEdit called with toolId:', toolId);
+    console.log('Current editToolId before setting:', editToolId);
     
     // Use the exact same data that the table is using
     const tableData = specialToolsWithAlerts;
@@ -136,10 +138,12 @@ export default function SpecialToolsPage() {
       setEditInspectionEnabled(Boolean(tool.inspectionEnabled));
       setEditInspectionIntervalDays(tool.inspectionIntervalDays?.toString() || '');
       console.log('Edit form state set successfully');
+      console.log('editToolId after setting should be:', toolId);
     } else {
       console.log('Tool not found in table data!');
       console.log('Available tool IDs in table:', tableData.map(t => ({ name: t.toolName, _id: t._id })));
     }
+    console.log('=== END CLICK DEBUG ===');
   }
 
   const specialToolsWithAlerts = useMemo(() => {
@@ -656,7 +660,15 @@ export default function SpecialToolsPage() {
       </div>
 
       {/* Edit Special Tool Settings Modal - Only shows when tool is clicked */}
-      {editToolId && (
+      {(() => {
+        console.log('=== MODAL DEBUG ===');
+        console.log('Checking if modal should show...');
+        console.log('editToolId value:', editToolId);
+        console.log('editToolId type:', typeof editToolId);
+        console.log('Should modal show?', !!editToolId);
+        console.log('=== END MODAL DEBUG ===');
+        return editToolId;
+      })() && (
         <>
           {console.log('Modal showing because editToolId is set to:', editToolId)}
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
