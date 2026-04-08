@@ -23,6 +23,11 @@ export default function SpecialToolsPage() {
   console.log('Tools API - Error:', toolsError);
   console.log('Tools API - Data:', toolsData);
 
+  const updateTool = useUpdateTool();
+  const assignTool = useAssignSpecialTool();
+  const dispatchTool = useDispatchSpecialTool();
+  const returnDispatch = useReturnDispatch();
+
   // Show loading state if APIs are still loading
   if (toolsLoading) {
     return (
@@ -47,11 +52,6 @@ export default function SpecialToolsPage() {
       </div>
     );
   }
-
-  const updateTool = useUpdateTool();
-  const assignTool = useAssignSpecialTool();
-  const dispatchTool = useDispatchSpecialTool();
-  const returnDispatch = useReturnDispatch();
 
   const allTools = toolsData?.tools || [];
   const users = usersData?.users || [];
