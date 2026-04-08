@@ -23,6 +23,31 @@ export default function SpecialToolsPage() {
   console.log('Tools API - Error:', toolsError);
   console.log('Tools API - Data:', toolsData);
 
+  // Show loading state if APIs are still loading
+  if (toolsLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="text-lg font-semibold text-epiroc-blue">Loading Special Tools...</div>
+          <div className="text-sm text-slate-600 mt-2">Please wait while we fetch the data.</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state if APIs failed
+  if (toolsError || !toolsData) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="text-lg font-semibold text-red-600">Failed to Load Data</div>
+          <div className="text-sm text-slate-600 mt-2">Please check if the backend server is running.</div>
+          <div className="text-xs text-slate-500 mt-1">Tools API Error: {toolsError ? 'Yes' : 'No'}</div>
+        </div>
+      </div>
+    );
+  }
+
   const updateTool = useUpdateTool();
   const assignTool = useAssignSpecialTool();
   const dispatchTool = useDispatchSpecialTool();
