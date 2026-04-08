@@ -260,6 +260,16 @@ export default function SpecialToolsPage() {
       { key: 'category', header: 'Category' },
       { key: 'specialStatus', header: 'Special Status' },
       { key: 'assignedTo', header: 'Assigned To', render: (t) => {
+          // Debug: log the assignment data structure
+          console.log('Assignment data for tool', t.toolName, ':', {
+            assignedToTechnicianId: t.assignedToTechnicianId,
+            assignedTo: t.assignedTo,
+            currentAssignment: t.currentAssignment,
+            technician: t.technician,
+            specialStatus: t.specialStatus,
+            allKeys: Object.keys(t)
+          });
+          
           // Try different possible assignment data structures
           if (t.assignedToTechnicianId?.fullName) {
             return t.assignedToTechnicianId.fullName;
