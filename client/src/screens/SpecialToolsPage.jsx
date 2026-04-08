@@ -18,15 +18,60 @@ export default function SpecialToolsPage() {
   const { data: usersData } = useUsers();
   const { data: dispatchesData } = useSpecialToolDispatches('Open');
 
-  // Debug tools API
-  console.log('Tools API - Loading:', toolsLoading);
-  console.log('Tools API - Error:', toolsError);
-  console.log('Tools API - Data:', toolsData);
-
   const updateTool = useUpdateTool();
   const assignTool = useAssignSpecialTool();
   const dispatchTool = useDispatchSpecialTool();
   const returnDispatch = useReturnDispatch();
+
+  // ALL useState calls must be at the top before any conditional logic
+  const [markToolId, setMarkToolId] = useState('');
+  const [markToolSearch, setMarkToolSearch] = useState('');
+  const [markSpecial, setMarkSpecial] = useState(true);
+  const [calibrationEnabled, setCalibrationEnabled] = useState(false);
+  const [calibrationIntervalDays, setCalibrationIntervalDays] = useState('90');
+  const [inspectionEnabled, setInspectionEnabled] = useState(false);
+  const [inspectionIntervalDays, setInspectionIntervalDays] = useState('365');
+
+  // Special tools search state
+  const [specialToolsSearch, setSpecialToolsSearch] = useState('');
+
+  const [assignToolId, setAssignToolId] = useState('');
+  const [assignTechnicianId, setAssignTechnicianId] = useState('');
+  const [assignDurationDays, setAssignDurationDays] = useState('365');
+
+  const [dispatchToolId, setDispatchToolId] = useState('');
+  const [dispatchType, setDispatchType] = useState('Calibration');
+  const [dispatchSentAt, setDispatchSentAt] = useState(() => new Date().toISOString().slice(0, 16));
+  const [dispatchExpectedAt, setDispatchExpectedAt] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 7);
+    return d.toISOString().slice(0, 16);
+  });
+  const [dispatchRef, setDispatchRef] = useState('');
+
+  const [returnDispatchId, setReturnDispatchId] = useState('');
+  const [returnAt, setReturnAt] = useState(() => new Date().toISOString().slice(0, 16));
+  const [returnRef, setReturnRef] = useState('');
+
+  const [recordToolId, setRecordToolId] = useState('');
+  const [recordLastCalibrationAt, setRecordLastCalibrationAt] = useState('');
+  const [recordLastInspectionAt, setRecordLastInspectionAt] = useState('');
+
+  // Historical form search state
+  const [historicalSearch, setHistoricalSearch] = useState('');
+
+  // Edit Special Tool form state
+  const [editToolId, setEditToolId] = useState('');
+  const [editSpecial, setEditSpecial] = useState(true);
+  const [editCalibrationEnabled, setEditCalibrationEnabled] = useState(false);
+  const [editCalibrationIntervalDays, setEditCalibrationIntervalDays] = useState('');
+  const [editInspectionEnabled, setEditInspectionEnabled] = useState(false);
+  const [editInspectionIntervalDays, setEditInspectionIntervalDays] = useState('');
+
+  // Debug tools API
+  console.log('Tools API - Loading:', toolsLoading);
+  console.log('Tools API - Error:', toolsError);
+  console.log('Tools API - Data:', toolsData);
 
   // Show loading state if APIs are still loading
   if (toolsLoading) {
@@ -71,17 +116,6 @@ export default function SpecialToolsPage() {
   
   const techUsers = useMemo(() => users.filter((u) => u.role !== 'Admin'), [users]);
 
-  const [markToolId, setMarkToolId] = useState('');
-  const [markToolSearch, setMarkToolSearch] = useState('');
-  const [markSpecial, setMarkSpecial] = useState(true);
-  const [calibrationEnabled, setCalibrationEnabled] = useState(false);
-  const [calibrationIntervalDays, setCalibrationIntervalDays] = useState('90');
-  const [inspectionEnabled, setInspectionEnabled] = useState(false);
-  const [inspectionIntervalDays, setInspectionIntervalDays] = useState('365');
-
-  // Special tools search state
-  const [specialToolsSearch, setSpecialToolsSearch] = useState('');
-
   const filteredMarkTools = useMemo(() => {
     const q = markToolSearch.trim().toLowerCase();
     if (!q) return allTools;
@@ -91,39 +125,6 @@ export default function SpecialToolsPage() {
       return name.includes(q) || code.includes(q);
     });
   }, [allTools, markToolSearch]);
-
-  const [assignToolId, setAssignToolId] = useState('');
-  const [assignTechnicianId, setAssignTechnicianId] = useState('');
-  const [assignDurationDays, setAssignDurationDays] = useState('365');
-
-  const [dispatchToolId, setDispatchToolId] = useState('');
-  const [dispatchType, setDispatchType] = useState('Calibration');
-  const [dispatchSentAt, setDispatchSentAt] = useState(() => new Date().toISOString().slice(0, 16));
-  const [dispatchExpectedAt, setDispatchExpectedAt] = useState(() => {
-    const d = new Date();
-    d.setDate(d.getDate() + 7);
-    return d.toISOString().slice(0, 16);
-  });
-  const [dispatchRef, setDispatchRef] = useState('');
-
-  const [returnDispatchId, setReturnDispatchId] = useState('');
-  const [returnAt, setReturnAt] = useState(() => new Date().toISOString().slice(0, 16));
-  const [returnRef, setReturnRef] = useState('');
-
-  const [recordToolId, setRecordToolId] = useState('');
-  const [recordLastCalibrationAt, setRecordLastCalibrationAt] = useState('');
-  const [recordLastInspectionAt, setRecordLastInspectionAt] = useState('');
-
-  // Historical form search state
-  const [historicalSearch, setHistoricalSearch] = useState('');
-
-  // Edit Special Tool form state
-  const [editToolId, setEditToolId] = useState('');
-  const [editSpecial, setEditSpecial] = useState(true);
-  const [editCalibrationEnabled, setEditCalibrationEnabled] = useState(false);
-  const [editCalibrationIntervalDays, setEditCalibrationIntervalDays] = useState('');
-  const [editInspectionEnabled, setEditInspectionEnabled] = useState(false);
-  const [editInspectionIntervalDays, setEditInspectionIntervalDays] = useState('');
 
   const ALERT_DAYS = 30;
   const nowMs = Date.now();
