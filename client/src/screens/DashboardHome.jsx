@@ -6,6 +6,7 @@ import { formatDateTime } from '../utils/format';
 
 export default function DashboardHome() {
   const { data, isLoading, isError } = useDashboard();
+  const { cards, tables, charts, meta } = data || {};
 
   if (isLoading) {
     return (
@@ -25,8 +26,6 @@ export default function DashboardHome() {
       </div>
     );
   }
-
-  const { cards, tables, charts, meta } = data;
 
   return (
     <div className="space-y-6">
