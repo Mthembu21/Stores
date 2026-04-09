@@ -5,6 +5,7 @@ export function RequireAuth({ children }) {
   const location = useLocation();
   const { data, isLoading, isError } = useMe();
 
+  // Early returns after all hooks are called
   if (isLoading) {
     return (
       <div className="min-h-screen grid place-items-center">
