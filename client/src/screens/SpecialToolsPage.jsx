@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
 import { Table } from '../components/Table';
 import { useUsers } from '../services/users';
 import { useTools, useUpdateTool } from '../services/tools';
@@ -15,13 +16,41 @@ export default function SpecialToolsPage() {
   const { data: usersData } = useUsers();
   const { data: dispatchesData } = useSpecialToolDispatches('Open');
 
+  const { mutate: updateTool } = useUpdateTool();
+  const { mutate: assignTool } = useAssignSpecialTool();
+  const { mutate: dispatchTool } = useDispatchSpecialTool();
+
   const [editToolId, setEditToolId] = useState('');
+  const [assignToolId, setAssignToolId] = useState('');
+  const [dispatchToolId, setDispatchToolId] = useState('');
+
+  // Form states
+  const [editForm, setEditForm] = useState({
+    toolName: '',
+    toolCode: '',
+    category: '',
+    nextCalibrationDueAt: '',
+    nextInspectionDueAt: '',
+  });
+
+  const [assignForm, setAssignForm] = useState({
+    technicianId: '',
+    startAt: '',
+    durationDays: '7',
+  });
+
+  const [dispatchForm, setDispatchForm] = useState({
+    type: 'Job',
+    sentAt: '',
+    expectedReturnAt: '',
+    reference: '',
+  });
 
   const allTools = toolsData?.tools || [];
   const users = usersData?.users || [];
   const dispatches = dispatchesData?.dispatches || [];
 
-  const specialTools = allTools.filter(t => t.isSpecialTool);
+  const specialTools = allTools.filter((t) => t.isSpecialTool);
 
   const ALERT_DAYS = 30;
 
@@ -32,7 +61,7 @@ export default function SpecialToolsPage() {
 
     if (tool.assignedToTechnicianId && users.length > 0) {
       const techId = String(tool.assignedToTechnicianId);
-      const technician = users.find(u => String(u._id || u.id) === techId);
+      const technician = users.find((u) => String(u._id || u.id) === techId);
       return technician?.fullName || 'Assigned';
     }
 
@@ -48,7 +77,7 @@ export default function SpecialToolsPage() {
       return Math.ceil((new Date(date).getTime() - now) / (24 * 60 * 60 * 1000));
     };
 
-    return specialTools.map(tool => {
+    return specialTools.map((tool) => {
       const calDays = daysUntil(tool.nextCalibrationDueAt);
       const inspDays = daysUntil(tool.nextInspectionDueAt);
 
@@ -63,27 +92,69 @@ export default function SpecialToolsPage() {
     });
   }, [specialTools]);
 
+  // Handle edit button click
+  const handleEditClick = (tool) => {
+    setEditToolId(tool._id);
+    setEditForm({
+      toolName: tool.toolName || '',
+      toolCode: tool.toolCode || '',
+      category: tool.category || '',
+      nextCalibrationDueAt: tool.nextCalibrationDueAt ? new Date(tool.nextCalibrationDueAt).toISOString().split('T')[0] : '',
+      nextInspectionDueAt: tool.nextInspectionDueAt ? new Date(tool.nextInspectionDueAt).toISOString().split('T')[0] : '',
+    });
+  };
+
   // Columns array, no inline functions with changing references
-  const columns = useMemo(() => [
-    {
-      key: 'toolName',
-      header: 'Tool',
-      render: (tool) => <button onClick={() => setEditToolId(tool._id)}>?? {tool.toolName}</button>,
-    },
-    { key: 'toolCode', header: 'Code' },
-    { key: 'category', header: 'Category' },
-    { key: 'specialStatus', header: 'Status' },
-    {
-      key: 'assignedTo',
-      header: 'Assigned To',
-      render: (tool) => getTechnicianName(tool),
-    },
-    {
-      key: 'assignmentEndAt',
-      header: 'End',
-      render: (tool) => (tool.assignmentEndAt ? formatDateTime(tool.assignmentEndAt) : ''),
-    },
-  ], [users]); // ? safe: only users array dependency
+  const columns = useMemo(
+    () => [
+      {
+        key: 'toolName',
+        header: 'Tool',
+        render: (tool) => (
+          <button 
+            onClick={() => handleEditClick(tool)}
+            className="text-blue-600 hover:text-blue-800 font-medium"
+          >
+            ?? {tool.toolName}
+          </button>
+        ),
+      },
+      { key: 'toolCode', header: 'Code' },
+      { key: 'category', header: 'Category' },
+      { key: 'specialStatus', header: 'Status' },
+      {
+        key: 'assignedTo',
+        header: 'Assigned To',
+        render: (tool) => getTechnicianName(tool),
+      },
+      {
+        key: 'assignmentEndAt',
+        header: 'End',
+        render: (tool) => (tool.assignmentEndAt ? formatDateTime(tool.assignmentEndAt) : ''),
+      },
+      {
+        key: 'actions',
+        header: 'Actions',
+        render: (tool) => (
+          <div className="flex gap-2">
+            <button
+              onClick={() => setAssignToolId(tool._id)}
+              className="rounded-lg bg-green-500 px-3 py-1 text-xs font-semibold text-white hover:bg-green-600"
+            >
+              Assign
+            </button>
+            <button
+              onClick={() => setDispatchToolId(tool._id)}
+              className="rounded-lg bg-blue-500 px-3 py-1 text-xs font-semibold text-white hover:bg-blue-600"
+            >
+              Dispatch
+            </button>
+          </div>
+        ),
+      },
+    ],
+    [users]
+  );
 
   // Early returns after all hooks are called
   if (toolsLoading) return <div>Loading...</div>;
@@ -105,11 +176,269 @@ export default function SpecialToolsPage() {
         }
       />
 
+      {/* Edit Tool Modal */}
       {editToolId && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-xl">
-            <h2>Edit Tool</h2>
-            <button onClick={() => setEditToolId('')}>Close</button>
+          <div className="bg-white p-6 rounded-xl max-w-md w-full">
+            <h2 className="text-xl font-semibold mb-4">Edit Tool</h2>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                updateTool.mutate({
+                  id: editToolId,
+                  patch: editForm,
+                });
+              }}
+              className="space-y-4"
+            >
+              <div>
+                <label className="block text-sm font-medium text-slate-700">Tool Name</label>
+                <input
+                  type="text"
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                  value={editForm.toolName}
+                  onChange={(e) => setEditForm({ ...editForm, toolName: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700">Tool Code</label>
+                <input
+                  type="text"
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                  value={editForm.toolCode}
+                  onChange={(e) => setEditForm({ ...editForm, toolCode: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700">Category</label>
+                <input
+                  type="text"
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                  value={editForm.category}
+                  onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700">Next Calibration Due</label>
+                <input
+                  type="date"
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                  value={editForm.nextCalibrationDueAt}
+                  onChange={(e) => setEditForm({ ...editForm, nextCalibrationDueAt: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700">Next Inspection Due</label>
+                <input
+                  type="date"
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                  value={editForm.nextInspectionDueAt}
+                  onChange={(e) => setEditForm({ ...editForm, nextInspectionDueAt: e.target.value })}
+                />
+              </div>
+              <div className="flex gap-3">
+                <button
+                  type="submit"
+                  className="flex-1 rounded-xl bg-epiroc-yellow px-4 py-2 font-semibold text-epiroc-black hover:brightness-95 disabled:opacity-60"
+                  disabled={updateTool.isPending}
+                >
+                  {updateTool.isPending ? 'Updating...' : 'Update Tool'}
+                </button>
+                <button
+                  type="button"
+                  className="flex-1 rounded-xl border border-slate-200 px-4 py-2 font-semibold text-slate-700 hover:bg-slate-50"
+                  onClick={() => {
+                    setEditToolId('');
+                    setEditForm({
+                      toolName: '',
+                      toolCode: '',
+                      category: '',
+                      nextCalibrationDueAt: '',
+                      nextInspectionDueAt: '',
+                    });
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Assign Tool Modal */}
+      {assignToolId && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-xl max-w-md w-full">
+            <h2 className="text-xl font-semibold mb-4">Assign Tool</h2>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                assignTool.mutate({
+                  toolId: assignToolId,
+                  technicianId: assignForm.technicianId,
+                  startAt: assignForm.startAt,
+                  durationDays: Number(assignForm.durationDays),
+                });
+              }}
+              className="space-y-4"
+            >
+              <div>
+                <label className="block text-sm font-medium text-slate-700">Technician</label>
+                <select
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                  value={assignForm.technicianId}
+                  onChange={(e) => setAssignForm({ ...assignForm, technicianId: e.target.value })}
+                  required
+                >
+                  <option value="">Select technician...</option>
+                  {users
+                    .filter((u) => u.role !== 'Admin')
+                    .map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.fullName} ({u.role})
+                      </option>
+                    ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700">Start Date</label>
+                <input
+                  type="datetime-local"
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                  value={assignForm.startAt}
+                  onChange={(e) => setAssignForm({ ...assignForm, startAt: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700">Duration (days)</label>
+                <input
+                  type="number"
+                  min="1"
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                  value={assignForm.durationDays}
+                  onChange={(e) => setAssignForm({ ...assignForm, durationDays: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="flex gap-3">
+                <button
+                  type="submit"
+                  className="flex-1 rounded-xl bg-epiroc-yellow px-4 py-2 font-semibold text-epiroc-black hover:brightness-95 disabled:opacity-60"
+                  disabled={assignTool.isPending}
+                >
+                  {assignTool.isPending ? 'Assigning...' : 'Assign Tool'}
+                </button>
+                <button
+                  type="button"
+                  className="flex-1 rounded-xl border border-slate-200 px-4 py-2 font-semibold text-slate-700 hover:bg-slate-50"
+                  onClick={() => {
+                    setAssignToolId('');
+                    setAssignForm({
+                      technicianId: '',
+                      startAt: '',
+                      durationDays: '7',
+                    });
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Dispatch Tool Modal */}
+      {dispatchToolId && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-xl max-w-md w-full">
+            <h2 className="text-xl font-semibold mb-4">Dispatch Tool</h2>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                dispatchTool.mutate({
+                  toolId: dispatchToolId,
+                  type: dispatchForm.type,
+                  sentAt: dispatchForm.sentAt,
+                  expectedReturnAt: dispatchForm.expectedReturnAt,
+                  reference: dispatchForm.reference,
+                });
+              }}
+              className="space-y-4"
+            >
+              <div>
+                <label className="block text-sm font-medium text-slate-700">Type</label>
+                <select
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                  value={dispatchForm.type}
+                  onChange={(e) => setDispatchForm({ ...dispatchForm, type: e.target.value })}
+                  required
+                >
+                  <option value="Job">Job</option>
+                  <option value="Maintenance">Maintenance</option>
+                  <option value="Calibration">Calibration</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700">Sent Date</label>
+                <input
+                  type="datetime-local"
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                  value={dispatchForm.sentAt}
+                  onChange={(e) => setDispatchForm({ ...dispatchForm, sentAt: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700">Expected Return</label>
+                <input
+                  type="datetime-local"
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                  value={dispatchForm.expectedReturnAt}
+                  onChange={(e) => setDispatchForm({ ...dispatchForm, expectedReturnAt: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700">Reference/Job Number</label>
+                <input
+                  type="text"
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                  value={dispatchForm.reference}
+                  onChange={(e) => setDispatchForm({ ...dispatchForm, reference: e.target.value })}
+                  placeholder="e.g. JOB-001"
+                />
+              </div>
+              <div className="flex gap-3">
+                <button
+                  type="submit"
+                  className="flex-1 rounded-xl bg-epiroc-yellow px-4 py-2 font-semibold text-epiroc-black hover:brightness-95 disabled:opacity-60"
+                  disabled={dispatchTool.isPending}
+                >
+                  {dispatchTool.isPending ? 'Dispatching...' : 'Dispatch Tool'}
+                </button>
+                <button
+                  type="button"
+                  className="flex-1 rounded-xl border border-slate-200 px-4 py-2 font-semibold text-slate-700 hover:bg-slate-50"
+                  onClick={() => {
+                    setDispatchToolId('');
+                    setDispatchForm({
+                      type: 'Job',
+                      sentAt: '',
+                      expectedReturnAt: '',
+                      reference: '',
+                    });
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
