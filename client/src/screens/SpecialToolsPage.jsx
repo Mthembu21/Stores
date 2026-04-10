@@ -23,12 +23,19 @@ export default function SpecialToolsPage() {
   const [editToolId, setEditToolId] = useState('');
   const [assignToolId, setAssignToolId] = useState('');
   const [dispatchToolId, setDispatchToolId] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Form states
   const [editForm, setEditForm] = useState({
     toolName: '',
     toolCode: '',
     category: '',
+    calibrationEnabled: true,
+    inspectionEnabled: true,
+    lastCalibrationAt: '',
+    lastInspectionAt: '',
+    calibrationDurationDays: '365',
+    inspectionDurationDays: '180',
     nextCalibrationDueAt: '',
     nextInspectionDueAt: '',
   });
@@ -51,6 +58,25 @@ export default function SpecialToolsPage() {
   const dispatches = dispatchesData?.dispatches || [];
 
   const specialTools = allTools.filter((t) => t.isSpecialTool);
+
+  // Filter special tools based on search
+  const filteredSpecialTools = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return specialTools.filter((t) => {
+      if (!q) return true;
+      const name = String(t.toolName || '').toLowerCase();
+      const code = String(t.toolCode || '').toLowerCase();
+      const category = String(t.category || '').toLowerCase();
+      const status = String(t.specialStatus || '').toLowerCase();
+      const assignedTo = getTechnicianName(t).toLowerCase();
+      
+      return name.includes(q) || 
+             code.includes(q) || 
+             category.includes(q) || 
+             status.includes(q) || 
+             assignedTo.includes(q);
+    });
+  }, [specialTools, searchQuery, users]);
 
   const ALERT_DAYS = 30;
 
@@ -77,7 +103,7 @@ export default function SpecialToolsPage() {
       return Math.ceil((new Date(date).getTime() - now) / (24 * 60 * 60 * 1000));
     };
 
-    return specialTools.map((tool) => {
+    return filteredSpecialTools.map((tool) => {
       const calDays = daysUntil(tool.nextCalibrationDueAt);
       const inspDays = daysUntil(tool.nextInspectionDueAt);
 
@@ -90,7 +116,7 @@ export default function SpecialToolsPage() {
 
       return { ...tool, __calDays: calDays, __inspDays: inspDays, __rowState: rowState };
     });
-  }, [specialTools]);
+  }, [filteredSpecialTools]);
 
   // Handle edit button click
   const handleEditClick = (tool) => {
@@ -99,6 +125,12 @@ export default function SpecialToolsPage() {
       toolName: tool.toolName || '',
       toolCode: tool.toolCode || '',
       category: tool.category || '',
+      calibrationEnabled: tool.calibrationEnabled !== false,
+      inspectionEnabled: tool.inspectionEnabled !== false,
+      lastCalibrationAt: tool.lastCalibrationAt ? new Date(tool.lastCalibrationAt).toISOString().split('T')[0] : '',
+      lastInspectionAt: tool.lastInspectionAt ? new Date(tool.lastInspectionAt).toISOString().split('T')[0] : '',
+      calibrationDurationDays: tool.calibrationDurationDays?.toString() || '365',
+      inspectionDurationDays: tool.inspectionDurationDays?.toString() || '180',
       nextCalibrationDueAt: tool.nextCalibrationDueAt ? new Date(tool.nextCalibrationDueAt).toISOString().split('T')[0] : '',
       nextInspectionDueAt: tool.nextInspectionDueAt ? new Date(tool.nextInspectionDueAt).toISOString().split('T')[0] : '',
     });
@@ -162,19 +194,57 @@ export default function SpecialToolsPage() {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto w-full">
-      <h1 className="text-2xl font-semibold">Special Tools</h1>
+      <div>
+        <div className="text-2xl font-semibold text-epiroc-blue">Special Tools</div>
+        <div className="text-sm text-slate-600">Manage and track special tools with calibration alerts.</div>
+      </div>
 
-      <Table
-        columns={columns}
-        rows={specialToolsWithAlerts}
-        getRowClassName={(tool) =>
-          tool.__rowState === 'overdue'
-            ? 'bg-red-50'
-            : tool.__rowState === 'soon'
-            ? 'bg-yellow-50'
-            : ''
-        }
-      />
+      <div className="rounded-xl bg-white shadow-soft p-6">
+        <div className="text-sm font-semibold text-epiroc-blue">All Special Tools</div>
+        
+        {/* Search Bar */}
+        <div className="p-3 bg-blue-50 rounded-xl border border-blue-200">
+          <div className="max-w-md mx-auto">
+            <div className="relative">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search special tools by name, code, category, status, or assigned person..."
+                className="w-full rounded-xl border border-slate-300 px-4 py-2 pr-10 text-sm focus:border-blue-400 focus:ring-2 focus:ring-blue-200"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600"
+                >
+                  ×
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {toolsLoading ? (
+          <div className="rounded-xl bg-white shadow-soft p-4 text-sm text-slate-600">Loading special tools...</div>
+        ) : toolsError ? (
+          <div className="rounded-xl bg-white shadow-soft p-4 text-sm text-slate-600">Could not load special tools</div>
+        ) : (
+          <Table 
+            emptyLabel="No special tools found" 
+            columns={columns} 
+            rows={specialToolsWithAlerts}
+            getRowClassName={(tool) =>
+              tool.__rowState === 'overdue'
+                ? 'bg-red-50'
+                : tool.__rowState === 'soon'
+                ? 'bg-yellow-50'
+                : ''
+            }
+            maxHeight="500px"
+          />
+        )}
+      </div>
 
       {/* Edit Tool Modal */}
       {editToolId && (
@@ -221,24 +291,105 @@ export default function SpecialToolsPage() {
                   required
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700">Next Calibration Due</label>
-                <input
-                  type="date"
-                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
-                  value={editForm.nextCalibrationDueAt}
-                  onChange={(e) => setEditForm({ ...editForm, nextCalibrationDueAt: e.target.value })}
-                />
+
+              {/* Calibration Section */}
+              <div className="border-t pt-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-semibold text-slate-700">Calibration</h3>
+                  <label className="flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={editForm.calibrationEnabled}
+                      onChange={(e) => setEditForm({ ...editForm, calibrationEnabled: e.target.checked })}
+                      className="mr-2"
+                    />
+                    <span className="text-sm text-slate-600">Enable</span>
+                  </label>
+                </div>
+                
+                {editForm.calibrationEnabled && (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700">Last Calibration Date</label>
+                      <input
+                        type="date"
+                        className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                        value={editForm.lastCalibrationAt}
+                        onChange={(e) => setEditForm({ ...editForm, lastCalibrationAt: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700">Calibration Duration (days)</label>
+                      <input
+                        type="number"
+                        min="1"
+                        className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                        value={editForm.calibrationDurationDays}
+                        onChange={(e) => setEditForm({ ...editForm, calibrationDurationDays: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700">Next Calibration Due</label>
+                      <input
+                        type="date"
+                        className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                        value={editForm.nextCalibrationDueAt}
+                        onChange={(e) => setEditForm({ ...editForm, nextCalibrationDueAt: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700">Next Inspection Due</label>
-                <input
-                  type="date"
-                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
-                  value={editForm.nextInspectionDueAt}
-                  onChange={(e) => setEditForm({ ...editForm, nextInspectionDueAt: e.target.value })}
-                />
+
+              {/* Inspection Section */}
+              <div className="border-t pt-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-semibold text-slate-700">Inspection</h3>
+                  <label className="flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={editForm.inspectionEnabled}
+                      onChange={(e) => setEditForm({ ...editForm, inspectionEnabled: e.target.checked })}
+                      className="mr-2"
+                    />
+                    <span className="text-sm text-slate-600">Enable</span>
+                  </label>
+                </div>
+                
+                {editForm.inspectionEnabled && (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700">Last Inspection Date</label>
+                      <input
+                        type="date"
+                        className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                        value={editForm.lastInspectionAt}
+                        onChange={(e) => setEditForm({ ...editForm, lastInspectionAt: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700">Inspection Duration (days)</label>
+                      <input
+                        type="number"
+                        min="1"
+                        className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                        value={editForm.inspectionDurationDays}
+                        onChange={(e) => setEditForm({ ...editForm, inspectionDurationDays: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700">Next Inspection Due</label>
+                      <input
+                        type="date"
+                        className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                        value={editForm.nextInspectionDueAt}
+                        onChange={(e) => setEditForm({ ...editForm, nextInspectionDueAt: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
+
               <div className="flex gap-3">
                 <button
                   type="submit"
@@ -256,6 +407,12 @@ export default function SpecialToolsPage() {
                       toolName: '',
                       toolCode: '',
                       category: '',
+                      calibrationEnabled: true,
+                      inspectionEnabled: true,
+                      lastCalibrationAt: '',
+                      lastInspectionAt: '',
+                      calibrationDurationDays: '365',
+                      inspectionDurationDays: '180',
                       nextCalibrationDueAt: '',
                       nextInspectionDueAt: '',
                     });
