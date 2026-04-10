@@ -59,6 +59,22 @@ export default function SpecialToolsPage() {
 
   const specialTools = allTools.filter((t) => t.isSpecialTool);
 
+  const ALERT_DAYS = 30;
+
+  const getTechnicianName = (tool) => {
+    if (tool.assignedTo?.fullName) return tool.assignedTo.fullName;
+    if (tool.currentAssignment?.technician?.fullName) return tool.currentAssignment.technician.fullName;
+    if (tool.technician?.fullName) return tool.technician.fullName;
+
+    if (tool.assignedToTechnicianId && users.length > 0) {
+      const techId = String(tool.assignedToTechnicianId);
+      const technician = users.find((u) => String(u._id || u.id) === techId);
+      return technician?.fullName || 'Assigned';
+    }
+
+    return 'Unassigned';
+  };
+
   // Filter special tools based on search
   const filteredSpecialTools = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -77,22 +93,6 @@ export default function SpecialToolsPage() {
              assignedTo.includes(q);
     });
   }, [specialTools, searchQuery, users]);
-
-  const ALERT_DAYS = 30;
-
-  const getTechnicianName = (tool) => {
-    if (tool.assignedTo?.fullName) return tool.assignedTo.fullName;
-    if (tool.currentAssignment?.technician?.fullName) return tool.currentAssignment.technician.fullName;
-    if (tool.technician?.fullName) return tool.technician.fullName;
-
-    if (tool.assignedToTechnicianId && users.length > 0) {
-      const techId = String(tool.assignedToTechnicianId);
-      const technician = users.find((u) => String(u._id || u.id) === techId);
-      return technician?.fullName || 'Assigned';
-    }
-
-    return 'Unassigned';
-  };
 
   // Precompute alert info (days until calibration/inspection)
   const specialToolsWithAlerts = useMemo(() => {
