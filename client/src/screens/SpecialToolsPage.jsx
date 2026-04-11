@@ -292,8 +292,8 @@ export default function SpecialToolsPage() {
 
       {/* Edit Tool Modal */}
       {editToolId && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-xl max-w-md w-full">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div className="bg-white p-6 rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <h2 className="text-xl font-semibold mb-4">Edit Tool</h2>
             <form
               onSubmit={(e) => {
@@ -340,15 +340,35 @@ export default function SpecialToolsPage() {
               <div className="border-t pt-4">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-sm font-semibold text-slate-700">Calibration</h3>
-                  <label className="flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={editForm.calibrationEnabled}
-                      onChange={(e) => setEditForm({ ...editForm, calibrationEnabled: e.target.checked })}
-                      className="mr-2"
-                    />
-                    <span className="text-sm text-slate-600">Enable</span>
-                  </label>
+                  <div className="flex items-center gap-4">
+                    <label className="flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={editForm.calibrationEnabled}
+                        onChange={(e) => setEditForm({ ...editForm, calibrationEnabled: e.target.checked })}
+                        className="mr-2"
+                      />
+                      <span className="text-sm text-slate-600">Enable</span>
+                    </label>
+                    {editForm.calibrationEnabled && (
+                      <button
+                        type="button"
+                        className="text-xs bg-blue-500 text-white px-3 py-1 rounded-lg hover:bg-blue-600"
+                        onClick={() => {
+                          const today = new Date().toISOString().split('T')[0];
+                          const nextCalibrationDueAt = (() => {
+                            const lastDate = new Date(today);
+                            const durationDays = parseInt(editForm.calibrationDurationDays) || 365;
+                            const nextDate = new Date(lastDate.getTime() + (durationDays * 24 * 60 * 60 * 1000));
+                            return nextDate.toISOString().split('T')[0];
+                          })();
+                          setEditForm({ ...editForm, lastCalibrationAt: today, nextCalibrationDueAt });
+                        }}
+                      >
+                        Reset Calibration
+                      </button>
+                    )}
+                  </div>
                 </div>
                 
                 {editForm.calibrationEnabled && (
@@ -359,7 +379,18 @@ export default function SpecialToolsPage() {
                         type="date"
                         className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
                         value={editForm.lastCalibrationAt}
-                        onChange={(e) => setEditForm({ ...editForm, lastCalibrationAt: e.target.value })}
+                        onChange={(e) => {
+                  const newLastCalibrationAt = e.target.value;
+                  const nextCalibrationDueAt = newLastCalibrationAt && editForm.calibrationEnabled
+                    ? (() => {
+                        const lastDate = new Date(newLastCalibrationAt);
+                        const durationDays = parseInt(editForm.calibrationDurationDays) || 365;
+                        const nextDate = new Date(lastDate.getTime() + (durationDays * 24 * 60 * 60 * 1000));
+                        return nextDate.toISOString().split('T')[0];
+                      })()
+                    : editForm.nextCalibrationDueAt;
+                  setEditForm({ ...editForm, lastCalibrationAt: newLastCalibrationAt, nextCalibrationDueAt });
+                }}
                       />
                     </div>
                     <div>
@@ -369,7 +400,18 @@ export default function SpecialToolsPage() {
                         min="1"
                         className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
                         value={editForm.calibrationDurationDays}
-                        onChange={(e) => setEditForm({ ...editForm, calibrationDurationDays: e.target.value })}
+                        onChange={(e) => {
+                  const newDurationDays = e.target.value;
+                  const nextCalibrationDueAt = editForm.lastCalibrationAt && editForm.calibrationEnabled
+                    ? (() => {
+                        const lastDate = new Date(editForm.lastCalibrationAt);
+                        const durationDays = parseInt(newDurationDays) || 365;
+                        const nextDate = new Date(lastDate.getTime() + (durationDays * 24 * 60 * 60 * 1000));
+                        return nextDate.toISOString().split('T')[0];
+                      })()
+                    : editForm.nextCalibrationDueAt;
+                  setEditForm({ ...editForm, calibrationDurationDays: newDurationDays, nextCalibrationDueAt });
+                }}
                       />
                     </div>
                     <div>
@@ -389,15 +431,35 @@ export default function SpecialToolsPage() {
               <div className="border-t pt-4">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-sm font-semibold text-slate-700">Inspection</h3>
-                  <label className="flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={editForm.inspectionEnabled}
-                      onChange={(e) => setEditForm({ ...editForm, inspectionEnabled: e.target.checked })}
-                      className="mr-2"
-                    />
-                    <span className="text-sm text-slate-600">Enable</span>
-                  </label>
+                  <div className="flex items-center gap-4">
+                    <label className="flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={editForm.inspectionEnabled}
+                        onChange={(e) => setEditForm({ ...editForm, inspectionEnabled: e.target.checked })}
+                        className="mr-2"
+                      />
+                      <span className="text-sm text-slate-600">Enable</span>
+                    </label>
+                    {editForm.inspectionEnabled && (
+                      <button
+                        type="button"
+                        className="text-xs bg-blue-500 text-white px-3 py-1 rounded-lg hover:bg-blue-600"
+                        onClick={() => {
+                          const today = new Date().toISOString().split('T')[0];
+                          const nextInspectionDueAt = (() => {
+                            const lastDate = new Date(today);
+                            const durationDays = parseInt(editForm.inspectionDurationDays) || 180;
+                            const nextDate = new Date(lastDate.getTime() + (durationDays * 24 * 60 * 60 * 1000));
+                            return nextDate.toISOString().split('T')[0];
+                          })();
+                          setEditForm({ ...editForm, lastInspectionAt: today, nextInspectionDueAt });
+                        }}
+                      >
+                        Reset Inspection
+                      </button>
+                    )}
+                  </div>
                 </div>
                 
                 {editForm.inspectionEnabled && (
@@ -408,7 +470,18 @@ export default function SpecialToolsPage() {
                         type="date"
                         className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
                         value={editForm.lastInspectionAt}
-                        onChange={(e) => setEditForm({ ...editForm, lastInspectionAt: e.target.value })}
+                        onChange={(e) => {
+                  const newLastInspectionAt = e.target.value;
+                  const nextInspectionDueAt = newLastInspectionAt && editForm.inspectionEnabled
+                    ? (() => {
+                        const lastDate = new Date(newLastInspectionAt);
+                        const durationDays = parseInt(editForm.inspectionDurationDays) || 180;
+                        const nextDate = new Date(lastDate.getTime() + (durationDays * 24 * 60 * 60 * 1000));
+                        return nextDate.toISOString().split('T')[0];
+                      })()
+                    : editForm.nextInspectionDueAt;
+                  setEditForm({ ...editForm, lastInspectionAt: newLastInspectionAt, nextInspectionDueAt });
+                }}
                       />
                     </div>
                     <div>
@@ -418,7 +491,18 @@ export default function SpecialToolsPage() {
                         min="1"
                         className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
                         value={editForm.inspectionDurationDays}
-                        onChange={(e) => setEditForm({ ...editForm, inspectionDurationDays: e.target.value })}
+                        onChange={(e) => {
+                  const newDurationDays = e.target.value;
+                  const nextInspectionDueAt = editForm.lastInspectionAt && editForm.inspectionEnabled
+                    ? (() => {
+                        const lastDate = new Date(editForm.lastInspectionAt);
+                        const durationDays = parseInt(newDurationDays) || 180;
+                        const nextDate = new Date(lastDate.getTime() + (durationDays * 24 * 60 * 60 * 1000));
+                        return nextDate.toISOString().split('T')[0];
+                      })()
+                    : editForm.nextInspectionDueAt;
+                  setEditForm({ ...editForm, inspectionDurationDays: newDurationDays, nextInspectionDueAt });
+                }}
                       />
                     </div>
                     <div>
