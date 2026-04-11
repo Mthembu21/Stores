@@ -94,7 +94,7 @@ export default function SpecialToolsPage() {
     const q = searchQuery.trim().toLowerCase();
     return specialTools.filter((t) => {
       if (!q) return true;
-      const name = String(t.toolName || '').toLowerCase();
+      const name = String(t.toolName || '').replace(/[^a-zA-Z0-9\s]/g, '').toLowerCase();
       const code = String(t.toolCode || '').toLowerCase();
       const category = String(t.category || '').toLowerCase();
       const status = String(t.specialStatus || '').toLowerCase();
