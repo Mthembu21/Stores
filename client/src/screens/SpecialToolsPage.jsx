@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Table } from '../components/Table';
 import { useUsers } from '../services/users';
-import { useTools, useUpdateTool } from '../services/tools';
+import { useTools, useUpdateTool, useDeleteTool } from '../services/tools';
 import {
   useAssignSpecialTool,
   useDispatchSpecialTool,
@@ -17,6 +17,7 @@ export default function SpecialToolsPage() {
   const { data: dispatchesData } = useSpecialToolDispatches('Open');
 
   const { mutate: updateTool } = useUpdateTool();
+  const { mutate: deleteTool } = useDeleteTool();
   const { mutate: assignTool } = useAssignSpecialTool();
   const { mutate: dispatchTool } = useDispatchSpecialTool();
 
@@ -73,6 +74,19 @@ export default function SpecialToolsPage() {
     }
 
     return 'Unassigned';
+  };
+
+  // Group technicians by department for better organization
+  const getTechniciansByDepartment = () => {
+    const nonAdminUsers = users.filter((u) => u.role !== 'Admin');
+    const grouped = nonAdminUsers.reduce((acc, user) => {
+      const dept = user.department || 'Unassigned';
+      if (!acc[dept]) acc[dept] = [];
+      acc[dept].push(user);
+      return acc;
+    }, {});
+    
+    return grouped;
   };
 
   // Filter special tools based on search
@@ -160,6 +174,26 @@ export default function SpecialToolsPage() {
         render: (tool) => getTechnicianName(tool),
       },
       {
+        key: 'lastCalibrationAt',
+        header: 'Last Calibration',
+        render: (tool) => (tool.lastCalibrationAt ? new Date(tool.lastCalibrationAt).toLocaleDateString() : 'Never'),
+      },
+      {
+        key: 'nextCalibrationDueAt',
+        header: 'Next Calibration',
+        render: (tool) => {
+          if (!tool.nextCalibrationDueAt) return 'Not Set';
+          const date = new Date(tool.nextCalibrationDueAt);
+          const now = new Date();
+          const isOverdue = date < now;
+          return (
+            <span className={isOverdue ? 'text-red-600 font-semibold' : ''}>
+              {date.toLocaleDateString()}
+            </span>
+          );
+        },
+      },
+      {
         key: 'assignmentEndAt',
         header: 'End',
         render: (tool) => (tool.assignmentEndAt ? formatDateTime(tool.assignmentEndAt) : ''),
@@ -180,6 +214,16 @@ export default function SpecialToolsPage() {
               className="rounded-lg bg-blue-500 px-3 py-1 text-xs font-semibold text-white hover:bg-blue-600"
             >
               Dispatch
+            </button>
+            <button
+              onClick={() => {
+                if (window.confirm('Are you sure you want to scrap this tool? This action cannot be undone.')) {
+                  deleteTool.mutate(tool._id);
+                }
+              }}
+              className="rounded-lg bg-red-500 px-3 py-1 text-xs font-semibold text-white hover:bg-red-600"
+            >
+              Scrap
             </button>
           </div>
         ),
@@ -236,7 +280,7 @@ export default function SpecialToolsPage() {
             rows={specialToolsWithAlerts}
             getRowClassName={(tool) =>
               tool.__rowState === 'overdue'
-                ? 'bg-red-50'
+                ? 'bg-red-100 border-2 border-red-300'
                 : tool.__rowState === 'soon'
                 ? 'bg-yellow-50'
                 : ''
@@ -452,13 +496,15 @@ export default function SpecialToolsPage() {
                   required
                 >
                   <option value="">Select technician...</option>
-                  {users
-                    .filter((u) => u.role !== 'Admin')
-                    .map((u) => (
-                      <option key={u.id} value={u.id}>
-                        {u.fullName} ({u.role})
-                      </option>
-                    ))}
+                  {Object.entries(getTechniciansByDepartment()).map(([department, deptUsers]) => (
+                    <optgroup key={department} label={department}>
+                      {deptUsers.map((u) => (
+                        <option key={u.id} value={u.id}>
+                          {u.fullName} ({u.role})
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
                 </select>
               </div>
               <div>

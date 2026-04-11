@@ -37,6 +37,7 @@ export default function ToolsPage() {
 
   const [toolsCategoryFilter, setToolsCategoryFilter] = useState('All');
   const [toolsSearch, setToolsSearch] = useState('');
+  const [isSpecialTool, setIsSpecialTool] = useState(false);
 
   const filteredTools = useMemo(() => {
     const q = toolsSearch.trim().toLowerCase();
@@ -218,6 +219,7 @@ export default function ToolsPage() {
                 toolCode,
                 category,
                 quantityTotal: Number(quantityTotal),
+                isSpecialTool,
               },
               {
                 onSuccess: () => {
@@ -225,6 +227,7 @@ export default function ToolsPage() {
                   setToolCode('');
                   setCategory('Hand Tools');
                   setQuantityTotal('1');
+                  setIsSpecialTool(false);
                 },
               }
             );
@@ -264,6 +267,17 @@ export default function ToolsPage() {
                 <option value="Power Tools">Power Tools</option>
                 <option value="Equipment">Equipment</option>
               </select>
+            </div>
+            <div>
+              <label className="flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={isSpecialTool}
+                  onChange={(e) => setIsSpecialTool(e.target.checked)}
+                  className="mr-2"
+                />
+                <span className="text-sm font-medium text-slate-700">Mark as Special Tool</span>
+              </label>
             </div>
 
             <div>
