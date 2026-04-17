@@ -24,9 +24,8 @@ http.interceptors.response.use(
       
       // Only redirect if not already on login page to prevent infinite loops
       if (window.location.pathname !== '/login') {
-        setTimeout(() => {
-          window.location.href = '/login';
-        }, 100);
+        // Use window.location.replace for cleaner redirect
+        window.location.replace('/login');
       }
     }
     
