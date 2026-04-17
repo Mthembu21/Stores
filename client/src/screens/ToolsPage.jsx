@@ -30,6 +30,33 @@ export default function ToolsPage() {
     return d.toISOString().slice(0, 16);
   });
 
+  // Borrow form search and filter states
+  const [borrowToolSearch, setBorrowToolSearch] = useState('');
+  const [borrowToolCategoryFilter, setBorrowToolCategoryFilter] = useState('All');
+
+  // Filter tools for borrow form with search and category
+  const filteredBorrowTools = useMemo(() => {
+    const search = borrowToolSearch.trim().toLowerCase();
+    return tools.filter((tool) => {
+      // Only show tools with available quantity
+      if (tool.quantityAvailable <= 0) return false;
+      
+      // Category filter
+      if (borrowToolCategoryFilter !== 'All' && tool.category !== borrowToolCategoryFilter) {
+        return false;
+      }
+      
+      // Search filter
+      if (search) {
+        const name = String(tool.toolName || '').toLowerCase();
+        const code = String(tool.toolCode || '').toLowerCase();
+        return name.includes(search) || code.includes(search);
+      }
+      
+      return true;
+    });
+  }, [tools, borrowToolSearch, borrowToolCategoryFilter]);
+
   const [toolName, setToolName] = useState('');
   const [toolCode, setToolCode] = useState('');
   const [category, setCategory] = useState('Hand Tools');
@@ -324,6 +351,8 @@ export default function ToolsPage() {
                   setToolId('');
                   setBorrowerId('');
                   setJobNumber('');
+                  setBorrowToolSearch('');
+                  setBorrowToolCategoryFilter('All');
                 },
               }
             );
@@ -363,20 +392,81 @@ export default function ToolsPage() {
 
             <div className="md:col-span-2">
               <label className="text-sm font-medium text-slate-700">Tool</label>
-              <select
-                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+              
+              {/* Category Filter */}
+              <div className="mb-2">
+                <select
+                  className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                  value={borrowToolCategoryFilter}
+                  onChange={(e) => setBorrowToolCategoryFilter(e.target.value)}
+                >
+                  <option value="All">All Categories</option>
+                  <option value="Hand Tools">Hand Tools</option>
+                  <option value="Power Tools">Power Tools</option>
+                  <option value="Equipment">Equipment</option>
+                </select>
+              </div>
+              
+              {/* Search Input */}
+              <div className="relative">
+                <input
+                  type="text"
+                  className="w-full rounded-xl border border-slate-200 px-3 py-2 pr-10 text-sm"
+                  value={borrowToolSearch}
+                  onChange={(e) => setBorrowToolSearch(e.target.value)}
+                  placeholder="Search tools by name or code..."
+                />
+                {borrowToolSearch && (
+                  <button
+                    type="button"
+                    className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600"
+                    onClick={() => setBorrowToolSearch('')}
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+              
+              {/* Tool Selection */}
+              <div className="mt-2 max-h-40 overflow-y-auto border border-slate-200 rounded-xl">
+                {filteredBorrowTools.length === 0 ? (
+                  <div className="p-4 text-sm text-slate-500 text-center">
+                    No tools found matching your search
+                  </div>
+                ) : (
+                  filteredBorrowTools.map((tool) => (
+                    <div
+                      key={tool._id}
+                      className={`p-3 border-b border-slate-100 cursor-pointer hover:bg-blue-50 ${
+                        toolId === tool._id ? 'bg-blue-100 border-blue-300' : ''
+                      }`}
+                      onClick={() => setToolId(tool._id)}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <div className="font-medium text-slate-900">{tool.toolName}</div>
+                          <div className="text-sm text-slate-600">{tool.toolCode}</div>
+                          <div className="text-xs text-slate-500">{tool.category}</div>
+                        </div>
+                        <div className="text-sm">
+                          <span className={`font-semibold ${
+                            tool.quantityAvailable > 0 ? 'text-green-600' : 'text-red-600'
+                          }`}>
+                            {tool.quantityAvailable} available
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+              
+              {/* Hidden input to store selected tool ID */}
+              <input
+                type="hidden"
                 value={toolId}
-                onChange={(e) => setToolId(e.target.value)}
                 required
-                disabled={toolsLoading || toolsError}
-              >
-                <option value="">Select tool...</option>
-                {filteredTools.map((t) => (
-                  <option key={t._id} value={t._id}>
-                    {t.toolName} ({t.toolCode}) - Available: {t.quantityAvailable}
-                  </option>
-                ))}
-              </select>
+              />
             </div>
 
             <div>
