@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Fix Authentication</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        .status {
+            margin: 20px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Authentication Fix</h1>
+        <p>This page will help fix the 401 Unauthorized error by clearing invalid authentication data.</p>
+        
+        <div id="status"></div>
+        
+        <button onclick="clearAuth()">Clear Authentication Data</button>
+        <button onclick="checkAuth()">Check Current Status</button>
+        <button onclick="goToLogin()">Go to Login</button>
+        
+        <script>
+            function clearAuth() {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                showStatus('Authentication data cleared successfully!', 'success');
+            }
+            
+            function checkAuth() {
+                const token = localStorage.getItem('token');
+                const user = localStorage.getItem('user');
+                
+                let status = '<strong>Current Authentication Status:</strong><br>';
+                status += 'Token exists: ' + (token ? 'YES' : 'NO') + '<br>';
+                status += 'User data exists: ' + (user ? 'YES' : 'NO') + '<br>';
+                
+                if (token) {
+                    status += 'Token length: ' + token.length + ' characters<br>';
+                    status += 'Token preview: ' + token.substring(0, 20) + '...<br>';
+                    
+                    try {
+                        const parts = token.split('.');
+                        if (parts.length === 3) {
+                            const payload = JSON.parse(atob(parts[1]));
+                            status += 'Token expires: ' + new Date(payload.exp * 1000).toLocaleString() + '<br>';
+                            status += 'Token is expired: ' + (Date.now() > payload.exp * 1000 ? 'YES' : 'NO') + '<br>';
+                        }
+                    } catch (e) {
+                        status += 'Token format: Invalid or not JWT<br>';
+                    }
+                }
+                
+                showStatus(status, token || user ? 'success' : 'error');
+            }
+            
+            function showStatus(message, type) {
+                const statusDiv = document.getElementById('status');
+                statusDiv.innerHTML = '<div class="status ' + type + '">' + message + '</div>';
+            }
+            
+            function goToLogin() {
+                window.location.href = '/login';
+            }
+            
+            // Auto-check on page load
+            window.onload = function() {
+                checkAuth();
+            };
+        </script>
+    </div>
+</body>
+</html>
