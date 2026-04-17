@@ -1,9 +1,10 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useMe } from '../services/auth';
+import { logout } from '../services/auth';
 
 export function RequireAuth({ children }) {
   const location = useLocation();
-  const { data, isLoading, isError } = useMe();
+  const { data, isLoading, isError, error } = useMe();
 
   // Early returns after all hooks are called
   if (isLoading) {
@@ -12,6 +13,12 @@ export function RequireAuth({ children }) {
         <div className="text-epiroc-blue font-semibold">Loading...</div>
       </div>
     );
+  }
+
+  // Handle 401 errors specifically
+  if (error?.response?.status === 401) {
+    // The HTTP interceptor will handle the redirect, but we provide a fallback
+    return <Navigate to="/login" replace state={{ from: location, reason: 'token_expired' }} />;
   }
 
   if (isError || !data?.user) {
@@ -26,6 +33,12 @@ export function RequireAuth({ children }) {
           <div className="mt-2 text-sm text-slate-600">
             Only Storeman (Admin role) can access the dashboard.
           </div>
+          <button
+            onClick={logout}
+            className="mt-4 w-full rounded-xl bg-epiroc-yellow px-4 py-2 font-semibold text-epiroc-black hover:brightness-95"
+          >
+            Back to Login
+          </button>
         </div>
       </div>
     );

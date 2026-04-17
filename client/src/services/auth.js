@@ -28,9 +28,31 @@ export function useMe() {
       return data;
     },
     staleTime: 30_000,
+    retry: false, // Don't retry on 401 errors
+    refetchOnWindowFocus: false, // Don't refetch on window focus
+    onError: (error) => {
+      // Only handle 401 errors, let other errors bubble up
+      if (error.response?.status === 401) {
+        // Token is invalid, clear it and let the interceptor handle redirect
+        console.log('Authentication token expired or invalid');
+      }
+    },
   });
 }
 
 export function logout() {
   localStorage.removeItem('token');
+  // Clear any other auth-related data if needed
+  localStorage.removeItem('user');
+  // Redirect to login page
+  window.location.href = '/login';
+}
+
+export function isAuthenticated() {
+  const token = localStorage.getItem('token');
+  return !!token; // Returns true if token exists
+}
+
+export function getToken() {
+  return localStorage.getItem('token');
 }

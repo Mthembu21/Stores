@@ -11,3 +11,22 @@ http.interceptors.request.use((config) => {
   }
   return config;
 });
+
+// Add response interceptor to handle 401 errors
+http.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // Handle 401 Unauthorized errors
+    if (error.response?.status === 401) {
+      // Clear the invalid token
+      localStorage.removeItem('token');
+      
+      // Redirect to login page
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
+    }
+    
+    return Promise.reject(error);
+  }
+);
