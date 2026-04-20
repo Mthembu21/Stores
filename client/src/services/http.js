@@ -12,23 +12,23 @@ http.interceptors.request.use((config) => {
   return config;
 });
 
-// Temporarily disabled authentication interceptor to isolate black/white page issue
-// http.interceptors.response.use(
-//   (response) => response,
-//   (error) => {
-//     // Handle 401 Unauthorized errors
-//     if (error.response?.status === 401) {
-//       // Clear the invalid token
-//       localStorage.removeItem('token');
-//       localStorage.removeItem('user');
-//       
-//       // Only redirect if not already on login page to prevent infinite loops
-//       if (window.location.pathname !== '/login') {
-//         // Use window.location.replace for cleaner redirect
-//         window.location.replace('/login');
-//       }
-//     }
-//     
-//     return Promise.reject(error);
-//   }
-// );
+// Add response interceptor to handle 401 errors
+http.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // Handle 401 Unauthorized errors
+    if (error.response?.status === 401) {
+      // Clear the invalid token
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      
+      // Only redirect if not already on login page to prevent infinite loops
+      if (window.location.pathname !== '/login') {
+        // Use replace to avoid history issues
+        window.location.replace('/login');
+      }
+    }
+    
+    return Promise.reject(error);
+  }
+);

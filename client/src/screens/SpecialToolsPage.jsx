@@ -298,6 +298,14 @@ export default function SpecialToolsPage() {
             <form
               onSubmit={(e) => {
                 e.preventDefault();
+                
+                // Check if updateTool is properly initialized
+                if (!updateTool || typeof updateTool.mutate !== 'function') {
+                  console.error('updateTool mutation is not properly initialized');
+                  toast.error('Update tool function is not available. Please refresh the page.');
+                  return;
+                }
+                
                 updateTool.mutate({
                   id: editToolId,
                   patch: editForm,
