@@ -16,10 +16,25 @@ export default function SpecialToolsPage() {
   const { data: usersData } = useUsers();
   const { data: dispatchesData } = useSpecialToolDispatches('Open');
 
-  const { mutate: updateTool } = useUpdateTool();
-  const { mutate: deleteTool } = useDeleteTool();
-  const { mutate: assignTool } = useAssignSpecialTool();
-  const { mutate: dispatchTool } = useDispatchSpecialTool();
+  const updateToolResult = useUpdateTool();
+  const deleteToolResult = useDeleteTool();
+  const assignToolResult = useAssignSpecialTool();
+  const dispatchToolResult = useDispatchSpecialTool();
+
+  // Extract mutate functions with error handling
+  const updateTool = updateToolResult?.mutate;
+  const deleteTool = deleteToolResult?.mutate;
+  const assignTool = assignToolResult?.mutate;
+  const dispatchTool = dispatchToolResult?.mutate;
+
+  // Debug mutation initialization
+  console.log('Mutation initialization:', {
+    updateTool: !!updateTool,
+    updateToolResult: !!updateToolResult,
+    deleteTool: !!deleteTool,
+    assignTool: !!assignTool,
+    dispatchTool: !!dispatchTool
+  });
 
   const [editToolId, setEditToolId] = useState('');
   const [assignToolId, setAssignToolId] = useState('');
@@ -218,7 +233,7 @@ export default function SpecialToolsPage() {
             <button
               onClick={() => {
                 if (window.confirm('Are you sure you want to scrap this tool? This action cannot be undone.')) {
-                  deleteTool.mutate(tool._id);
+                  deleteTool(tool._id);
                 }
               }}
               className="rounded-lg bg-red-500 px-3 py-1 text-xs font-semibold text-white hover:bg-red-600"
@@ -300,13 +315,13 @@ export default function SpecialToolsPage() {
                 e.preventDefault();
                 
                 // Check if updateTool is properly initialized
-                if (!updateTool || typeof updateTool.mutate !== 'function') {
+                if (!updateTool || typeof updateTool !== 'function') {
                   console.error('updateTool mutation is not properly initialized');
                   toast.error('Update tool function is not available. Please refresh the page.');
                   return;
                 }
                 
-                updateTool.mutate({
+                updateTool({
                   id: editToolId,
                   patch: editForm,
                 });
