@@ -46,6 +46,7 @@ export default function SpecialToolsPage() {
     toolName: '',
     toolCode: '',
     category: '',
+    status: 'Good',
     calibrationEnabled: true,
     inspectionEnabled: true,
     lastCalibrationAt: '',
@@ -154,6 +155,7 @@ export default function SpecialToolsPage() {
       toolName: tool.toolName || '',
       toolCode: tool.toolCode || '',
       category: tool.category || '',
+      status: tool.status || 'Good',
       calibrationEnabled: tool.calibrationEnabled !== false,
       inspectionEnabled: tool.inspectionEnabled !== false,
       lastCalibrationAt: tool.lastCalibrationAt ? new Date(tool.lastCalibrationAt).toISOString().split('T')[0] : '',
@@ -359,6 +361,21 @@ export default function SpecialToolsPage() {
                 />
               </div>
 
+              <div>
+                <label className="block text-sm font-medium text-slate-700">Tool Status</label>
+                <select
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                  value={editForm.status}
+                  onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
+                  required
+                >
+                  <option value="Good">Good Condition</option>
+                  <option value="Damaged">Damaged</option>
+                  <option value="Under Repair">Under Repair</option>
+                  <option value="Maintenance Required">Maintenance Required</option>
+                </select>
+              </div>
+
               {/* Calibration Section */}
               <div className="border-t pt-4">
                 <div className="flex items-center justify-between mb-3">
@@ -558,6 +575,7 @@ export default function SpecialToolsPage() {
                       toolName: '',
                       toolCode: '',
                       category: '',
+                      status: 'Good',
                       calibrationEnabled: true,
                       inspectionEnabled: true,
                       lastCalibrationAt: '',
