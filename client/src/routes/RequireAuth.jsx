@@ -6,6 +6,20 @@ export function RequireAuth({ children }) {
   const location = useLocation();
   const { data, isLoading, isError, error } = useMe();
 
+  // Move useEffect outside conditional logic to fix React error #310
+  useEffect(() => {
+    // Only clear tokens if not authenticated
+    const user = data?.user || data;
+    const isAuthenticated = user && user.role === 'Admin';
+    
+    if (!isAuthenticated && !isLoading) {
+      console.log('REQUIRE AUTH: Clearing invalid tokens');
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('loginTimestamp');
+    }
+  }, [data, isLoading]);
+
   // Comprehensive logging for debugging
   console.log('=== REQUIRE AUTH DEBUG ===');
   console.log('isLoading:', isLoading);
@@ -67,14 +81,6 @@ export function RequireAuth({ children }) {
     } catch (e) {
       console.error('REQUIRE AUTH: Failed to store auth failure details:', e);
     }
-    
-    // Clear any invalid tokens (move cleanup outside render)
-    useEffect(() => {
-      console.log('REQUIRE AUTH: Clearing invalid tokens');
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      localStorage.removeItem('loginTimestamp');
-    }, []);
     
     // Redirect to login immediately
     console.log('REQUIRE AUTH: Redirecting to /login');
