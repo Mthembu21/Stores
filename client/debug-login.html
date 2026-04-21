@@ -137,6 +137,7 @@
             const employeeNumber = document.getElementById('employeeNumber').value;
             const password = document.getElementById('password').value;
             
+            console.log('Attempting login with:', { employeeNumber, password });
             showStatus('Attempting login...', 'success');
             
             try {
@@ -148,8 +149,11 @@
                     body: JSON.stringify({ employeeNumber, password })
                 });
                 
+                console.log('Login response:', response.status, response.statusText);
+                
                 if (response.ok) {
                     const data = await response.json();
+                    console.log('Login data:', data);
                     if (data.token) {
                         localStorage.setItem('token', data.token);
                         localStorage.setItem('user', JSON.stringify(data.user));
@@ -164,6 +168,7 @@
                     showStatus('Login failed: ' + response.status + ' ' + response.statusText, 'error');
                 }
             } catch (error) {
+                console.error('Login error:', error);
                 showStatus('Login error: ' + error.message, 'error');
             }
         }
