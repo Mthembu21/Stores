@@ -84,7 +84,34 @@ export default function ToolsPage() {
       { key: 'category', header: 'Category' },
       { key: 'quantityAvailable', header: 'Available' },
       { key: 'quantityTotal', header: 'Total' },
-      { key: 'status', header: 'Status' },
+      { 
+        key: 'status', 
+        header: 'Status', 
+        render: (t) => (
+          <div className="flex items-center gap-2">
+            <select
+              className="rounded-lg border border-slate-200 px-2 py-1 text-xs"
+              defaultValue={t.status || 'Good'}
+              onChange={(e) => {
+                const id = t._id || t.id;
+                if (!id) {
+                  toast.error('Could not update tool: missing id');
+                  return;
+                }
+                updateTool.mutate({
+                  id,
+                  patch: { status: e.target.value }
+                });
+              }}
+            >
+              <option value="Good">Good</option>
+              <option value="Fair">Fair</option>
+              <option value="Damaged">Damaged</option>
+              <option value="Missing">Missing</option>
+            </select>
+          </div>
+        )
+      },
       { key: 'flag', header: 'Flag' },
       {
         key: 'lastReturnCondition',
