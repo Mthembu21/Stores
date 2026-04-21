@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Comprehensive Authentication Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 15px;
+            margin: 5px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #065f46; }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Comprehensive Authentication Test</h1>
+        <p>This page helps diagnose authentication issues step by step.</p>
+        
+        <div id="status"></div>
+        
+        <div class="test-section">
+            <h3>Step 1: Storage Check</h3>
+            <button onclick="checkStorage()">Check Current Storage</button>
+            
+            <h3>Step 2: Clear All Data</h3>
+            <button onclick="clearAllData()">Clear All Authentication Data</button>
+            
+            <h3>Step 3: Test Login</h3>
+            <button onclick="testLogin()">Test Login Function</button>
+            
+            <h3>Step 4: Test API Connection</h3>
+            <button onclick="testAPIConnection()">Test API Connection</button>
+            
+            <h3>Step 5: Test Token Validation</h3>
+            <button onclick="testTokenValidation()">Test Token Validation</button>
+        </div>
+        
+        <div style="margin-top: 20px;">
+            <button onclick="goToMainApp()">Go to Main Application</button>
+        </div>
+    </div>
+    
+    <script>
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = '<div class="status ' + type + '">' + message + '</div>';
+        }
+        
+        function checkStorage() {
+            const token = localStorage.getItem('token');
+            const user = localStorage.getItem('user');
+            const timestamp = localStorage.getItem('loginTimestamp');
+            
+            let status = 'Token: ' + (token ? 'YES' : 'NO') + '<br>';
+            status += 'User: ' + (user ? 'YES' : 'NO') + '<br>';
+            if (token) {
+                status += 'Token length: ' + token.length + ' chars<br>';
+                status += 'Token preview: ' + token.substring(0, 20) + '...<br>';
+                
+                try {
+                    const parts = token.split('.');
+                    if (parts.length === 3) {
+                        const payload = JSON.parse(atob(parts[1]));
+                        status += 'Token expires: ' + new Date(payload.exp * 1000).toLocaleString() + '<br>';
+                        status += 'Token is expired: ' + (Date.now() > payload.exp * 1000 ? 'YES' : 'NO') + '<br>';
+                    }
+                } catch (e) {
+                    status += 'Token format: Invalid (not JWT)<br>';
+                }
+            }
+            
+            if (timestamp) {
+                const loginTime = parseInt(timestamp);
+                const currentTime = Date.now();
+                const timeDiff = currentTime - loginTime;
+                status += 'Login age: ' + Math.floor(timeDiff / 60000) + ' seconds<br>';
+            }
+            
+            showStatus(status, token || user ? 'success' : 'error');
+        }
+        
+        function clearAllData() {
+            localStorage.clear();
+            sessionStorage.clear();
+            showStatus('All data cleared! Page will reload...', 'success');
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000);
+        }
+        
+        async function testLogin() {
+            showStatus('Testing login function...', 'info');
+            
+            const employeeNumber = document.getElementById('testEmployeeNumber')?.value || 'test123';
+            const password = document.getElementById('testPassword')?.value || 'testpass';
+            
+            try {
+                showStatus('Sending login request...', 'info');
+                
+                const response = await fetch('https://stores-backend.onrender.com/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ employeeNumber, password })
+                });
+                
+                console.log('Login response:', response.status, response.statusText);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    showStatus('Login successful! Token: ' + (data.token ? 'YES' : 'NO'), 'success');
+                    return true;
+                } else {
+                    showStatus('Login failed: ' + response.status + ' ' + response.statusText, 'error');
+                    return false;
+                }
+            } catch (error) {
+                showStatus('Login error: ' + error.message, 'error');
+                return false;
+            }
+        }
+        
+        async function testAPIConnection() {
+            showStatus('Testing API connection...', 'info');
+            
+            const token = localStorage.getItem('token');
+            if (!token) {
+                showStatus('No token found. Please login first.', 'error');
+                return;
+            }
+            
+            try {
+                showStatus('Testing API with token: ' + token.substring(0, 20) + '...', 'info');
+                
+                const response = await fetch('https://stores-backend.onrender.com/api/auth/me', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                console.log('API Response:', response.status, response.statusText);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    showStatus('API connection successful! User: ' + (data.user ? data.user.fullName : 'Unknown'), 'success');
+                    return true;
+                } else {
+                    showStatus('API connection failed: ' + response.status + ' ' + response.statusText, 'error');
+                    return false;
+                }
+            } catch (error) {
+                showStatus('API connection error: ' + error.message, 'error');
+                return false;
+            }
+        }
+        
+        async function testTokenValidation() {
+            showStatus('Testing token validation...', 'info');
+            
+            const token = localStorage.getItem('token');
+            if (!token) {
+                showStatus('No token to validate.', 'error');
+                return;
+            }
+            
+            try {
+                const parts = token.split('.');
+                if (parts.length === 3) {
+                    const payload = JSON.parse(atob(parts[1]));
+                    const currentTime = Date.now() / 1000;
+                    const isValid = payload.exp > currentTime;
+                    
+                    showStatus('Token validation result: ' + (isValid ? 'VALID' : 'EXPIRED'), isValid ? 'success' : 'error');
+                } else {
+                    showStatus('Token format: Invalid (not JWT)', 'error');
+                }
+            } catch (e) {
+                showStatus('Token validation error: ' + e.message, 'error');
+            }
+        }
+        
+        function goToMainApp() {
+            window.location.href = '/';
+        }
+        
+        // Auto-check on page load
+        window.onload = function() {
+            checkStorage();
+        };
+    </script>
+</body>
+</html>
