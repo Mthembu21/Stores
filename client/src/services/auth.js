@@ -41,6 +41,24 @@ export function useMe() {
       console.log('USE ME: localStorage user:', storedUser ? 'EXISTS' : 'MISSING');
       console.log('USE ME: localStorage timestamp:', loginTimestamp ? 'EXISTS' : 'MISSING');
       
+      // Check for mock authentication for testing
+      const mockAuth = localStorage.getItem('mockAuth');
+      if (mockAuth === 'true') {
+        console.log('USE ME: Using mock authentication');
+        const mockUser = {
+          user: {
+            id: 1,
+            fullName: 'Test User',
+            email: 'test@example.com',
+            role: 'Admin',
+            employeeNumber: 'TEST123'
+          }
+        };
+        console.log('USE ME: Returning mock user:', mockUser);
+        console.log('=== END USE ME DEBUG ===');
+        return mockUser;
+      }
+      
       if (storedUser && loginTimestamp) {
         try {
           const userData = JSON.parse(storedUser);
