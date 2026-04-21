@@ -10,12 +10,9 @@ export function useLogin() {
       return data;
     },
     onSuccess: (data) => {
-      console.log('Login success:', data);
       if (data.token) {
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
-        // Also store login timestamp for debugging
-        localStorage.setItem('loginTimestamp', Date.now().toString());
       }
       qc.invalidateQueries({ queryKey: ['me'] });
       toast.success('Logged in');
@@ -30,146 +27,24 @@ export function useMe() {
   return useQuery({
     queryKey: ['me'],
     queryFn: async () => {
-      console.log('=== USE ME HOOK DEBUG ===');
-      
-      // First check if we have user data in localStorage
-      const storedUser = localStorage.getItem('user');
-      const loginTimestamp = localStorage.getItem('loginTimestamp');
+      // Only call API if we have a valid token
       const token = localStorage.getItem('token');
-      
-      console.log('USE ME: localStorage token:', token ? 'EXISTS' : 'MISSING');
-      console.log('USE ME: localStorage user:', storedUser ? 'EXISTS' : 'MISSING');
-      console.log('USE ME: localStorage timestamp:', loginTimestamp ? 'EXISTS' : 'MISSING');
-      
-      // Check for mock authentication for testing
-      const mockAuth = localStorage.getItem('mockAuth');
-      if (mockAuth === 'true') {
-        console.log('USE ME: Using mock authentication');
-        const mockUser = {
-          user: {
-            id: 1,
-            fullName: 'Test User',
-            email: 'test@example.com',
-            role: 'Admin',
-            employeeNumber: 'TEST123'
-          }
-        };
-        console.log('USE ME: Returning mock user:', mockUser);
-        console.log('=== END USE ME DEBUG ===');
-        return mockUser;
+      if (!token) {
+        return null;
       }
-      
-      if (storedUser && loginTimestamp) {
-        try {
-          const userData = JSON.parse(storedUser);
-          console.log('USE ME: Parsed stored user data:', userData);
-          
-          // Check if login is recent (within last 5 minutes)
-          const loginTime = parseInt(loginTimestamp);
-          const currentTime = Date.now();
-          const timeDiff = currentTime - loginTime;
-          
-          console.log('USE ME: Login time difference:', timeDiff, 'ms (', Math.floor(timeDiff / 60000), 'minutes)');
-          
-          if (timeDiff < 5 * 60 * 1000) { // 5 minutes
-            console.log('USE ME: Using cached user data, age:', Math.floor(timeDiff / 60000), 'minutes');
-            console.log('USE ME: Returning cached user:', userData);
-            console.log('=== END USE ME DEBUG ===');
-            return userData;
-          } else {
-            console.log('USE ME: Cached data expired, fetching fresh data');
-          }
-        } catch (e) {
-          console.error('USE ME: Error parsing stored user data:', e);
-        }
-      } else {
-        console.log('USE ME: No cached data found, fetching from API');
-      }
-      
-      // If no recent cached data, try to fetch from API
-      console.log('USE ME: Fetching fresh user data from API');
-      console.log('USE ME: API endpoint:', '/auth/me');
-      console.log('USE ME: Using token:', token ? token.substring(0, 20) + '...' : 'NO TOKEN');
-      
+
       try {
         const response = await http.get('/auth/me');
-        console.log('USE ME: API response status:', response.status);
-        console.log('USE ME: API response data:', response.data);
-        console.log('USE ME: Returning API data:', response.data);
-        console.log('=== END USE ME DEBUG ===');
         return response.data;
       } catch (error) {
-        console.error('USE ME: API fetch error:', error);
-        console.error('USE ME: Error response:', error.response);
-        console.error('USE ME: Error status:', error.response?.status);
-        console.error('USE ME: Error message:', error.message);
-        
-        // Store error details for debugging
-        try {
-          const errorDetails = {
-            timestamp: new Date().toISOString(),
-            message: error?.message || 'Unknown error',
-            status: error?.response?.status || 'No status',
-            code: error?.code || 'No code',
-            stack: error?.stack || 'No stack available',
-            responseData: error?.response?.data || 'No response data'
-          };
-          localStorage.setItem('useMeError', JSON.stringify(errorDetails));
-          console.log('USE ME: Error details stored in localStorage under "useMeError"');
-        } catch (e) {
-          console.error('USE ME: Failed to store error details:', e);
-        }
-        
-        console.log('USE ME: Returning null due to API error');
-        console.log('=== END USE ME DEBUG ===');
+        // Don't throw errors, just return null to prevent crashes
         return null;
       }
     },
-    staleTime: 30_000,
-    retry: false, // Don't retry on 401 errors
-    refetchOnWindowFocus: false, // Don't refetch on window focus
-    onError: (error) => {
-      // Store error details for debugging
-      const errorDetails = {
-        message: error?.message || 'Unknown error',
-        status: error?.response?.status || 'No status',
-        code: error?.code || 'No code',
-        timestamp: new Date().toISOString(),
-        stack: error?.stack || 'No stack available'
-      };
-      
-      console.error('useMe error:', error);
-      console.error('Detailed error information:', errorDetails);
-      
-      // Store error in localStorage to prevent it from disappearing
-      try {
-        localStorage.setItem('authError', JSON.stringify(errorDetails));
-        console.log('Error details stored in localStorage under "authError"');
-      } catch (e) {
-        console.error('Failed to store error details:', e);
-      }
-      
-      // Handle all errors including connection issues
-      if (error.response?.status === 401) {
-        // Token is invalid, clear it and let the interceptor handle redirect
-        console.log('Authentication token expired or invalid');
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        localStorage.removeItem('loginTimestamp');
-      } else if (error.code === 'ECONNABORTED' || error.message.includes('Network Error')) {
-        // Connection error, clear token and redirect to login
-        console.log('Connection error, clearing authentication');
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        localStorage.removeItem('loginTimestamp');
-      } else {
-        // For other errors, also clear auth data to be safe
-        console.log('Other authentication error:', error.message);
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        localStorage.removeItem('loginTimestamp');
-      }
-    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: false,
+    refetchOnWindowFocus: false,
+    enabled: !!localStorage.getItem('token'), // Only run query if token exists
   });
 }
 
