@@ -12,8 +12,11 @@ export default function LoginPage() {
 
   const from = location.state?.from?.pathname || '/';
 
+  // Always call useEffect - move conditional logic inside
   useEffect(() => {
+    console.log('LOGIN PAGE: useEffect called, login.isSuccess:', login.isSuccess);
     if (login.isSuccess) {
+      console.log('LOGIN PAGE: Navigating to:', from);
       navigate(from, { replace: true });
     }
   }, [login.isSuccess, navigate, from]);
