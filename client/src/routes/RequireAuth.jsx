@@ -14,11 +14,25 @@ export function RequireAuth({ children }) {
     );
   }
 
-  if (isError || !data?.user) {
-    console.log('Auth error:', error);
-    // Clear any invalid tokens
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+  // Add a small delay to prevent immediate redirect loops
+  const [shouldRedirect, setShouldRedirect] = useState(false);
+  
+  React.useEffect(() => {
+    if (isError || !data?.user) {
+      console.log('Auth error:', error);
+      // Clear any invalid tokens
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      // Set redirect after a short delay
+      const timer = setTimeout(() => {
+        setShouldRedirect(true);
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isError, data?.user, error]);
+
+  if (shouldRedirect) {
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
