@@ -1,24 +1,9 @@
 import { Navigate, useLocation } from 'react-router-dom';
-import { useState, useEffect } from 'react';
 import { useMe } from '../services/auth';
 
 export function RequireAuth({ children }) {
   const location = useLocation();
   const { data, isLoading, isError, error } = useMe();
-
-  // Move useEffect outside conditional logic to fix React error #310
-  useEffect(() => {
-    // Only clear tokens if not authenticated
-    const user = data?.user || data;
-    const isAuthenticated = user && user.role === 'Admin';
-    
-    if (!isAuthenticated && !isLoading) {
-      console.log('REQUIRE AUTH: Clearing invalid tokens');
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      localStorage.removeItem('loginTimestamp');
-    }
-  }, [data, isLoading]);
 
   // Comprehensive logging for debugging
   console.log('=== REQUIRE AUTH DEBUG ===');
@@ -63,6 +48,12 @@ export function RequireAuth({ children }) {
       userRole: user?.role,
       isAdmin: user?.role === 'Admin'
     });
+    
+    // Clear invalid tokens directly (no useEffect to avoid React error #310)
+    console.log('REQUIRE AUTH: Clearing invalid tokens');
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('loginTimestamp');
     
     // Store authentication failure details for debugging
     try {
