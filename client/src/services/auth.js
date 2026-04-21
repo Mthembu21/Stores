@@ -27,7 +27,6 @@ export function useMe() {
   return useQuery({
     queryKey: ['me'],
     queryFn: async () => {
-      // Only call API if we have a valid token
       const token = localStorage.getItem('token');
       if (!token) {
         return null;
@@ -44,7 +43,6 @@ export function useMe() {
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: false,
     refetchOnWindowFocus: false,
-    enabled: !!localStorage.getItem('token'), // Only run query if token exists
   });
 }
 
