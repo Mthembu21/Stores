@@ -65,10 +65,16 @@ export function useMe() {
 
 export function logout() {
   localStorage.removeItem('token');
-  // Clear any other auth-related data if needed
   localStorage.removeItem('user');
   // Redirect to login page
   window.location.href = '/login';
+}
+
+export function clearAuth() {
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  // Force page reload to clear any cached state
+  window.location.reload();
 }
 
 export function isAuthenticated() {

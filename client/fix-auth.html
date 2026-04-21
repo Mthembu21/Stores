@@ -54,7 +54,8 @@
         
         <button onclick="clearAuth()">Clear Authentication Data</button>
         <button onclick="checkAuth()">Check Current Status</button>
-        <button onclick="goToLogin()">Go to Login</button>
+        <button onclick="clearAllAuth()">Clear All Auth Data</button>
+              <button onclick="goToLogin()">Go to Login</button>
         
         <script>
             function clearAuth() {
@@ -97,6 +98,14 @@
             
             function goToLogin() {
                 window.location.href = '/login';
+            }
+            
+            function clearAllAuth() {
+                localStorage.clear();
+                showStatus('All authentication data cleared! Page will reload...', 'success');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
             }
             
             // Auto-check on page load
