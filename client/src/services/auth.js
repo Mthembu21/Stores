@@ -66,7 +66,25 @@ export function useMe() {
     retry: false, // Don't retry on 401 errors
     refetchOnWindowFocus: false, // Don't refetch on window focus
     onError: (error) => {
+      // Store error details for debugging
+      const errorDetails = {
+        message: error?.message || 'Unknown error',
+        status: error?.response?.status || 'No status',
+        code: error?.code || 'No code',
+        timestamp: new Date().toISOString(),
+        stack: error?.stack || 'No stack available'
+      };
+      
       console.error('useMe error:', error);
+      console.error('Detailed error information:', errorDetails);
+      
+      // Store error in localStorage to prevent it from disappearing
+      try {
+        localStorage.setItem('authError', JSON.stringify(errorDetails));
+        console.log('Error details stored in localStorage under "authError"');
+      } catch (e) {
+        console.error('Failed to store error details:', e);
+      }
       
       // Handle all errors including connection issues
       if (error.response?.status === 401) {
