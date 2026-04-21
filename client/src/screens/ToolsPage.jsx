@@ -114,6 +114,30 @@ export default function ToolsPage() {
               <option value="Damaged">Damaged</option>
               <option value="Missing">Missing</option>
             </select>
+            <button
+              type="button"
+              className="rounded-lg bg-epiroc-blue px-3 py-1 text-xs font-semibold text-white hover:brightness-95 disabled:opacity-60"
+              onClick={() => {
+                const id = t._id || t.id;
+                if (!id) {
+                  toast.error('Could not update tool: missing id');
+                  return;
+                }
+                console.log('TOOLS PAGE: Save button clicked:', {
+                  id,
+                  currentStatus: t.status
+                });
+                updateTool.mutate({
+                  id,
+                  patch: { status: t.status }
+                });
+                toast.success('Tool status saved');
+              }}
+              disabled={updateTool.isPending}
+              title="Save Status"
+            >
+              Save
+            </button>
           </div>
         )
       },
