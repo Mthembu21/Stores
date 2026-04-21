@@ -30,6 +30,26 @@ class ErrorBoundary extends React.Component {
     console.error('Application Error:', error, errorInfo);
     console.error('Error Stack:', error?.stack || 'No stack available');
     console.error('Component Stack:', errorInfo?.componentStack || 'No component stack available');
+    
+    // Log detailed error information for debugging
+    const errorDetails = {
+      message: error?.message || 'Unknown error',
+      stack: error?.stack || 'No stack available',
+      componentStack: errorInfo?.componentStack || 'No component stack available',
+      timestamp: new Date().toISOString(),
+      userAgent: navigator.userAgent,
+      url: window.location.href
+    };
+    
+    console.error('Detailed Error Information:', errorDetails);
+    
+    // Store error details for debugging
+    try {
+      localStorage.setItem('lastError', JSON.stringify(errorDetails));
+    } catch (e) {
+      console.error('Failed to store error details:', e);
+    }
+    
     this.setState({ hasError: true, error });
   }
 
