@@ -103,9 +103,15 @@ export default function ToolsPage() {
                   oldValue: t.status,
                   newValue: e.target.value
                 });
+                
+                // Use correct field based on tool type
+                const patchData = t.isSpecialTool 
+                  ? { specialStatus: e.target.value }
+                  : { status: e.target.value };
+                
                 updateTool.mutate({
                   id,
-                  patch: { status: e.target.value }
+                  patch: patchData
                 });
               }}
             >
@@ -127,9 +133,15 @@ export default function ToolsPage() {
                   id,
                   currentStatus: t.status
                 });
+                
+                // Use correct field based on tool type
+                const patchData = t.isSpecialTool 
+                  ? { specialStatus: t.status }
+                  : { status: t.status };
+                
                 updateTool.mutate({
                   id,
-                  patch: { status: t.status }
+                  patch: patchData
                 });
                 toast.success('Tool status saved');
               }}
