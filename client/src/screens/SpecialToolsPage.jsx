@@ -155,7 +155,7 @@ export default function SpecialToolsPage() {
       toolName: tool.toolName || '',
       toolCode: tool.toolCode || '',
       category: tool.category || '',
-      status: tool.status || 'Good',
+      status: tool.status || tool.specialStatus || 'Good',
       calibrationEnabled: tool.calibrationEnabled !== false,
       inspectionEnabled: tool.inspectionEnabled !== false,
       lastCalibrationAt: tool.lastCalibrationAt ? new Date(tool.lastCalibrationAt).toISOString().split('T')[0] : '',
@@ -184,7 +184,33 @@ export default function SpecialToolsPage() {
       },
       { key: 'toolCode', header: 'Code' },
       { key: 'category', header: 'Category' },
-      { key: 'specialStatus', header: 'Status' },
+      { 
+        key: 'specialStatus', 
+        header: 'Status',
+        render: (tool) => {
+          const status = tool.status || tool.specialStatus || 'Good';
+          const getStatusColor = (status) => {
+            switch (status) {
+              case 'Good':
+                return 'text-green-600 bg-green-100 px-2 py-1 rounded-full text-xs font-semibold';
+              case 'Damaged':
+                return 'text-red-600 bg-red-100 px-2 py-1 rounded-full text-xs font-semibold';
+              case 'Under Repair':
+                return 'text-orange-600 bg-orange-100 px-2 py-1 rounded-full text-xs font-semibold';
+              case 'Maintenance Required':
+                return 'text-yellow-600 bg-yellow-100 px-2 py-1 rounded-full text-xs font-semibold';
+              default:
+                return 'text-slate-600 bg-slate-100 px-2 py-1 rounded-full text-xs font-semibold';
+            }
+          };
+          
+          return (
+            <span className={getStatusColor(status)}>
+              {status}
+            </span>
+          );
+        }
+      },
       {
         key: 'assignedTo',
         header: 'Assigned To',
@@ -218,32 +244,54 @@ export default function SpecialToolsPage() {
       {
         key: 'actions',
         header: 'Actions',
-        render: (tool) => (
-          <div className="flex gap-2">
-            <button
-              onClick={() => setAssignToolId(tool._id)}
-              className="rounded-lg bg-green-500 px-3 py-1 text-xs font-semibold text-white hover:bg-green-600"
-            >
-              Assign
-            </button>
-            <button
-              onClick={() => setDispatchToolId(tool._id)}
-              className="rounded-lg bg-blue-500 px-3 py-1 text-xs font-semibold text-white hover:bg-blue-600"
-            >
-              Dispatch
-            </button>
-            <button
-              onClick={() => {
-                if (window.confirm('Are you sure you want to scrap this tool? This action cannot be undone.')) {
-                  deleteTool(tool._id);
-                }
-              }}
-              className="rounded-lg bg-red-500 px-3 py-1 text-xs font-semibold text-white hover:bg-red-600"
-            >
-              Scrap
-            </button>
-          </div>
-        ),
+        render: (tool) => {
+          const currentStatus = tool.status || tool.specialStatus || 'Good';
+          const isUnderRepair = currentStatus === 'Under Repair';
+          
+          return (
+            <div className="flex gap-2 flex-wrap">
+              {isUnderRepair && (
+                <button
+                  onClick={() => {
+                    if (window.confirm('Mark this tool as Good Condition? This will make it available for borrowing.')) {
+                      updateTool({
+                        id: tool._id,
+                        patch: { status: 'Good' }
+                      });
+                    }
+                  }}
+                  className="rounded-lg bg-green-500 px-3 py-1 text-xs font-semibold text-white hover:bg-green-600"
+                >
+                  Mark as Good
+                </button>
+              )}
+              <button
+                onClick={() => setAssignToolId(tool._id)}
+                className="rounded-lg bg-green-500 px-3 py-1 text-xs font-semibold text-white hover:bg-green-600"
+                disabled={currentStatus !== 'Good'}
+              >
+                Assign
+              </button>
+              <button
+                onClick={() => setDispatchToolId(tool._id)}
+                className="rounded-lg bg-blue-500 px-3 py-1 text-xs font-semibold text-white hover:bg-blue-600"
+                disabled={currentStatus !== 'Good'}
+              >
+                Dispatch
+              </button>
+              <button
+                onClick={() => {
+                  if (window.confirm('Are you sure you want to scrap this tool? This action cannot be undone.')) {
+                    deleteTool(tool._id);
+                  }
+                }}
+                className="rounded-lg bg-red-500 px-3 py-1 text-xs font-semibold text-white hover:bg-red-600"
+              >
+                Scrap
+              </button>
+            </div>
+          );
+        },
       },
     ],
     [users]
