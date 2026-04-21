@@ -15,15 +15,21 @@ export function RequireAuth({ children }) {
     );
   }
 
+  // Safely extract user from different possible API response formats
+  const user = data?.user || data;
+  
   // Check if user is authenticated - handle null/undefined cases
-  const isAuthenticated = data?.user && data.user.role === 'Admin';
+  const isAuthenticated = user && user.role === 'Admin';
   
   if (!isAuthenticated) {
-    console.log('User not authenticated or invalid role:', { data, error });
-    // Clear any invalid tokens
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    localStorage.removeItem('loginTimestamp');
+    console.log('User not authenticated or invalid role:', { data, error, user });
+    // Clear any invalid tokens (move cleanup outside render)
+    useEffect(() => {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('loginTimestamp');
+    }, []);
+    
     // Redirect to login immediately
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
