@@ -84,52 +84,7 @@ export default function ToolsPage() {
       { key: 'category', header: 'Category' },
       { key: 'quantityAvailable', header: 'Available' },
       { key: 'quantityTotal', header: 'Total' },
-      { 
-        key: 'status', 
-        header: 'Status',
-        render: (tool) => {
-          const currentStatus = tool.status || 'Good';
-          const getStatusColor = (status) => {
-            switch (status) {
-              case 'Good':
-                return 'text-green-600 bg-green-100 px-2 py-1 rounded-full text-xs font-semibold';
-              case 'Damaged':
-                return 'text-red-600 bg-red-100 px-2 py-1 rounded-full text-xs font-semibold';
-              case 'Under Repair':
-                return 'text-orange-600 bg-orange-100 px-2 py-1 rounded-full text-xs font-semibold';
-              case 'Maintenance Required':
-                return 'text-yellow-600 bg-yellow-100 px-2 py-1 rounded-full text-xs font-semibold';
-              default:
-                return 'text-slate-600 bg-slate-100 px-2 py-1 rounded-full text-xs font-semibold';
-            }
-          };
-
-          return (
-            <div className="flex items-center gap-2">
-              <select
-                value={currentStatus}
-                onChange={(e) => {
-                  const newStatus = e.target.value;
-                  updateTool.mutate({
-                    id: tool._id || tool.id,
-                    patch: { status: newStatus }
-                  });
-                }}
-                className="text-sm border border-slate-200 rounded px-2 py-1 focus:border-blue-400 focus:ring-2 focus:ring-blue-200"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <option value="Good">Good Condition</option>
-                <option value="Damaged">Damaged</option>
-                <option value="Under Repair">Under Repair</option>
-                <option value="Maintenance Required">Maintenance Required</option>
-              </select>
-              <span className={getStatusColor(currentStatus)}>
-                {currentStatus}
-              </span>
-            </div>
-          );
-        }
-      },
+      { key: 'status', header: 'Status' },
       { key: 'flag', header: 'Flag' },
       {
         key: 'lastReturnCondition',
