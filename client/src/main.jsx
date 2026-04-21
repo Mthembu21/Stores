@@ -28,6 +28,8 @@ class ErrorBoundary extends React.Component {
 
   componentDidCatch(error, errorInfo) {
     console.error('Application Error:', error, errorInfo);
+    console.error('Error Stack:', error?.stack || 'No stack available');
+    console.error('Component Stack:', errorInfo?.componentStack || 'No component stack available');
     this.setState({ hasError: true, error });
   }
 
