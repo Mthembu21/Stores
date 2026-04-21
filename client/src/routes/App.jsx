@@ -26,7 +26,7 @@ export default function App() {
         <Route path="special-tools" element={<SpecialToolsPage />} />
       </Route>
 
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
 }

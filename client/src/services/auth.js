@@ -53,8 +53,14 @@ export function useMe() {
       
       // If no recent cached data, try to fetch from API
       console.log('Fetching fresh user data from API');
-      const { data } = await http.get('/auth/me');
-      return data;
+      try {
+        const { data } = await http.get('/auth/me');
+        return data;
+      } catch (error) {
+        console.error('API fetch error:', error);
+        // Return null instead of throwing to prevent crashes
+        return null;
+      }
     },
     staleTime: 30_000,
     retry: false, // Don't retry on 401 errors

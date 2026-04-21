@@ -27,6 +27,18 @@ export default function DashboardHome() {
     );
   }
 
+  // Add null/undefined safety checks
+  if (!cards || !tables || !charts) {
+    return (
+      <div className="rounded-xl bg-white shadow-soft p-6">
+        <div className="text-sm font-semibold text-epiroc-blue">Dashboard data incomplete</div>
+        <div className="mt-1 text-sm text-slate-600">
+          Some dashboard components could not be loaded.
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-end justify-between">
