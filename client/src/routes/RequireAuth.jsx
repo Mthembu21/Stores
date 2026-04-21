@@ -3,7 +3,7 @@ import { useMe } from '../services/auth';
 
 export function RequireAuth({ children }) {
   const location = useLocation();
-  const { data, isLoading, isError } = useMe();
+  const { data, isLoading, isError, error } = useMe();
 
   // Early returns after all hooks are called
   if (isLoading) {
@@ -15,6 +15,10 @@ export function RequireAuth({ children }) {
   }
 
   if (isError || !data?.user) {
+    console.log('Auth error:', error);
+    // Clear any invalid tokens
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
 

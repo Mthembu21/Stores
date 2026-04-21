@@ -31,10 +31,16 @@ export function useMe() {
     retry: false, // Don't retry on 401 errors
     refetchOnWindowFocus: false, // Don't refetch on window focus
     onError: (error) => {
-      // Only handle 401 errors, let other errors bubble up
+      console.log('useMe error:', error);
+      // Handle all errors including connection issues
       if (error.response?.status === 401) {
         // Token is invalid, clear it and let the interceptor handle redirect
         console.log('Authentication token expired or invalid');
+      } else if (error.code === 'ECONNABORTED' || error.message.includes('Network Error')) {
+        // Connection error, clear token and redirect to login
+        console.log('Connection error, clearing authentication');
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
       }
     },
   });
