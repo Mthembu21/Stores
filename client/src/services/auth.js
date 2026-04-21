@@ -30,35 +30,80 @@ export function useMe() {
   return useQuery({
     queryKey: ['me'],
     queryFn: async () => {
+      console.log('=== USE ME HOOK DEBUG ===');
+      
       // First check if we have user data in localStorage
       const storedUser = localStorage.getItem('user');
       const loginTimestamp = localStorage.getItem('loginTimestamp');
+      const token = localStorage.getItem('token');
+      
+      console.log('USE ME: localStorage token:', token ? 'EXISTS' : 'MISSING');
+      console.log('USE ME: localStorage user:', storedUser ? 'EXISTS' : 'MISSING');
+      console.log('USE ME: localStorage timestamp:', loginTimestamp ? 'EXISTS' : 'MISSING');
       
       if (storedUser && loginTimestamp) {
         try {
           const userData = JSON.parse(storedUser);
+          console.log('USE ME: Parsed stored user data:', userData);
+          
           // Check if login is recent (within last 5 minutes)
           const loginTime = parseInt(loginTimestamp);
           const currentTime = Date.now();
           const timeDiff = currentTime - loginTime;
           
+          console.log('USE ME: Login time difference:', timeDiff, 'ms (', Math.floor(timeDiff / 60000), 'minutes)');
+          
           if (timeDiff < 5 * 60 * 1000) { // 5 minutes
-            console.log('Using cached user data, age:', Math.floor(timeDiff / 60000), 'minutes');
+            console.log('USE ME: Using cached user data, age:', Math.floor(timeDiff / 60000), 'minutes');
+            console.log('USE ME: Returning cached user:', userData);
+            console.log('=== END USE ME DEBUG ===');
             return userData;
+          } else {
+            console.log('USE ME: Cached data expired, fetching fresh data');
           }
         } catch (e) {
-          console.error('Error parsing stored user data:', e);
+          console.error('USE ME: Error parsing stored user data:', e);
         }
+      } else {
+        console.log('USE ME: No cached data found, fetching from API');
       }
       
       // If no recent cached data, try to fetch from API
-      console.log('Fetching fresh user data from API');
+      console.log('USE ME: Fetching fresh user data from API');
+      console.log('USE ME: API endpoint:', '/auth/me');
+      console.log('USE ME: Using token:', token ? token.substring(0, 20) + '...' : 'NO TOKEN');
+      
       try {
-        const { data } = await http.get('/auth/me');
-        return data;
+        const response = await http.get('/auth/me');
+        console.log('USE ME: API response status:', response.status);
+        console.log('USE ME: API response data:', response.data);
+        console.log('USE ME: Returning API data:', response.data);
+        console.log('=== END USE ME DEBUG ===');
+        return response.data;
       } catch (error) {
-        console.error('API fetch error:', error);
-        // Return null instead of throwing to prevent crashes
+        console.error('USE ME: API fetch error:', error);
+        console.error('USE ME: Error response:', error.response);
+        console.error('USE ME: Error status:', error.response?.status);
+        console.error('USE ME: Error message:', error.message);
+        
+        // Store error details for debugging
+        try {
+          const errorDetails = {
+            timestamp: new Date().toISOString(),
+            message: error?.message || 'Unknown error',
+            status: error?.response?.status || 'No status',
+            code: error?.code || 'No code',
+            stack: error?.stack || 'No stack available',
+            responseData: error?.response?.data || 'No response data'
+          };
+          localStorage.setItem('useMeError', JSON.stringify(errorDetails));
+          console.log('USE ME: Error details stored in localStorage under "useMeError"');
+        } catch (e) {
+          console.error('USE ME: Failed to store error details:', e);
+        }
+        
+        console.log('USE ME: Returning null due to API error');
+        console.log('=== END USE ME DEBUG ===');
         return null;
       }
     },
