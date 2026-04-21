@@ -17,6 +17,12 @@ export default function ToolsPage() {
   const updateTool = useUpdateTool();
   const returnTool = useReturnTool();
 
+  // Debug data flow
+  console.log('TOOLS PAGE: Raw tools data:', toolsData);
+  console.log('TOOLS PAGE: Tools loading:', toolsLoading);
+  console.log('TOOLS PAGE: Tools error:', toolsError);
+  console.log('TOOLS PAGE: Processed tools:', toolsData?.tools || []);
+
   const tools = toolsData?.tools || [];
   const users = usersData?.users || [];
   const openBorrowings = borrowData?.records || [];
