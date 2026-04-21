@@ -98,6 +98,11 @@ export default function ToolsPage() {
                   toast.error('Could not update tool: missing id');
                   return;
                 }
+                console.log('TOOLS PAGE: Status dropdown change:', {
+                  id,
+                  oldValue: t.status,
+                  newValue: e.target.value
+                });
                 updateTool.mutate({
                   id,
                   patch: { status: e.target.value }
