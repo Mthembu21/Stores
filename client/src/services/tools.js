@@ -22,6 +22,7 @@ export function useUpdateTool() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['tools'] });
+      qc.invalidateQueries({ queryKey: ['dashboard'] }); // Also refresh dashboard
       toast.success('Tool updated');
     },
     onError: (err) => {
