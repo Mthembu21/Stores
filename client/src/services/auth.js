@@ -10,7 +10,11 @@ export function useLogin() {
       return data;
     },
     onSuccess: (data) => {
-      localStorage.setItem('token', data.token);
+      console.log('Login success:', data);
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+      }
       qc.invalidateQueries({ queryKey: ['me'] });
       toast.success('Logged in');
     },
@@ -24,6 +28,17 @@ export function useMe() {
   return useQuery({
     queryKey: ['me'],
     queryFn: async () => {
+      // First check if we have user data in localStorage
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        try {
+          return JSON.parse(storedUser);
+        } catch (e) {
+          console.error('Error parsing stored user data:', e);
+        }
+      }
+      
+      // If no stored user, try to fetch from API
       const { data } = await http.get('/auth/me');
       return data;
     },
@@ -36,6 +51,8 @@ export function useMe() {
       if (error.response?.status === 401) {
         // Token is invalid, clear it and let the interceptor handle redirect
         console.log('Authentication token expired or invalid');
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
       } else if (error.code === 'ECONNABORTED' || error.message.includes('Network Error')) {
         // Connection error, clear token and redirect to login
         console.log('Connection error, clearing authentication');
