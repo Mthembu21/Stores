@@ -28,14 +28,19 @@ export function useMe() {
     queryKey: ['me'],
     queryFn: async () => {
       const token = localStorage.getItem('token');
+      console.log('useMe: token from localStorage:', token ? 'exists' : 'none');
+      
       if (!token) {
         return null;
       }
 
       try {
+        console.log('useMe: making request to /auth/me');
         const response = await http.get('/auth/me');
+        console.log('useMe: response data:', response.data);
         return response.data;
       } catch (error) {
+        console.log('useMe: error:', error.response?.status, error.response?.data);
         // Don't throw errors, just return null to prevent crashes
         return null;
       }
