@@ -27,10 +27,23 @@ export function RequireAuth({ children }) {
   if (!isAuthenticated) {
     // Only redirect if not already on login page to prevent infinite loops
     if (location.pathname !== '/login') {
-      // Clear invalid tokens
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      localStorage.removeItem('loginTimestamp');
+      // Check if login was recent before clearing localStorage
+      const loginTimestamp = localStorage.getItem('loginTimestamp');
+      const now = Date.now();
+      const timeSinceLogin = loginTimestamp ? now - parseInt(loginTimestamp) : Infinity;
+      
+      console.log('RequireAuth: time since login:', timeSinceLogin, 'ms');
+      
+      // Only clear token if login was more than 10 seconds ago (to handle race conditions)
+      if (timeSinceLogin > 10000) {
+        console.log('RequireAuth: clearing localStorage due to old authentication failure');
+        // Clear invalid tokens
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        localStorage.removeItem('loginTimestamp');
+      } else {
+        console.log('RequireAuth: recent login detected, not clearing localStorage');
+      }
       
       console.log('RequireAuth: Redirecting to login from:', location.pathname);
       // Redirect to login
