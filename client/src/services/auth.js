@@ -13,17 +13,28 @@ export function useLogin() {
       console.log('useLogin: login success, data:', data);
       if (data.token) {
         console.log('useLogin: storing token in localStorage');
+        console.log('useLogin: localStorage before storage:', JSON.stringify(localStorage));
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
+        console.log('useLogin: localStorage after storage:', JSON.stringify(localStorage));
         console.log('useLogin: token stored, verifying:', localStorage.getItem('token') ? 'exists' : 'missing');
+        console.log('useLogin: user stored, verifying:', localStorage.getItem('user') ? 'exists' : 'missing');
         // Store a timestamp to prevent immediate clearing
         localStorage.setItem('loginTimestamp', Date.now().toString());
+        console.log('useLogin: timestamp stored, verifying:', localStorage.getItem('loginTimestamp') ? 'exists' : 'missing');
       }
       console.log('useLogin: invalidating me query with delay');
       // Add a small delay to ensure localStorage is updated before invalidating
       setTimeout(() => {
+        console.log('useLogin: checking localStorage before query invalidation:', JSON.stringify(localStorage));
         qc.invalidateQueries({ queryKey: ['me'] });
       }, 100);
+      
+      // Also check localStorage after a longer delay
+      setTimeout(() => {
+        console.log('useLogin: checking localStorage after 200ms:', JSON.stringify(localStorage));
+      }, 200);
+      
       toast.success('Logged in');
     },
     onError: (err) => {
