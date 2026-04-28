@@ -18,9 +18,12 @@ http.interceptors.response.use(
   (error) => {
     // Handle 401 Unauthorized errors
     if (error.response?.status === 401) {
+      console.log('HTTP: 401 error detected, clearing localStorage');
+      console.log('HTTP: localStorage before clear:', JSON.stringify(localStorage));
       // Clear the invalid token
       localStorage.removeItem('token');
       localStorage.removeItem('user');
+      console.log('HTTP: localStorage after clear:', JSON.stringify(localStorage));
       
       // Only redirect if not already on login page to prevent infinite loops
       if (window.location.pathname !== '/login') {

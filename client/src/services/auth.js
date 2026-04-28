@@ -36,13 +36,16 @@ export function useMe() {
     queryFn: async () => {
       const token = localStorage.getItem('token');
       console.log('useMe: token from localStorage:', token ? 'exists' : 'none');
+      console.log('useMe: localStorage keys:', Object.keys(localStorage));
+      console.log('useMe: full localStorage content:', JSON.stringify(localStorage));
       
       if (!token) {
+        console.log('useMe: no token found, returning null');
         return null;
       }
 
       try {
-        console.log('useMe: making request to /auth/me');
+        console.log('useMe: making request to /auth/me with token:', token.substring(0, 20) + '...');
         const response = await http.get('/auth/me');
         console.log('useMe: response data:', response.data);
         return response.data;
