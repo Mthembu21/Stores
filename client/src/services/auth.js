@@ -17,8 +17,11 @@ export function useLogin() {
         localStorage.setItem('user', JSON.stringify(data.user));
         console.log('useLogin: token stored, verifying:', localStorage.getItem('token') ? 'exists' : 'missing');
       }
-      console.log('useLogin: invalidating me query');
-      qc.invalidateQueries({ queryKey: ['me'] });
+      console.log('useLogin: invalidating me query with delay');
+      // Add a small delay to ensure localStorage is updated before invalidating
+      setTimeout(() => {
+        qc.invalidateQueries({ queryKey: ['me'] });
+      }, 100);
       toast.success('Logged in');
     },
     onError: (err) => {

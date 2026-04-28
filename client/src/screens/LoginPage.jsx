@@ -23,12 +23,13 @@ export default function LoginPage() {
   // Handle successful login with stable state
   useEffect(() => {
     if (login.isSuccess && !isLoggingIn) {
-      console.log('LOGIN PAGE: Login successful, navigating to:', from);
+      console.log('LOGIN PAGE: Login successful, waiting for token storage before navigating to:', from);
       setIsLoggingIn(true);
-      // Add a small delay to ensure the login state is stable
+      // Add a longer delay to ensure localStorage is updated and useMe can read it
       setTimeout(() => {
+        console.log('LOGIN PAGE: Navigating after delay');
         navigate(from, { replace: true });
-      }, 100);
+      }, 300);
     }
   }, [login.isSuccess, navigate, from, isLoggingIn]);
 
