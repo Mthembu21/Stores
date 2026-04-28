@@ -9,17 +9,28 @@ export default function LoginPage() {
 
   const [employeeNumber, setEmployeeNumber] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   const from = location.state?.from?.pathname || '/';
 
-  // Always call useEffect - move conditional logic inside
+  // Reset login state when login fails or component mounts
   useEffect(() => {
-    console.log('LOGIN PAGE: useEffect called, login.isSuccess:', login.isSuccess);
-    if (login.isSuccess) {
-      console.log('LOGIN PAGE: Navigating to:', from);
-      navigate(from, { replace: true });
+    if (login.isError) {
+      setIsLoggingIn(false);
     }
-  }, [login.isSuccess, navigate, from]);
+  }, [login.isError]);
+
+  // Handle successful login with stable state
+  useEffect(() => {
+    if (login.isSuccess && !isLoggingIn) {
+      console.log('LOGIN PAGE: Login successful, navigating to:', from);
+      setIsLoggingIn(true);
+      // Add a small delay to ensure the login state is stable
+      setTimeout(() => {
+        navigate(from, { replace: true });
+      }, 100);
+    }
+  }, [login.isSuccess, navigate, from, isLoggingIn]);
 
   return (
     <div className="min-h-screen grid place-items-center px-6" style={{ background: '#f6f8fb' }}>

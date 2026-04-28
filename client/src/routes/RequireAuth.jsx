@@ -20,14 +20,22 @@ export function RequireAuth({ children }) {
   // Check if user is authenticated - handle null/undefined cases
   const isAuthenticated = user && user.role === 'Admin';
   
+  // Add debug logging to understand what's happening
+  console.log('RequireAuth: user data:', user);
+  console.log('RequireAuth: isAuthenticated:', isAuthenticated);
+  
   if (!isAuthenticated) {
-    // Clear invalid tokens
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    localStorage.removeItem('loginTimestamp');
-    
-    // Redirect to login
-    return <Navigate to="/login" replace state={{ from: location }} />;
+    // Only redirect if not already on login page to prevent infinite loops
+    if (location.pathname !== '/login') {
+      // Clear invalid tokens
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('loginTimestamp');
+      
+      console.log('RequireAuth: Redirecting to login from:', location.pathname);
+      // Redirect to login
+      return <Navigate to="/login" replace state={{ from: location }} />;
+    }
   }
 
   return children;
