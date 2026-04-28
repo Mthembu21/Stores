@@ -16,6 +16,8 @@ export function useLogin() {
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
         console.log('useLogin: token stored, verifying:', localStorage.getItem('token') ? 'exists' : 'missing');
+        // Store a timestamp to prevent immediate clearing
+        localStorage.setItem('loginTimestamp', Date.now().toString());
       }
       console.log('useLogin: invalidating me query with delay');
       // Add a small delay to ensure localStorage is updated before invalidating
