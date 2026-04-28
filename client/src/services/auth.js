@@ -10,10 +10,14 @@ export function useLogin() {
       return data;
     },
     onSuccess: (data) => {
+      console.log('useLogin: login success, data:', data);
       if (data.token) {
+        console.log('useLogin: storing token in localStorage');
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
+        console.log('useLogin: token stored, verifying:', localStorage.getItem('token') ? 'exists' : 'missing');
       }
+      console.log('useLogin: invalidating me query');
       qc.invalidateQueries({ queryKey: ['me'] });
       toast.success('Logged in');
     },
