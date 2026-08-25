@@ -3,6 +3,7 @@ require('express-async-errors');
 
 const mongoose = require('mongoose');
 const app = require('./app');
+const { ensureDefaultStore } = require('./utils/defaultStore');
 
 const PORT = process.env.PORT || 5000;
 
@@ -12,6 +13,7 @@ async function start() {
   }
 
   await mongoose.connect(process.env.MONGO_URI);
+  await ensureDefaultStore();
 
   app.listen(PORT, () => {
     console.log(`API listening on port ${PORT}`);

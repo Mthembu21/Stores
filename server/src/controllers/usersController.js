@@ -3,6 +3,16 @@ const { ApiError } = require('../utils/ApiError');
 const { User } = require('../models/User');
 const { Roles } = require('../config/roles');
 
+const ASSIGNABLE_ROLES = [
+  Roles.Technician,
+  Roles.Apprentice,
+  Roles.Intern,
+  Roles.Admin,
+  Roles.ToolsStoreman,
+  Roles.PartsStoreman,
+  Roles.Supervisor,
+];
+
 async function listUsers(req, res) {
   const users = await User.find({}).sort({ createdAt: -1 });
   res.json({ users: users.map((u) => u.toSafeJSON()) });
@@ -15,7 +25,7 @@ async function createUser(req, res) {
     throw new ApiError(400, 'Missing required fields');
   }
 
-  if (![Roles.Technician, Roles.Apprentice, Roles.Intern, Roles.Admin].includes(role)) {
+  if (!ASSIGNABLE_ROLES.includes(role)) {
     throw new ApiError(400, 'Invalid role');
   }
 
@@ -46,7 +56,7 @@ async function updateUser(req, res) {
     throw new ApiError(404, 'User not found');
   }
 
-  if (role && ![Roles.Technician, Roles.Apprentice, Roles.Intern, Roles.Admin].includes(role)) {
+  if (role && !ASSIGNABLE_ROLES.includes(role)) {
     throw new ApiError(400, 'Invalid role');
   }
 

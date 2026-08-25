@@ -1,5 +1,5 @@
 const express = require('express');
-const { returnTool } = require('../controllers/returnController');
+const { listStockMovements } = require('../controllers/stockMovementsController');
 const { requireAuth } = require('../middleware/auth');
 const { requireRole } = require('../middleware/requireRole');
 const { Roles } = require('../config/roles');
@@ -7,8 +7,8 @@ const { Roles } = require('../config/roles');
 const router = express.Router();
 
 router.use(requireAuth);
-router.use(requireRole(Roles.Admin, Roles.ToolsStoreman));
+router.use(requireRole(Roles.Admin, Roles.PartsStoreman, Roles.Supervisor));
 
-router.post('/', returnTool);
+router.get('/', listStockMovements);
 
-module.exports = { returnRoutes: router };
+module.exports = { stockMovementRoutes: router };

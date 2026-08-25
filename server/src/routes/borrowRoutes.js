@@ -7,7 +7,7 @@ const { Roles } = require('../config/roles');
 const router = express.Router();
 
 router.use(requireAuth);
-router.use(requireRole(Roles.Admin));
+router.use(requireRole(Roles.Admin, Roles.ToolsStoreman));
 
 router.get('/', listBorrowings);
 router.post('/', borrowTool);

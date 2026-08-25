@@ -1,5 +1,6 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useMe } from '../services/auth';
+import { APP_ROLES } from '../config/permissions';
 
 export function RequireAuth({ children }) {
   const location = useLocation();
@@ -18,7 +19,7 @@ export function RequireAuth({ children }) {
   const user = data?.user || data;
   
   // Check if user is authenticated - handle null/undefined cases
-  const isAuthenticated = user && user.role === 'Admin';
+  const isAuthenticated = user && APP_ROLES.includes(user.role);
   
   // Add debug logging to understand what's happening
   console.log('RequireAuth: user data:', user);

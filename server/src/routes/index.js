@@ -8,6 +8,11 @@ const { returnRoutes } = require('./returnRoutes');
 const { ppeRoutes } = require('./ppeRoutes');
 const { dashboardRoutes } = require('./dashboardRoutes');
 const { specialToolRoutes } = require('./specialToolRoutes');
+const { sparePartRoutes } = require('./sparePartRoutes');
+const { storeIssueRoutes } = require('./storeIssueRoutes');
+const { partReturnRoutes } = require('./partReturnRoutes');
+const { stockMovementRoutes } = require('./stockMovementRoutes');
+const { partsDashboardRoutes } = require('./partsDashboardRoutes');
 
 const router = express.Router();
 
@@ -23,5 +28,10 @@ router.use('/return', returnRoutes);
 router.use('/ppe', ppeRoutes);
 router.use('/dashboard', dashboardRoutes);
 router.use('/special-tools', specialToolRoutes);
+router.use('/spare-parts', sparePartRoutes);
+router.use('/store-issues', storeIssueRoutes);
+router.use('/part-returns', partReturnRoutes);
+router.use('/stock-movements', stockMovementRoutes);
+router.use('/parts-dashboard', partsDashboardRoutes);
 
 module.exports = router;

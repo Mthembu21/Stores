@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Table } from '../components/Table';
 import { useCreateUser, useDeleteUser, useUsers } from '../services/users';
 
-const roles = ['Technician', 'Apprentice', 'Intern', 'Admin'];
+const roles = ['Technician', 'Apprentice', 'Intern', 'Admin', 'ToolsStoreman', 'PartsStoreman', 'Supervisor'];
 
 export default function UsersPage() {
   const { data, isLoading, isError } = useUsers();

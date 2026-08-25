@@ -1,5 +1,6 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { logout } from '../services/auth';
+import { useMe } from '../services/auth';
 
 function SideLink({ to, children }) {
   return (
@@ -19,8 +20,23 @@ function SideLink({ to, children }) {
   );
 }
 
+function NavSection({ title }) {
+  return (
+    <div className="mt-6 mb-1 px-3 text-xs font-semibold uppercase tracking-wide text-white/50">
+      {title}
+    </div>
+  );
+}
+
 export default function DashboardLayout() {
   const navigate = useNavigate();
+  const { data } = useMe();
+  const user = data?.user || data;
+  const role = user?.role;
+
+  const canSeeTools = role === 'Admin' || role === 'ToolsStoreman';
+  const canSeeSpareParts = role === 'Admin' || role === 'PartsStoreman' || role === 'Supervisor';
+  const canSeeUsers = role === 'Admin';
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -33,9 +49,35 @@ export default function DashboardLayout() {
 
           <nav className="mt-6 space-y-2">
             <SideLink to="/">Dashboard</SideLink>
-            <SideLink to="/tools">Tools</SideLink>
-            <SideLink to="/special-tools">Special Tools</SideLink>
-            <SideLink to="/users">Users</SideLink>
+
+            {canSeeTools && (
+              <>
+                <NavSection title="Tools Management" />
+                <SideLink to="/tools">Tools Inventory</SideLink>
+                <SideLink to="/special-tools">Special Tools</SideLink>
+              </>
+            )}
+
+            {canSeeSpareParts && (
+              <>
+                <NavSection title="Spare Parts & Stores" />
+                <SideLink to="/spare-parts">Parts Dashboard</SideLink>
+                <SideLink to="/spare-parts/inventory">Parts Inventory</SideLink>
+                <SideLink to="/spare-parts/issue">Issue Parts</SideLink>
+                <SideLink to="/spare-parts/store-issues">Store Issues</SideLink>
+                <SideLink to="/spare-parts/returns">Returns</SideLink>
+                <SideLink to="/spare-parts/low-stock">Low Stock</SideLink>
+                <SideLink to="/spare-parts/to-order">Parts To Order</SideLink>
+                <SideLink to="/spare-parts/movements">Stock Movements</SideLink>
+              </>
+            )}
+
+            {canSeeUsers && (
+              <>
+                <NavSection title="Administration" />
+                <SideLink to="/users">Users</SideLink>
+              </>
+            )}
           </nav>
 
           <button
