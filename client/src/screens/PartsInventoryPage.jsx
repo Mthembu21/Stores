@@ -1,7 +1,15 @@
 import { useMemo, useRef, useState } from 'react';
 import { Table } from '../components/Table';
-import { useBulkCreateSpareParts, useCreateSparePart, useSpareParts, useUpdateSparePart } from '../services/spareParts';
+import {
+  useBulkCreateSpareParts,
+  useConsumablesTracking,
+  useCreateSparePart,
+  useRestockSparePart,
+  useSpareParts,
+  useUpdateSparePart,
+} from '../services/spareParts';
 import { parseSpreadsheetText, SPREADSHEET_TEMPLATE_HEADERS } from '../utils/parseSpreadsheet';
+import { formatDateTime } from '../utils/format';
 
 function stockBadge(part) {
   if (part.stockOnHand <= 0) return { label: 'OUT OF STOCK', className: 'text-red-600 font-semibold' };
@@ -61,6 +69,69 @@ export default function PartsInventoryPage() {
   const updatePart = useUpdateSparePart();
   const bulkCreateParts = useBulkCreateSpareParts();
 
+  const { data: consumablesData, isLoading: consumablesLoading, isError: consumablesError } = useConsumablesTracking();
+  const consumables = consumablesData?.consumables || [];
+  const restockPart = useRestockSparePart();
+
+  function handleRestock(part) {
+    const raw = window.prompt(`Quantity received for ${part.partNumber} (${part.partDescription}):`);
+    if (raw === null) return;
+    const quantity = Number(raw);
+    if (!(quantity > 0)) {
+      window.alert('Enter a quantity greater than 0');
+      return;
+    }
+    const reason = window.prompt('Reason / PO reference (optional):', '') || undefined;
+    restockPart.mutate({ id: part._id, quantity, reason });
+  }
+
+  const consumablesColumns = useMemo(
+    () => [
+      { key: 'partNumber', header: 'Part Number' },
+      { key: 'partDescription', header: 'Description' },
+      {
+        key: 'stockOnHand',
+        header: 'Remaining',
+        render: (p) => (
+          <div className="flex items-center gap-2">
+            <span>{p.stockOnHand}</span>
+            <span className={stockBadge(p).className}>{stockBadge(p).label}</span>
+          </div>
+        ),
+      },
+      { key: 'minimumStockLevel', header: 'Min Level' },
+      { key: 'unitOfMeasure', header: 'UoM' },
+      {
+        key: 'lastRestockedAt',
+        header: 'Last Restocked',
+        render: (p) => (p.lastRestockedAt ? formatDateTime(p.lastRestockedAt) : 'Never'),
+      },
+      { key: 'lastRestockedQuantity', header: 'Qty Received' },
+      {
+        key: 'daysSinceRestock',
+        header: 'Days Since Restock',
+        render: (p) => (p.daysSinceRestock === null ? '—' : p.daysSinceRestock),
+      },
+      { key: 'issuedSinceRestock', header: 'Issued Since Restock' },
+      { key: 'storageLocation', header: 'Location' },
+      {
+        key: 'actions',
+        header: '',
+        render: (p) => (
+          <button
+            type="button"
+            className="rounded-lg border border-slate-200 px-2 py-0.5 text-xs hover:bg-slate-50"
+            onClick={() => handleRestock(p)}
+            disabled={restockPart.isPending}
+          >
+            Restock
+          </button>
+        ),
+      },
+    ],
+    [restockPart]
+  );
+
   const fileInputRef = useRef(null);
   const [bulkText, setBulkText] = useState('');
   const [bulkRows, setBulkRows] = useState([]);
@@ -100,12 +171,38 @@ export default function PartsInventoryPage() {
 
   const [partNumber, setPartNumber] = useState('');
   const [partDescription, setPartDescription] = useState('');
-  const [partTypeInput, setPartTypeInput] = useState('Returnable');
   const [serialNumber, setSerialNumber] = useState('');
   const [stockOnHand, setStockOnHand] = useState('0');
   const [minimumStockLevel, setMinimumStockLevel] = useState('0');
   const [unitOfMeasure, setUnitOfMeasure] = useState('EA');
   const [storageLocationInput, setStorageLocationInput] = useState('');
+
+  const [consumableName, setConsumableName] = useState('');
+  const [consumableQuantity, setConsumableQuantity] = useState('0');
+  const [consumableMinLevel, setConsumableMinLevel] = useState('0');
+  const [consumableLocation, setConsumableLocation] = useState('');
+
+  function handleAddConsumable(e) {
+    e.preventDefault();
+    createPart.mutate(
+      {
+        partDescription: consumableName,
+        partType: 'Consumable',
+        stockOnHand: Number(consumableQuantity),
+        minimumStockLevel: Number(consumableMinLevel) || 0,
+        unitOfMeasure: 'EA',
+        storageLocation: consumableLocation,
+      },
+      {
+        onSuccess: () => {
+          setConsumableName('');
+          setConsumableQuantity('0');
+          setConsumableMinLevel('0');
+          setConsumableLocation('');
+        },
+      }
+    );
+  }
 
   const columns = useMemo(
     () => [
@@ -161,8 +258,9 @@ export default function PartsInventoryPage() {
         <div className="text-sm text-slate-600">Manage spare parts stock levels and details.</div>
       </div>
 
-      <div className="rounded-xl bg-white shadow-soft p-6">
+      <div className="rounded-xl bg-white shadow-soft p-6 max-w-4xl mx-auto">
         <div className="text-sm font-semibold text-epiroc-blue">Add spare part</div>
+        <div className="text-xs text-slate-500">Returnable spares and tools that get issued and are expected back.</div>
         <form
           className="mt-4 space-y-4"
           onSubmit={(e) => {
@@ -171,7 +269,7 @@ export default function PartsInventoryPage() {
               {
                 partNumber: partNumber || undefined,
                 partDescription,
-                partType: partTypeInput,
+                partType: 'Returnable',
                 serialNumber,
                 stockOnHand: Number(stockOnHand),
                 minimumStockLevel: Number(minimumStockLevel),
@@ -182,7 +280,6 @@ export default function PartsInventoryPage() {
                 onSuccess: () => {
                   setPartNumber('');
                   setPartDescription('');
-                  setPartTypeInput('Returnable');
                   setSerialNumber('');
                   setStockOnHand('0');
                   setMinimumStockLevel('0');
@@ -200,13 +297,6 @@ export default function PartsInventoryPage() {
             <div className="md:col-span-2">
               <label className="text-sm font-medium text-slate-700">Part description</label>
               <input className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" value={partDescription} onChange={(e) => setPartDescription(e.target.value)} required />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-slate-700">Part type</label>
-              <select className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" value={partTypeInput} onChange={(e) => setPartTypeInput(e.target.value)}>
-                <option value="Returnable">Returnable (spares, tools)</option>
-                <option value="Consumable">Consumable (used up, not returned)</option>
-              </select>
             </div>
             <div>
               <label className="text-sm font-medium text-slate-700">Serial number</label>
@@ -238,7 +328,65 @@ export default function PartsInventoryPage() {
         </form>
       </div>
 
-      <div className="rounded-xl bg-white shadow-soft p-6 space-y-4">
+      <div className="rounded-xl bg-white shadow-soft p-6 max-w-4xl mx-auto">
+        <div className="text-sm font-semibold text-epiroc-blue">Add consumable</div>
+        <div className="text-xs text-slate-500">Oils, grease, filters, PPE — issued but never returned. Just a name and quantity.</div>
+        <form className="mt-4 space-y-4" onSubmit={handleAddConsumable}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium text-slate-700">Name</label>
+              <input
+                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                value={consumableName}
+                onChange={(e) => setConsumableName(e.target.value)}
+                placeholder="e.g. Brake cleaner 500ml"
+                required
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-slate-700">Quantity on hand</label>
+              <input
+                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                type="number"
+                min="0"
+                value={consumableQuantity}
+                onChange={(e) => setConsumableQuantity(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+          <details className="text-sm">
+            <summary className="cursor-pointer text-epiroc-blue font-medium">More options (optional)</summary>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+              <div>
+                <label className="text-sm font-medium text-slate-700">Minimum stock level</label>
+                <input
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                  type="number"
+                  min="0"
+                  value={consumableMinLevel}
+                  onChange={(e) => setConsumableMinLevel(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-slate-700">Storage location</label>
+                <input
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                  value={consumableLocation}
+                  onChange={(e) => setConsumableLocation(e.target.value)}
+                />
+              </div>
+            </div>
+          </details>
+          <div className="flex justify-center">
+            <button className="rounded-xl bg-epiroc-yellow px-6 py-2 font-semibold text-epiroc-black shadow-soft hover:brightness-95 disabled:opacity-60" type="submit" disabled={createPart.isPending}>
+              {createPart.isPending ? 'Adding consumable...' : 'Add consumable'}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div className="rounded-xl bg-white shadow-soft p-6 space-y-4 max-w-4xl mx-auto">
         <div className="flex items-center justify-between">
           <div>
             <div className="text-sm font-semibold text-epiroc-blue">Bulk add parts</div>
@@ -405,6 +553,28 @@ export default function PartsInventoryPage() {
           <div className="rounded-xl bg-white shadow-soft p-4 text-sm text-slate-600">Could not load parts</div>
         ) : (
           <Table emptyLabel="No spare parts found" columns={columns} rows={parts} maxHeight="500px" />
+        )}
+      </div>
+
+      <div className="space-y-3">
+        <div>
+          <div className="text-sm font-semibold text-epiroc-blue">Consumables tracking</div>
+          <div className="text-xs text-slate-500">
+            Items added via "Add consumable" above — remaining stock, last restock, and consumption since then.
+          </div>
+        </div>
+
+        {consumablesLoading ? (
+          <div className="rounded-xl bg-white shadow-soft p-4 text-sm text-slate-600">Loading consumables...</div>
+        ) : consumablesError ? (
+          <div className="rounded-xl bg-white shadow-soft p-4 text-sm text-slate-600">Could not load consumables</div>
+        ) : (
+          <Table
+            emptyLabel="No consumables added yet. Use the Add consumable form above."
+            columns={consumablesColumns}
+            rows={consumables}
+            maxHeight="500px"
+          />
         )}
       </div>
     </div>
