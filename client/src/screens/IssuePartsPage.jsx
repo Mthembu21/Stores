@@ -1,14 +1,9 @@
 import { useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
-import { SignaturePad } from '../components/SignaturePad';
-import { useMe } from '../services/auth';
 import { useSpareParts } from '../services/spareParts';
 import { useCreateStoreIssue } from '../services/storeIssues';
 
 export default function IssuePartsPage() {
-  const { data: meData } = useMe();
-  const me = meData?.user || meData;
-
   const { data: partsData, isLoading: partsLoading } = useSpareParts();
   const parts = partsData?.parts || [];
   const createIssue = useCreateStoreIssue();
@@ -44,8 +39,6 @@ export default function IssuePartsPage() {
 
   const [foremanName, setForemanName] = useState('');
   const [foremanSurname, setForemanSurname] = useState('');
-  const [foremanSignature, setForemanSignature] = useState('');
-  const [storemanSignature, setStoremanSignature] = useState('');
 
   const requestedNum = Number(quantityRequested) || 0;
   const stockOnHand = selectedPart?.stockOnHand ?? 0;
@@ -79,8 +72,6 @@ export default function IssuePartsPage() {
     setQuantityTouched(false);
     setForemanName('');
     setForemanSurname('');
-    setForemanSignature('');
-    setStoremanSignature('');
   }
 
   function handleSubmit(e) {
@@ -89,11 +80,6 @@ export default function IssuePartsPage() {
       toast.error('Select a part first');
       return;
     }
-    if (!foremanSignature || !storemanSignature) {
-      toast.error('Both Foreman and Storeman signatures are required');
-      return;
-    }
-
     createIssue.mutate(
       {
         machineNumber,
@@ -110,8 +96,6 @@ export default function IssuePartsPage() {
         quantityToOrder: effectiveToOrder,
         foremanName,
         foremanSurname,
-        foremanSignature,
-        storemanSignature,
       },
       { onSuccess: resetForm }
     );
@@ -268,7 +252,7 @@ export default function IssuePartsPage() {
         </div>
 
         <div className="rounded-xl bg-white shadow-soft p-6 space-y-4">
-          <div className="text-sm font-semibold text-epiroc-blue">4. Signatures</div>
+          <div className="text-sm font-semibold text-epiroc-blue">4. Foreman</div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium text-slate-700">Foreman name</label>
@@ -278,10 +262,6 @@ export default function IssuePartsPage() {
               <label className="text-sm font-medium text-slate-700">Foreman surname</label>
               <input className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" value={foremanSurname} onChange={(e) => setForemanSurname(e.target.value)} />
             </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <SignaturePad label="Foreman signature" value={foremanSignature} onChange={setForemanSignature} />
-            <SignaturePad label={`Storeman signature (${me?.fullName || 'you'})`} value={storemanSignature} onChange={setStoremanSignature} />
           </div>
         </div>
 

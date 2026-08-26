@@ -54,7 +54,7 @@ export default function PartReturnsPage() {
       { key: 'partDescription', header: 'Description' },
       { key: 'quantityIssued', header: 'Issued' },
       { key: 'quantityReturned', header: 'Already Returned' },
-      { key: 'outstanding', header: 'Outstanding', render: (i) => i.quantityIssued - i.quantityReturned },
+      { key: 'outstanding', header: 'Issued Out', render: (i) => i.quantityIssued - i.quantityReturned },
       { key: 'issueDate', header: 'Issue Date', render: (i) => formatDateTime(i.issueDate) },
       { key: 'status', header: 'Status' },
     ],
@@ -84,7 +84,7 @@ export default function PartReturnsPage() {
         ) : (
           <div className="max-h-64 overflow-y-auto border border-slate-200 rounded-xl">
             {outstandingIssues.length === 0 ? (
-              <div className="p-4 text-sm text-slate-500 text-center">No issues with outstanding quantity found</div>
+              <div className="p-4 text-sm text-slate-500 text-center">No parts issued out</div>
             ) : (
               outstandingIssues.map((issue) => (
                 <div
@@ -100,7 +100,7 @@ export default function PartReturnsPage() {
                       <div className="text-sm text-slate-600">{issue.partDescription}</div>
                     </div>
                     <div className="text-sm font-semibold text-epiroc-blue">
-                      {issue.quantityIssued - issue.quantityReturned} outstanding
+                      {issue.quantityIssued - issue.quantityReturned} issued out
                     </div>
                   </div>
                 </div>
@@ -146,8 +146,8 @@ export default function PartReturnsPage() {
       )}
 
       <div className="space-y-3">
-        <div className="text-sm font-semibold text-epiroc-blue">Issues with outstanding quantity</div>
-        <Table emptyLabel="Nothing outstanding" columns={columns} rows={outstandingIssues} maxHeight="400px" />
+        <div className="text-sm font-semibold text-epiroc-blue">Parts issued out</div>
+        <Table emptyLabel="No parts issued out" columns={columns} rows={outstandingIssues} maxHeight="400px" />
       </div>
     </div>
   );

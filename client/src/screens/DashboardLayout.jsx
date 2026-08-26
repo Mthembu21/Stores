@@ -66,6 +66,7 @@ export default function DashboardLayout() {
                 <SideLink to="/spare-parts/issue">Issue Parts</SideLink>
                 <SideLink to="/spare-parts/store-issues">Store Issues</SideLink>
                 <SideLink to="/spare-parts/returns">Returns</SideLink>
+                <SideLink to="/spare-parts/consumables">Consumables</SideLink>
                 <SideLink to="/spare-parts/low-stock">Low Stock</SideLink>
                 <SideLink to="/spare-parts/to-order">Parts To Order</SideLink>
                 <SideLink to="/spare-parts/movements">Stock Movements</SideLink>

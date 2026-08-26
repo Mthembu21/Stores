@@ -34,7 +34,7 @@ export default function PartsDashboardPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         <Card title="Total Parts" value={cards.totalParts} />
-        <Card title="Active Parts" value={cards.activeParts} />
+        <Card title="Available Parts" value={cards.activeParts} />
         <Card title="Low Stock Parts" value={cards.lowStockParts} tone="warning" />
         <Card title="Out of Stock Parts" value={cards.outOfStockParts} tone="danger" />
         <Card title="Parts Issued Today" value={cards.partsIssuedToday} />

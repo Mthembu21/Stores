@@ -4,6 +4,14 @@ const sparePartSchema = new mongoose.Schema(
   {
     partNumber: { type: String, required: true, unique: true, trim: true },
     partDescription: { type: String, required: true, trim: true },
+    partType: {
+      type: String,
+      required: true,
+      enum: ['Returnable', 'Consumable'],
+      default: 'Returnable',
+    },
+    lastRestockedAt: { type: Date, default: null },
+    lastRestockedQuantity: { type: Number, default: 0 },
     componentPartNumber: { type: String, trim: true, default: '' },
     componentDescription: { type: String, trim: true, default: '' },
     functionalSystem: { type: String, trim: true, default: '' },

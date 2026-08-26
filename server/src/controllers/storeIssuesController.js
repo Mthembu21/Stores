@@ -27,16 +27,10 @@ async function createStoreIssue(req, res) {
     quantityToOrder: quantityToOrderInput,
     foremanName,
     foremanSurname,
-    foremanSignature,
-    storemanSignature,
   } = req.body;
 
   if (!sparePartId || !requestorName || !requestorSurname || !quantityRequested) {
     throw new ApiError(400, 'Missing required fields');
-  }
-
-  if (!foremanSignature || !storemanSignature) {
-    throw new ApiError(400, 'Foreman and Storeman signatures are both required');
   }
 
   const part = await SparePart.findById(sparePartId);
@@ -97,8 +91,6 @@ async function createStoreIssue(req, res) {
     quantityReturned: 0,
     foremanName,
     foremanSurname,
-    foremanSignature,
-    storemanSignature,
     issuedBy: req.user._id,
     issueDate: new Date(),
     status: deriveStatus(requested, quantityIssued),

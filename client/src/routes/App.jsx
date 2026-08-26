@@ -12,6 +12,7 @@ import PartReturnsPage from '../screens/PartReturnsPage';
 import LowStockPage from '../screens/LowStockPage';
 import PartsToOrderPage from '../screens/PartsToOrderPage';
 import StockMovementsPage from '../screens/StockMovementsPage';
+import ConsumablesPage from '../screens/ConsumablesPage';
 import { RequireAuth } from './RequireAuth';
 import { RequireRole } from './RequireRole';
 import HomeRedirect from './HomeRedirect';
@@ -117,6 +118,14 @@ export default function App() {
           element={
             <RequireRole roles={MODULE_ROLES.spareParts}>
               <StockMovementsPage />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="spare-parts/consumables"
+          element={
+            <RequireRole roles={MODULE_ROLES.spareParts}>
+              <ConsumablesPage />
             </RequireRole>
           }
         />
