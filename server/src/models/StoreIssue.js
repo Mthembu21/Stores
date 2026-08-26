@@ -24,7 +24,7 @@ const storeIssueSchema = new mongoose.Schema(
     requestorClockNumber: { type: String, trim: true, default: '' },
     requestorContactNumber: { type: String, trim: true, default: '' },
 
-    justification: { type: String, required: true, trim: true },
+    justification: { type: String, trim: true, default: '' },
 
     quantityRequested: { type: Number, required: true, min: 0 },
     quantityIssued: { type: Number, required: true, min: 0, default: 0 },
