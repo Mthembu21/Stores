@@ -25,6 +25,7 @@ export function useCreateStoreIssue() {
       qc.invalidateQueries({ queryKey: ['spare-parts'], exact: false });
       qc.invalidateQueries({ queryKey: ['parts-dashboard'] });
       qc.invalidateQueries({ queryKey: ['stock-movements'], exact: false });
+      qc.invalidateQueries({ queryKey: ['consumables-tracking'] });
       toast.success('Store issue created');
     },
     onError: (err) => {

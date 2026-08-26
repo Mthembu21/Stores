@@ -20,16 +20,18 @@ async function createStoreIssue(req, res) {
     sparePartId,
     requestorName,
     requestorSurname,
-    requestorEmployeeNumber,
+    requestorClockNumber,
     requestorContactNumber,
+    justification,
     quantityRequested,
     quantityIssued: quantityIssuedInput,
     quantityToOrder: quantityToOrderInput,
+    quantityReturned: quantityReturnedInput,
     foremanName,
     foremanSurname,
   } = req.body;
 
-  if (!sparePartId || !requestorName || !requestorSurname || !quantityRequested) {
+  if (!sparePartId || !requestorName || !requestorSurname || !quantityRequested || !justification) {
     throw new ApiError(400, 'Missing required fields');
   }
 
@@ -59,12 +61,25 @@ async function createStoreIssue(req, res) {
     throw new ApiError(400, 'Quantity issued is invalid for current stock / quantity requested');
   }
 
+  const quantityReturned =
+    quantityReturnedInput !== undefined && quantityReturnedInput !== null ? Number(quantityReturnedInput) : 0;
+  if (quantityReturned < 0 || quantityReturned > quantityIssued) {
+    throw new ApiError(400, 'Quantity returned cannot exceed quantity issued');
+  }
+
   const previousStock = part.stockOnHand;
-  part.stockOnHand -= quantityIssued;
+  const afterIssueStock = previousStock - quantityIssued;
+  const finalStock = afterIssueStock + quantityReturned;
+  part.stockOnHand = finalStock;
   await part.save();
 
   const store = await getDefaultStoreId();
   const issueNumber = await getNextSequence('storeIssueNumber', 'SI');
+
+  let status = deriveStatus(requested, quantityIssued);
+  if (quantityIssued > 0 && quantityReturned >= quantityIssued) {
+    status = 'Returned';
+  }
 
   const issue = await StoreIssue.create({
     issueNumber,
@@ -83,17 +98,18 @@ async function createStoreIssue(req, res) {
     serialNumber: part.serialNumber,
     requestorName,
     requestorSurname,
-    requestorEmployeeNumber,
+    requestorClockNumber,
     requestorContactNumber,
+    justification,
     quantityRequested: requested,
     quantityIssued,
     quantityToOrder,
-    quantityReturned: 0,
+    quantityReturned,
     foremanName,
     foremanSurname,
     issuedBy: req.user._id,
     issueDate: new Date(),
-    status: deriveStatus(requested, quantityIssued),
+    status,
   });
 
   if (quantityIssued > 0) {
@@ -105,12 +121,30 @@ async function createStoreIssue(req, res) {
       movementType: 'Issue',
       quantity: quantityIssued,
       previousStock,
-      newStock: part.stockOnHand,
+      newStock: afterIssueStock,
       storeIssue: issue._id,
       serviceOrderNumber,
       workOrderNumber,
       user: req.user._id,
       reason: 'Store issue',
+    });
+  }
+
+  if (quantityReturned > 0) {
+    await StockMovement.create({
+      movementId: await getNextSequence('stockMovementId', 'MV'),
+      store,
+      sparePart: part._id,
+      partNumber: part.partNumber,
+      movementType: 'Return',
+      quantity: quantityReturned,
+      previousStock: afterIssueStock,
+      newStock: finalStock,
+      storeIssue: issue._id,
+      serviceOrderNumber,
+      workOrderNumber,
+      user: req.user._id,
+      reason: 'Returned at time of issue',
     });
   }
 
