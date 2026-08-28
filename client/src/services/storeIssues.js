@@ -13,6 +13,18 @@ export function useStoreIssues(filters) {
   });
 }
 
+export function useStoreIssue(id) {
+  return useQuery({
+    queryKey: ['store-issue', id],
+    queryFn: async () => {
+      const { data } = await http.get(`/store-issues/${id}`);
+      return data;
+    },
+    enabled: Boolean(id),
+    staleTime: 5_000,
+  });
+}
+
 export function useCreateStoreIssue() {
   const qc = useQueryClient();
   return useMutation({

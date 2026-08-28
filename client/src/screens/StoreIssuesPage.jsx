@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Table } from '../components/Table';
 import { useStoreIssues } from '../services/storeIssues';
 import { formatDateTime } from '../utils/format';
@@ -36,6 +37,20 @@ export default function StoreIssuesPage() {
       { key: 'issuedBy', header: 'Issued By', render: (i) => i.issuedBy?.fullName || '' },
       { key: 'issueDate', header: 'Date', render: (i) => formatDateTime(i.issueDate) },
       { key: 'status', header: 'Status' },
+      {
+        key: 'print',
+        header: '',
+        render: (i) => (
+          <Link
+            to={`/spare-parts/store-issues/${i.issueId}/print`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-epiroc-blue font-semibold hover:underline"
+          >
+            Print
+          </Link>
+        ),
+      },
     ],
     []
   );

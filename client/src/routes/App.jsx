@@ -13,6 +13,7 @@ import LowStockPage from '../screens/LowStockPage';
 import PartsToOrderPage from '../screens/PartsToOrderPage';
 import StockMovementsPage from '../screens/StockMovementsPage';
 import KpiTrackerPage from '../screens/KpiTrackerPage';
+import IssuePrintPage from '../screens/IssuePrintPage';
 import { RequireAuth } from './RequireAuth';
 import { RequireRole } from './RequireRole';
 import HomeRedirect from './HomeRedirect';
@@ -130,6 +131,17 @@ export default function App() {
           }
         />
       </Route>
+
+      <Route
+        path="spare-parts/store-issues/:id/print"
+        element={
+          <RequireAuth>
+            <RequireRole roles={MODULE_ROLES.spareParts}>
+              <IssuePrintPage />
+            </RequireRole>
+          </RequireAuth>
+        }
+      />
 
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
