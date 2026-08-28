@@ -273,8 +273,6 @@ export default function IssuePartsPage() {
           <div className="flex items-center gap-3">
             <Link
               to={`/spare-parts/store-issues/${lastCreatedIssue._id}/print`}
-              target="_blank"
-              rel="noopener noreferrer"
               className="rounded-xl bg-epiroc-yellow px-4 py-2 text-sm font-semibold text-epiroc-black shadow-soft hover:brightness-95"
             >
               View & Print

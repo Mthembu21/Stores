@@ -43,8 +43,6 @@ export default function StoreIssuesPage() {
         render: (i) => (
           <Link
             to={`/spare-parts/store-issues/${i.issueId}/print`}
-            target="_blank"
-            rel="noopener noreferrer"
             className="text-epiroc-blue font-semibold hover:underline"
           >
             Print

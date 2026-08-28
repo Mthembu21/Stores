@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { useStoreIssue } from '../services/storeIssues';
 import epirocLogo from '../components/logo.png';
 
@@ -80,7 +80,8 @@ export default function IssuePrintPage() {
           max-width: 190mm;
           margin: 0 auto 8px auto;
           display: flex;
-          justify-content: flex-end;
+          justify-content: space-between;
+          align-items: center;
         }
         .print-header {
           display: flex;
@@ -196,6 +197,9 @@ export default function IssuePrintPage() {
       `}</style>
 
       <div className="print-toolbar no-print">
+        <Link to="/spare-parts/store-issues" className="text-sm text-epiroc-blue font-semibold hover:underline">
+          &larr; Back to Store Issues
+        </Link>
         <button
           className="rounded-xl bg-epiroc-yellow px-4 py-2 text-sm font-semibold text-epiroc-black shadow-soft hover:brightness-95"
           onClick={() => window.print()}
