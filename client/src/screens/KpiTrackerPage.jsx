@@ -1,10 +1,18 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Table } from '../components/Table';
+import { KpiWeeklyCharts } from '../components/KpiCharts';
 import { useKpiEntries, useSaveKpiEntry } from '../services/kpiEntries';
 import { KPI_DEFINITIONS, formatTarget, meetsTarget } from '../config/kpiDefinitions';
 
 function todayIso() {
   const d = new Date();
+  const tzOffsetMs = d.getTimezoneOffset() * 60000;
+  return new Date(d.getTime() - tzOffsetMs).toISOString().slice(0, 10);
+}
+
+function isoDaysAgo(daysAgo) {
+  const d = new Date();
+  d.setDate(d.getDate() - daysAgo);
   const tzOffsetMs = d.getTimezoneOffset() * 60000;
   return new Date(d.getTime() - tzOffsetMs).toISOString().slice(0, 10);
 }
@@ -26,6 +34,9 @@ export default function KpiTrackerPage() {
 
   const [selectedDate, setSelectedDate] = useState(todayIso());
   const [values, setValues] = useState({});
+  const [comments, setComments] = useState({});
+
+  const last7Days = useMemo(() => Array.from({ length: 7 }, (_, i) => isoDaysAgo(6 - i)), []);
 
   const existingEntry = useMemo(
     () => entries.find((e) => dateOnly(e.date) === selectedDate),
@@ -35,8 +46,10 @@ export default function KpiTrackerPage() {
   useEffect(() => {
     if (existingEntry) {
       setValues({ ...existingEntry.values });
+      setComments({ ...existingEntry.comments });
     } else {
       setValues({});
+      setComments({});
     }
   }, [selectedDate, existingEntry]);
 
@@ -44,9 +57,13 @@ export default function KpiTrackerPage() {
     setValues((prev) => ({ ...prev, [key]: val }));
   }
 
+  function updateComment(key, val) {
+    setComments((prev) => ({ ...prev, [key]: val }));
+  }
+
   function handleSave(e) {
     e.preventDefault();
-    saveEntry.mutate({ date: selectedDate, values });
+    saveEntry.mutate({ date: selectedDate, values, comments });
   }
 
   const historyColumns = useMemo(
@@ -57,8 +74,14 @@ export default function KpiTrackerPage() {
         header: def.label,
         render: (row) => {
           const val = row.values?.[def.key];
+          const comment = row.comments?.[def.key];
           const ok = meetsTarget(def, val);
-          return <span className={statusClass(ok)}>{val === null || val === undefined ? '—' : val}</span>;
+          return (
+            <span className={statusClass(ok)} title={comment || undefined}>
+              {val === null || val === undefined ? '—' : val}
+              {comment ? ' *' : ''}
+            </span>
+          );
         },
       })),
       { key: 'recordedBy', header: 'Recorded by', render: (row) => row.recordedBy?.fullName || '' },
@@ -87,31 +110,36 @@ export default function KpiTrackerPage() {
           />
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-4">
           {KPI_DEFINITIONS.map((def) => {
             const val = values[def.key];
             const ok = meetsTarget(def, val);
             return (
-              <div
-                key={def.key}
-                className="grid grid-cols-1 md:grid-cols-[1fr_1fr_120px_140px] gap-3 items-center border-b border-slate-100 pb-3 last:border-b-0 last:pb-0"
-              >
-                <div>
-                  <div className="text-sm font-medium text-slate-900">{def.label}</div>
-                  <div className="text-xs text-slate-500">{def.description}</div>
+              <div key={def.key} className="border-b border-slate-100 pb-4 last:border-b-0 last:pb-0 space-y-2">
+                <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_120px_140px] gap-3 items-center">
+                  <div>
+                    <div className="text-sm font-medium text-slate-900">{def.label}</div>
+                    <div className="text-xs text-slate-500">{def.description}</div>
+                  </div>
+                  <div className="text-xs text-slate-500">Target: {formatTarget(def)}</div>
+                  <input
+                    className="rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                    type="number"
+                    step="any"
+                    value={val ?? ''}
+                    onChange={(e) => updateValue(def.key, e.target.value)}
+                    placeholder={def.unit}
+                  />
+                  <div className={`text-sm text-center ${statusClass(ok)}`}>
+                    {ok === null ? 'No entry' : ok ? 'On target' : 'Below target'}
+                  </div>
                 </div>
-                <div className="text-xs text-slate-500">Target: {formatTarget(def)}</div>
                 <input
-                  className="rounded-xl border border-slate-200 px-3 py-2 text-sm"
-                  type="number"
-                  step="any"
-                  value={val ?? ''}
-                  onChange={(e) => updateValue(def.key, e.target.value)}
-                  placeholder={def.unit}
+                  className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs"
+                  value={comments[def.key] || ''}
+                  onChange={(e) => updateComment(def.key, e.target.value)}
+                  placeholder="Add a comment (optional)"
                 />
-                <div className={`text-sm text-center ${statusClass(ok)}`}>
-                  {ok === null ? 'No entry' : ok ? 'On target' : 'Below target'}
-                </div>
               </div>
             );
           })}
@@ -129,7 +157,19 @@ export default function KpiTrackerPage() {
       </form>
 
       <div className="space-y-3">
+        <div className="text-sm font-semibold text-epiroc-blue">Weekly progress (target vs actual)</div>
+        {isLoading ? (
+          <div className="rounded-xl bg-white shadow-soft p-4 text-sm text-slate-600">Loading KPI history...</div>
+        ) : isError ? (
+          <div className="rounded-xl bg-white shadow-soft p-4 text-sm text-slate-600">Could not load KPI history</div>
+        ) : (
+          <KpiWeeklyCharts entries={entries} days={last7Days} />
+        )}
+      </div>
+
+      <div className="space-y-3">
         <div className="text-sm font-semibold text-epiroc-blue">Recent history</div>
+        <div className="text-xs text-slate-500">Values marked with * have a comment attached — hover to read it.</div>
         {isLoading ? (
           <div className="rounded-xl bg-white shadow-soft p-4 text-sm text-slate-600">Loading KPI history...</div>
         ) : isError ? (

@@ -11,7 +11,7 @@ const KPI_DEFINITIONS = [
     key: 'putAwayTime',
     label: 'Put-Away Time',
     description: 'Time from receiving to bin location',
-    target: 3,
+    target: 24,
     unit: 'hours',
     direction: 'lower',
   },

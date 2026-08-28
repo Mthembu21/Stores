@@ -10,7 +10,7 @@ function startOfDay(input) {
 }
 
 async function upsertKpiEntry(req, res) {
-  const { date, values } = req.body;
+  const { date, values, comments } = req.body;
 
   if (!values || typeof values !== 'object') {
     throw new ApiError(400, 'Missing KPI values');
@@ -23,6 +23,9 @@ async function upsertKpiEntry(req, res) {
     if (Object.prototype.hasOwnProperty.call(values, key)) {
       const raw = values[key];
       setFields[`values.${key}`] = raw === '' || raw === null || raw === undefined ? null : Number(raw);
+    }
+    if (comments && typeof comments === 'object' && Object.prototype.hasOwnProperty.call(comments, key)) {
+      setFields[`comments.${key}`] = comments[key] || '';
     }
   }
 

@@ -16,8 +16,8 @@ export function useKpiEntries(limit) {
 export function useSaveKpiEntry() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ date, values }) => {
-      const { data } = await http.post('/kpi-entries', { date, values });
+    mutationFn: async ({ date, values, comments }) => {
+      const { data } = await http.post('/kpi-entries', { date, values, comments });
       return data;
     },
     onSuccess: () => {
