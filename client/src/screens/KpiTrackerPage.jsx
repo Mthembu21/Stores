@@ -96,7 +96,7 @@ export default function KpiTrackerPage() {
         <div className="text-sm text-slate-600">Capture today's warehouse operations KPIs and review recent history.</div>
       </div>
 
-      <form className="rounded-xl bg-white shadow-soft p-6 space-y-4" onSubmit={handleSave}>
+      <form className="max-w-2xl mx-auto w-full rounded-xl bg-white shadow-soft p-6 space-y-4" onSubmit={handleSave}>
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="text-sm font-semibold text-epiroc-blue">
             {existingEntry ? 'Edit KPIs for' : 'Capture KPIs for'}
@@ -116,21 +116,23 @@ export default function KpiTrackerPage() {
             const ok = meetsTarget(def, val);
             return (
               <div key={def.key} className="border-b border-slate-100 pb-4 last:border-b-0 last:pb-0 space-y-2">
-                <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_120px_140px] gap-3 items-center">
+                <div className="flex items-start justify-between gap-2">
                   <div>
                     <div className="text-sm font-medium text-slate-900">{def.label}</div>
                     <div className="text-xs text-slate-500">{def.description}</div>
                   </div>
-                  <div className="text-xs text-slate-500">Target: {formatTarget(def)}</div>
+                  <div className="text-xs text-slate-500 whitespace-nowrap pt-0.5">Target: {formatTarget(def)}</div>
+                </div>
+                <div className="flex items-center gap-3">
                   <input
-                    className="rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                    className="w-28 rounded-xl border border-slate-200 px-3 py-2 text-sm"
                     type="number"
                     step="any"
                     value={val ?? ''}
                     onChange={(e) => updateValue(def.key, e.target.value)}
                     placeholder={def.unit}
                   />
-                  <div className={`text-sm text-center ${statusClass(ok)}`}>
+                  <div className={`text-sm ${statusClass(ok)}`}>
                     {ok === null ? 'No entry' : ok ? 'On target' : 'Below target'}
                   </div>
                 </div>
