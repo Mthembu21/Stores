@@ -12,6 +12,7 @@ import PartReturnsPage from '../screens/PartReturnsPage';
 import LowStockPage from '../screens/LowStockPage';
 import PartsToOrderPage from '../screens/PartsToOrderPage';
 import StockMovementsPage from '../screens/StockMovementsPage';
+import KpiTrackerPage from '../screens/KpiTrackerPage';
 import { RequireAuth } from './RequireAuth';
 import { RequireRole } from './RequireRole';
 import HomeRedirect from './HomeRedirect';
@@ -117,6 +118,14 @@ export default function App() {
           element={
             <RequireRole roles={MODULE_ROLES.spareParts}>
               <StockMovementsPage />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="spare-parts/kpi"
+          element={
+            <RequireRole roles={MODULE_ROLES.spareParts}>
+              <KpiTrackerPage />
             </RequireRole>
           }
         />

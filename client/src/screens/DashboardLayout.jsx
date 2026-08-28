@@ -69,6 +69,7 @@ export default function DashboardLayout() {
                 <SideLink to="/spare-parts/low-stock">Low Stock</SideLink>
                 <SideLink to="/spare-parts/to-order">Parts To Order</SideLink>
                 <SideLink to="/spare-parts/movements">Stock Movements</SideLink>
+                <SideLink to="/spare-parts/kpi">Daily KPIs</SideLink>
               </>
             )}
 
