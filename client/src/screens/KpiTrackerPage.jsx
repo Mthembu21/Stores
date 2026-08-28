@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Table } from '../components/Table';
-import { KpiWeeklyCharts } from '../components/KpiCharts';
+import { KpiOverviewChart } from '../components/KpiCharts';
 import { useKpiEntries, useSaveKpiEntry } from '../services/kpiEntries';
 import { KPI_DEFINITIONS, formatTarget, meetsTarget } from '../config/kpiDefinitions';
 
@@ -163,7 +163,7 @@ export default function KpiTrackerPage() {
         ) : isError ? (
           <div className="rounded-xl bg-white shadow-soft p-4 text-sm text-slate-600">Could not load KPI history</div>
         ) : (
-          <KpiWeeklyCharts entries={entries} days={last7Days} />
+          <KpiOverviewChart entries={entries} days={last7Days} />
         )}
       </div>
 
