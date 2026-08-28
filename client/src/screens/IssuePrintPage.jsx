@@ -73,8 +73,8 @@ export default function IssuePrintPage() {
           background: #fff;
           color: #111;
           font-family: Arial, Helvetica, sans-serif;
-          font-size: 8.5pt;
-          line-height: 1.25;
+          font-size: 9.5pt;
+          line-height: 1.35;
         }
         .print-toolbar {
           max-width: 190mm;
@@ -88,106 +88,107 @@ export default function IssuePrintPage() {
           justify-content: space-between;
           align-items: flex-start;
           border-bottom: 2px solid #003b71;
-          padding-bottom: 4px;
-          margin-bottom: 6px;
+          padding-bottom: 6px;
+          margin-bottom: 9px;
         }
         .print-header .brand {
           display: flex;
           align-items: center;
-          gap: 8px;
+          gap: 9px;
         }
         .print-header .brand img {
-          height: 22pt;
+          height: 25pt;
           width: auto;
           display: block;
         }
         .print-header h1 {
-          font-size: 13pt;
+          font-size: 14.5pt;
           font-weight: 700;
           color: #003b71;
           margin: 0;
         }
         .print-header .sub {
-          font-size: 9pt;
+          font-size: 10pt;
           font-weight: 600;
           margin-top: 2px;
         }
         .print-header .meta {
           text-align: right;
-          font-size: 8.5pt;
+          font-size: 9.5pt;
         }
         .print-header .meta .issue-number {
-          font-size: 11pt;
+          font-size: 12pt;
           font-weight: 700;
         }
         .section {
           border: 1px solid #94a3b8;
-          margin-bottom: 4px;
+          margin-bottom: 5px;
           page-break-inside: avoid;
         }
         .section-title {
           background: #e2e8f0;
           font-weight: 700;
-          font-size: 7.5pt;
+          font-size: 8pt;
           text-transform: uppercase;
           letter-spacing: 0.02em;
-          padding: 2px 4px;
+          padding: 4px 6px;
           border-bottom: 1px solid #94a3b8;
         }
         .section-body {
-          padding: 3px 4px;
+          padding: 6px 8px;
         }
         .grid {
           display: grid;
-          gap: 2px 8px;
+          gap: 4px 10px;
         }
         .grid-2 { grid-template-columns: repeat(2, 1fr); }
         .grid-3 { grid-template-columns: repeat(3, 1fr); }
         .grid-4 { grid-template-columns: repeat(4, 1fr); }
         .field-label {
-          font-size: 6.8pt;
+          font-size: 7.2pt;
           color: #475569;
           text-transform: uppercase;
         }
         .field-value {
-          font-size: 8.5pt;
+          font-size: 9.5pt;
           font-weight: 600;
           border-bottom: 1px solid #cbd5e1;
-          min-height: 11pt;
+          min-height: 12pt;
+          padding-bottom: 1px;
         }
         table.print-table {
           width: 100%;
           border-collapse: collapse;
-          font-size: 8pt;
+          font-size: 8.8pt;
         }
         table.print-table th, table.print-table td {
           border: 1px solid #94a3b8;
-          padding: 2px 4px;
+          padding: 3px 6px;
           text-align: left;
         }
         table.print-table th {
           background: #f1f5f9;
-          font-size: 7pt;
+          font-size: 7.5pt;
           text-transform: uppercase;
         }
         .checkbox-row {
           display: flex;
-          gap: 12px;
-          margin-bottom: 3px;
+          gap: 16px;
+          margin-bottom: 5px;
         }
         .checkbox-row span {
-          font-size: 8pt;
+          font-size: 8.8pt;
         }
         .signature-grid {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
-          gap: 8px;
+          gap: 10px;
         }
         .signature-box {
           border-top: 1px solid #111;
-          margin-top: 14px;
-          padding-top: 2px;
-          font-size: 7.5pt;
+          margin-top: 15px;
+          padding-top: 3px;
+          font-size: 8pt;
         }
         @media print {
           .no-print { display: none !important; }
