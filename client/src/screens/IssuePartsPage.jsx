@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useSpareParts } from '../services/spareParts';
 import { useCreateStoreIssue } from '../services/storeIssues';
@@ -23,6 +24,7 @@ export default function IssuePartsPage() {
 
   const [partSearch, setPartSearch] = useState('');
   const [items, setItems] = useState([]);
+  const [lastCreatedIssue, setLastCreatedIssue] = useState(null);
 
   const filteredParts = useMemo(() => {
     const q = partSearch.trim().toLowerCase();
@@ -247,7 +249,12 @@ export default function IssuePartsPage() {
         storemanName,
         storemanSurname,
       },
-      { onSuccess: resetForm }
+      {
+        onSuccess: (data) => {
+          setLastCreatedIssue(data?.issue || null);
+          resetForm();
+        },
+      }
     );
   }
 
@@ -257,6 +264,31 @@ export default function IssuePartsPage() {
         <div className="text-2xl font-semibold text-epiroc-blue">Issue Parts</div>
         <div className="text-sm text-slate-600">Add one or more parts, capture job details, justification and quantities.</div>
       </div>
+
+      {lastCreatedIssue && (
+        <div className="rounded-xl bg-green-50 border border-green-200 p-4 flex items-center justify-between flex-wrap gap-3">
+          <div className="text-sm text-green-800">
+            Issue <span className="font-semibold">{lastCreatedIssue.issueNumber}</span> created successfully.
+          </div>
+          <div className="flex items-center gap-3">
+            <Link
+              to={`/spare-parts/store-issues/${lastCreatedIssue._id}/print`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-xl bg-epiroc-yellow px-4 py-2 text-sm font-semibold text-epiroc-black shadow-soft hover:brightness-95"
+            >
+              View & Print
+            </Link>
+            <button
+              type="button"
+              className="text-sm text-green-700 hover:underline"
+              onClick={() => setLastCreatedIssue(null)}
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
 
       <form className="rounded-xl bg-white shadow-soft p-6 space-y-6" onSubmit={handleSubmit}>
         <div className="space-y-3">
