@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Table } from '../components/Table';
 import { useStoreIssues } from '../services/storeIssues';
 import { formatDateTime } from '../utils/format';
+import { flattenIssueItems } from '../utils/storeIssues';
 
 const STATUS_OPTIONS = ['Issued', 'Partially Issued', 'Awaiting Order', 'Returned', 'Closed'];
 
@@ -15,7 +16,7 @@ export default function StoreIssuesPage() {
   );
 
   const { data, isLoading, isError } = useStoreIssues(filters);
-  const issues = data?.issues || [];
+  const lines = useMemo(() => flattenIssueItems(data?.issues || []), [data]);
 
   const columns = useMemo(
     () => [
@@ -67,7 +68,7 @@ export default function StoreIssuesPage() {
       ) : isError ? (
         <div className="rounded-xl bg-white shadow-soft p-4 text-sm text-slate-600">Could not load store issues</div>
       ) : (
-        <Table emptyLabel="No store issues found" columns={columns} rows={issues} maxHeight="600px" />
+        <Table emptyLabel="No store issues found" columns={columns} rows={lines} maxHeight="600px" />
       )}
     </div>
   );

@@ -2,14 +2,15 @@ import { useMemo } from 'react';
 import { Table } from '../components/Table';
 import { useStoreIssues } from '../services/storeIssues';
 import { formatDateTime } from '../utils/format';
+import { flattenIssueItems } from '../utils/storeIssues';
 
 export default function PartsToOrderPage() {
   const { data, isLoading, isError } = useStoreIssues();
-  const issues = data?.issues || [];
+  const lines = useMemo(() => flattenIssueItems(data?.issues || []), [data]);
 
   const toOrder = useMemo(
-    () => issues.filter((i) => i.quantityToOrder > 0 && i.status !== 'Closed' && i.status !== 'Returned'),
-    [issues]
+    () => lines.filter((i) => i.quantityToOrder > 0 && i.issueStatus !== 'Closed' && i.status !== 'Returned'),
+    [lines]
   );
 
   const columns = useMemo(

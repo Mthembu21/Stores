@@ -4,11 +4,12 @@ const { SparePart } = require('../models/SparePart');
 const { StockMovement } = require('../models/StockMovement');
 const { getNextSequence } = require('../utils/sequence');
 const { getDefaultStoreId } = require('../utils/defaultStore');
+const { deriveItemStatus, deriveOverallStatus } = require('../utils/storeIssueStatus');
 
 async function createPartReturn(req, res) {
-  const { storeIssueId, quantity, reason } = req.body;
+  const { storeIssueId, itemId, quantity, reason } = req.body;
 
-  if (!storeIssueId || !quantity) {
+  if (!storeIssueId || !itemId || !quantity) {
     throw new ApiError(400, 'Missing required fields');
   }
 
@@ -22,12 +23,17 @@ async function createPartReturn(req, res) {
     throw new ApiError(404, 'Store issue not found');
   }
 
-  const outstanding = issue.quantityIssued - issue.quantityReturned;
+  const item = issue.items.id(itemId);
+  if (!item) {
+    throw new ApiError(404, 'Store issue part line not found');
+  }
+
+  const outstanding = item.quantityIssued - item.quantityReturned;
   if (returnQty > outstanding) {
     throw new ApiError(400, `Cannot return more than the outstanding quantity (${outstanding})`);
   }
 
-  const part = await SparePart.findById(issue.sparePart);
+  const part = await SparePart.findById(item.sparePart);
   if (!part) {
     throw new ApiError(404, 'Spare part not found');
   }
@@ -36,10 +42,9 @@ async function createPartReturn(req, res) {
   part.stockOnHand += returnQty;
   await part.save();
 
-  issue.quantityReturned += returnQty;
-  if (issue.quantityReturned >= issue.quantityIssued) {
-    issue.status = 'Returned';
-  }
+  item.quantityReturned += returnQty;
+  item.status = deriveItemStatus(item.quantityRequested, item.quantityIssued, item.quantityReturned);
+  issue.status = deriveOverallStatus(issue.items);
   await issue.save();
 
   const store = await getDefaultStoreId();
@@ -60,7 +65,7 @@ async function createPartReturn(req, res) {
     reason: reason || 'Part return',
   });
 
-  const populated = await StoreIssue.findById(issue._id).populate('sparePart').populate('issuedBy');
+  const populated = await StoreIssue.findById(issue._id).populate('items.sparePart').populate('issuedBy');
   res.status(201).json({ issue: populated });
 }
 

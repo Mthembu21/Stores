@@ -1,12 +1,15 @@
+import { useMemo } from 'react';
 import { Card } from '../components/Card';
 import { Table } from '../components/Table';
 import { LowStockChart } from '../components/PartsCharts';
 import { usePartsDashboard } from '../services/partsDashboard';
 import { formatDateTime } from '../utils/format';
+import { flattenIssueItems } from '../utils/storeIssues';
 
 export default function PartsDashboardPage() {
   const { data, isLoading, isError } = usePartsDashboard();
   const { cards, tables } = data || {};
+  const recentIssueLines = useMemo(() => flattenIssueItems(tables?.recentIssues || []), [tables]);
 
   if (isLoading) {
     return (
@@ -83,7 +86,7 @@ export default function PartsDashboardPage() {
               { key: 'issueDate', header: 'Date', render: (i) => formatDateTime(i.issueDate) },
               { key: 'status', header: 'Status' },
             ]}
-            rows={tables?.recentIssues || []}
+            rows={recentIssueLines}
           />
         </div>
       </div>

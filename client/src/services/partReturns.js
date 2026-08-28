@@ -5,8 +5,8 @@ import { http } from './http';
 export function useCreatePartReturn() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ storeIssueId, quantity, reason }) => {
-      const { data } = await http.post('/part-returns', { storeIssueId, quantity, reason });
+    mutationFn: async ({ storeIssueId, itemId, quantity, reason }) => {
+      const { data } = await http.post('/part-returns', { storeIssueId, itemId, quantity, reason });
       return data;
     },
     onSuccess: () => {

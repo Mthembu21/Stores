@@ -4,15 +4,16 @@ import { Table } from '../components/Table';
 import { useStoreIssues } from '../services/storeIssues';
 import { useCreatePartReturn } from '../services/partReturns';
 import { formatDateTime } from '../utils/format';
+import { flattenIssueItems } from '../utils/storeIssues';
 
 export default function PartReturnsPage() {
   const [search, setSearch] = useState('');
   const { data, isLoading, isError } = useStoreIssues({ search: search || undefined });
-  const issues = data?.issues || [];
+  const lines = useMemo(() => flattenIssueItems(data?.issues || []), [data]);
 
   const outstandingIssues = useMemo(
-    () => issues.filter((i) => i.quantityIssued - i.quantityReturned > 0),
-    [issues]
+    () => lines.filter((i) => i.quantityIssued - i.quantityReturned > 0),
+    [lines]
   );
 
   const [selectedIssue, setSelectedIssue] = useState(null);
@@ -36,7 +37,7 @@ export default function PartReturnsPage() {
     }
 
     createReturn.mutate(
-      { storeIssueId: selectedIssue._id, quantity: qty, reason },
+      { storeIssueId: selectedIssue.issueId, itemId: selectedIssue.itemId, quantity: qty, reason },
       {
         onSuccess: () => {
           setSelectedIssue(null);
@@ -86,21 +87,21 @@ export default function PartReturnsPage() {
             {outstandingIssues.length === 0 ? (
               <div className="p-4 text-sm text-slate-500 text-center">No parts issued out</div>
             ) : (
-              outstandingIssues.map((issue) => (
+              outstandingIssues.map((line) => (
                 <div
-                  key={issue._id}
+                  key={line.itemId}
                   className={`p-3 border-b border-slate-100 cursor-pointer hover:bg-blue-50 ${
-                    selectedIssue?._id === issue._id ? 'bg-blue-100' : ''
+                    selectedIssue?.itemId === line.itemId ? 'bg-blue-100' : ''
                   }`}
-                  onClick={() => setSelectedIssue(issue)}
+                  onClick={() => setSelectedIssue(line)}
                 >
                   <div className="flex justify-between items-start">
                     <div>
-                      <div className="font-medium text-slate-900">{issue.issueNumber} — {issue.partNumber}</div>
-                      <div className="text-sm text-slate-600">{issue.partDescription}</div>
+                      <div className="font-medium text-slate-900">{line.issueNumber} — {line.partNumber}</div>
+                      <div className="text-sm text-slate-600">{line.partDescription}</div>
                     </div>
                     <div className="text-sm font-semibold text-epiroc-blue">
-                      {issue.quantityIssued - issue.quantityReturned} issued out
+                      {line.quantityIssued - line.quantityReturned} issued out
                     </div>
                   </div>
                 </div>

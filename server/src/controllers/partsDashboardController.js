@@ -47,7 +47,7 @@ async function getPartsDashboard(req, res) {
       { $match: { movementType: 'Issue', createdAt: { $gte: monthStart, $lt: monthEnd } } },
       { $group: { _id: null, total: { $sum: '$quantity' } } },
     ]),
-    StoreIssue.countDocuments({ quantityToOrder: { $gt: 0 }, status: { $ne: 'Closed' } }),
+    StoreIssue.countDocuments({ 'items.quantityToOrder': { $gt: 0 }, status: { $ne: 'Closed' } }),
     StockMovement.aggregate([
       { $match: { movementType: 'Return' } },
       { $group: { _id: null, total: { $sum: '$quantity' } } },
@@ -60,7 +60,7 @@ async function getPartsDashboard(req, res) {
     StoreIssue.find({})
       .sort({ issueDate: -1 })
       .limit(10)
-      .populate('sparePart')
+      .populate('items.sparePart')
       .populate('issuedBy'),
   ]);
 
