@@ -12,11 +12,10 @@ const { Roles } = require('../config/roles');
 const router = express.Router();
 
 router.use(requireAuth);
-router.use(requireRole(Roles.Admin));
 
 router.get('/', listUsers);
-router.post('/', createUser);
-router.patch('/:id', updateUser);
-router.delete('/:id', deleteUser);
+router.post('/', requireRole(Roles.Admin), createUser);
+router.patch('/:id', requireRole(Roles.Admin), updateUser);
+router.delete('/:id', requireRole(Roles.Admin), deleteUser);
 
 module.exports = { userRoutes: router };
