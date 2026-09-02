@@ -36,7 +36,7 @@ export default function DashboardLayout() {
 
   const canSeeTools = role === 'Admin' || role === 'ToolsStoreman';
   const canSeeSpareParts = role === 'Admin' || role === 'PartsStoreman' || role === 'Supervisor';
-  const canSeeUsers = role === 'Admin';
+  const canSeeUsers = role === 'Admin' || role === 'ToolsStoreman';
 
   return (
     <div className="min-h-screen bg-slate-50">
