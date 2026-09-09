@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Table } from '../components/Table';
+import { ToolConditionSelect } from '../components/ToolConditionSelect';
 import { useBorrowTool, useBorrowings } from '../services/borrow';
 import { useCreateTool, useDeleteTool, useTools, useUpdateTool } from '../services/tools';
 import { useReturnTool } from '../services/return';
@@ -94,34 +95,7 @@ export default function ToolsPage() {
       {
         key: 'flag',
         header: 'Condition',
-        render: (t) => (
-          <select
-            className="rounded-lg border border-slate-200 px-2 py-1 text-xs"
-            value={t.flag || 'None'}
-            onChange={(e) => {
-              const id = t._id || t.id;
-              if (!id) {
-                toast.error('Could not update tool: missing id');
-                return;
-              }
-              updateTool.mutate(
-                { id, patch: { flag: e.target.value } },
-                {
-                  onSuccess: () => {
-                    if (t.flag !== 'None' && e.target.value === 'None') {
-                      toast.success('Tool repaired and back in the available pool');
-                    }
-                  },
-                }
-              );
-            }}
-            disabled={updateTool.isPending}
-          >
-            <option value="None">Good</option>
-            <option value="Damaged">Damaged</option>
-            <option value="Missing">Missing</option>
-          </select>
-        ),
+        render: (t) => <ToolConditionSelect tool={t} />,
       },
       {
         key: 'lastReturnCondition',

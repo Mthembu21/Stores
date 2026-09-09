@@ -1,5 +1,6 @@
 import { Card } from '../components/Card';
 import { Table } from '../components/Table';
+import { ToolConditionSelect } from '../components/ToolConditionSelect';
 import { MonthlyBorrowTrendsChart, ConsumablesPerTechnicianChart } from '../components/Charts';
 import { useDashboard } from '../services/dashboard';
 import { formatDateTime } from '../utils/format';
@@ -109,6 +110,11 @@ export default function DashboardHome() {
               { key: 'toolCode', header: 'Tool Code' },
               { key: 'category', header: 'Category' },
               { key: 'status', header: 'Status' },
+              {
+                key: 'flag',
+                header: 'Condition',
+                render: (t) => <ToolConditionSelect tool={t} />,
+              },
             ]}
             rows={tables?.damagedTools || []}
           />
@@ -123,6 +129,11 @@ export default function DashboardHome() {
               { key: 'toolCode', header: 'Tool Code' },
               { key: 'category', header: 'Category' },
               { key: 'status', header: 'Status' },
+              {
+                key: 'flag',
+                header: 'Condition',
+                render: (t) => <ToolConditionSelect tool={t} />,
+              },
             ]}
             rows={tables?.missingTools || []}
           />
