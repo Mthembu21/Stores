@@ -81,10 +81,20 @@ async function updateTool(req, res) {
     tool.toolCode = String(toolCode).trim();
   }
 
+  const previousFlag = tool.flag;
+
   if (toolName !== undefined) tool.toolName = toolName;
   if (category !== undefined) tool.category = category;
   if (status !== undefined) tool.status = status;
   if (flag !== undefined) tool.flag = flag;
+
+  // A tool coming back from Damaged/Missing to None (repaired/found) was never
+  // returned to the available pool when it was flagged, so restore it now.
+  const wasOut = previousFlag === 'Damaged' || previousFlag === 'Missing';
+  const isRepaired = wasOut && tool.flag === 'None';
+  if (isRepaired) {
+    tool.quantityAvailable = Math.min(tool.quantityAvailable + 1, tool.quantityTotal);
+  }
 
   if (isSpecialTool !== undefined) {
     tool.isSpecialTool = Boolean(isSpecialTool);
@@ -149,11 +159,15 @@ async function updateTool(req, res) {
     tool.quantityAvailable = a;
   }
 
-  if (tool.quantityAvailable === 0 && tool.status === 'Available') {
-    tool.status = 'Borrowed';
-  }
-  if (tool.quantityAvailable > 0 && tool.status === 'Borrowed') {
-    tool.status = 'Available';
+  if (isRepaired) {
+    tool.status = tool.quantityAvailable > 0 ? 'Available' : 'Borrowed';
+  } else {
+    if (tool.quantityAvailable === 0 && tool.status === 'Available') {
+      tool.status = 'Borrowed';
+    }
+    if (tool.quantityAvailable > 0 && tool.status === 'Borrowed') {
+      tool.status = 'Available';
+    }
   }
 
   await tool.save();

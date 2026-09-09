@@ -90,76 +90,39 @@ export default function ToolsPage() {
       { key: 'category', header: 'Category' },
       { key: 'quantityAvailable', header: 'Available' },
       { key: 'quantityTotal', header: 'Total' },
-      { 
-        key: 'status', 
-        header: 'Status', 
+      { key: 'status', header: 'Status', render: (t) => t.status || '' },
+      {
+        key: 'flag',
+        header: 'Condition',
         render: (t) => (
-          <div className="flex items-center gap-2">
-            <select
-              className="rounded-lg border border-slate-200 px-2 py-1 text-xs"
-              defaultValue={t.status || 'Good'}
-              onChange={(e) => {
-                const id = t._id || t.id;
-                if (!id) {
-                  toast.error('Could not update tool: missing id');
-                  return;
+          <select
+            className="rounded-lg border border-slate-200 px-2 py-1 text-xs"
+            value={t.flag || 'None'}
+            onChange={(e) => {
+              const id = t._id || t.id;
+              if (!id) {
+                toast.error('Could not update tool: missing id');
+                return;
+              }
+              updateTool.mutate(
+                { id, patch: { flag: e.target.value } },
+                {
+                  onSuccess: () => {
+                    if (t.flag !== 'None' && e.target.value === 'None') {
+                      toast.success('Tool repaired and back in the available pool');
+                    }
+                  },
                 }
-                console.log('TOOLS PAGE: Status dropdown change:', {
-                  id,
-                  oldValue: t.status,
-                  newValue: e.target.value
-                });
-                
-                // Use correct field based on tool type
-                const patchData = t.isSpecialTool 
-                  ? { specialStatus: e.target.value }
-                  : { status: e.target.value };
-                
-                updateTool.mutate({
-                  id,
-                  patch: patchData
-                });
-              }}
-            >
-              <option value="Good">Good</option>
-              <option value="Fair">Fair</option>
-              <option value="Damaged">Damaged</option>
-              <option value="Missing">Missing</option>
-            </select>
-            <button
-              type="button"
-              className="rounded-lg bg-epiroc-gray px-3 py-1 text-xs font-semibold text-white hover:brightness-95 disabled:opacity-60"
-              onClick={() => {
-                const id = t._id || t.id;
-                if (!id) {
-                  toast.error('Could not update tool: missing id');
-                  return;
-                }
-                console.log('TOOLS PAGE: Save button clicked:', {
-                  id,
-                  currentStatus: t.status
-                });
-                
-                // Use correct field based on tool type
-                const patchData = t.isSpecialTool 
-                  ? { specialStatus: t.status }
-                  : { status: t.status };
-                
-                updateTool.mutate({
-                  id,
-                  patch: patchData
-                });
-                toast.success('Tool status saved');
-              }}
-              disabled={updateTool.isPending}
-              title="Save Status"
-            >
-              Save
-            </button>
-          </div>
-        )
+              );
+            }}
+            disabled={updateTool.isPending}
+          >
+            <option value="None">Good</option>
+            <option value="Damaged">Damaged</option>
+            <option value="Missing">Missing</option>
+          </select>
+        ),
       },
-      { key: 'flag', header: 'Flag' },
       {
         key: 'lastReturnCondition',
         header: 'Last Return',
