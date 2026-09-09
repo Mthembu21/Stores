@@ -15,7 +15,7 @@ async function listConsumableItems(req, res) {
 }
 
 async function createConsumableItem(req, res) {
-  const { name, unitOfMeasure, stockOnHand } = req.body;
+  const { name, unitOfMeasure, stockOnHand, minimumStockLevel } = req.body;
 
   if (!name || !unitOfMeasure) {
     throw new ApiError(400, 'Missing required fields');
@@ -24,6 +24,11 @@ async function createConsumableItem(req, res) {
   const qty = stockOnHand === undefined || stockOnHand === '' ? 0 : Number(stockOnHand);
   if (Number.isNaN(qty) || qty < 0) {
     throw new ApiError(400, 'Invalid quantity');
+  }
+
+  const minQty = minimumStockLevel === undefined || minimumStockLevel === '' ? 0 : Number(minimumStockLevel);
+  if (Number.isNaN(minQty) || minQty < 0) {
+    throw new ApiError(400, 'Invalid minimum stock quantity');
   }
 
   const existing = await Consumable.findOne({ name: name.trim() });
@@ -35,13 +40,14 @@ async function createConsumableItem(req, res) {
     name: name.trim(),
     unitOfMeasure: unitOfMeasure.trim(),
     stockOnHand: qty,
+    minimumStockLevel: minQty,
   });
   res.status(201).json({ item });
 }
 
 async function updateConsumableItem(req, res) {
   const { id } = req.params;
-  const { name, unitOfMeasure } = req.body;
+  const { name, unitOfMeasure, minimumStockLevel } = req.body;
 
   const item = await Consumable.findById(id);
   if (!item) {
@@ -50,6 +56,13 @@ async function updateConsumableItem(req, res) {
 
   if (name !== undefined) item.name = name.trim();
   if (unitOfMeasure !== undefined) item.unitOfMeasure = unitOfMeasure.trim();
+  if (minimumStockLevel !== undefined) {
+    const minQty = Number(minimumStockLevel);
+    if (Number.isNaN(minQty) || minQty < 0) {
+      throw new ApiError(400, 'Invalid minimum stock quantity');
+    }
+    item.minimumStockLevel = minQty;
+  }
 
   await item.save();
   res.json({ item });

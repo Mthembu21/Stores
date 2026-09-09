@@ -16,8 +16,13 @@ export function useConsumableItems() {
 export function useCreateConsumableItem() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ name, unitOfMeasure, stockOnHand }) => {
-      const { data } = await http.post('/consumables/items', { name, unitOfMeasure, stockOnHand });
+    mutationFn: async ({ name, unitOfMeasure, stockOnHand, minimumStockLevel }) => {
+      const { data } = await http.post('/consumables/items', {
+        name,
+        unitOfMeasure,
+        stockOnHand,
+        minimumStockLevel,
+      });
       return data;
     },
     onSuccess: () => {
@@ -26,6 +31,23 @@ export function useCreateConsumableItem() {
     },
     onError: (err) => {
       toast.error(err?.response?.data?.message || 'Could not add consumable');
+    },
+  });
+}
+
+export function useUpdateConsumableItem() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, patch }) => {
+      const { data } = await http.patch(`/consumables/items/${id}`, patch);
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['consumables', 'items'] });
+      toast.success('Consumable updated');
+    },
+    onError: (err) => {
+      toast.error(err?.response?.data?.message || 'Could not update consumable');
     },
   });
 }

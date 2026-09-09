@@ -4,6 +4,7 @@ import { useUsers } from '../services/users';
 import {
   useConsumableItems,
   useCreateConsumableItem,
+  useUpdateConsumableItem,
   useRestockConsumableItem,
   useDeleteConsumableItem,
   useConsumables,
@@ -39,12 +40,37 @@ function RestockCell({ item, onRestock, isPending }) {
   );
 }
 
+function MinQtyCell({ item, onUpdate, isPending }) {
+  const [value, setValue] = useState(String(item.minimumStockLevel ?? 0));
+
+  return (
+    <div className="flex items-center gap-2">
+      <input
+        type="number"
+        min="0"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        className="w-20 rounded-lg border border-slate-200 px-2 py-1 text-sm"
+      />
+      <button
+        type="button"
+        disabled={isPending}
+        onClick={() => onUpdate(Number(value) || 0)}
+        className="rounded-lg bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-200 disabled:opacity-50"
+      >
+        Save
+      </button>
+    </div>
+  );
+}
+
 export default function ConsumablesPage() {
   const { data: usersData } = useUsers();
   const { data: itemsData, isLoading: itemsLoading, isError: itemsError } = useConsumableItems();
   const { data: recordsData, isLoading: recordsLoading, isError: recordsError } = useConsumables();
 
   const createItem = useCreateConsumableItem();
+  const updateItem = useUpdateConsumableItem();
   const restockItem = useRestockConsumableItem();
   const deleteItem = useDeleteConsumableItem();
   const issueConsumable = useIssueConsumable();
@@ -59,17 +85,24 @@ export default function ConsumablesPage() {
   const [newName, setNewName] = useState('');
   const [newUom, setNewUom] = useState('');
   const [newQty, setNewQty] = useState('0');
+  const [newMinQty, setNewMinQty] = useState('0');
 
   function handleAddConsumable(e) {
     e.preventDefault();
     if (!newName.trim() || !newUom.trim()) return;
     createItem.mutate(
-      { name: newName.trim(), unitOfMeasure: newUom.trim(), stockOnHand: Number(newQty) || 0 },
+      {
+        name: newName.trim(),
+        unitOfMeasure: newUom.trim(),
+        stockOnHand: Number(newQty) || 0,
+        minimumStockLevel: Number(newMinQty) || 0,
+      },
       {
         onSuccess: () => {
           setNewName('');
           setNewUom('');
           setNewQty('0');
+          setNewMinQty('0');
         },
       }
     );
@@ -118,7 +151,7 @@ export default function ConsumablesPage() {
       {/* Add Consumable */}
       <form className="rounded-xl bg-white shadow-soft p-6 space-y-4" onSubmit={handleAddConsumable}>
         <div className="text-sm font-semibold text-epiroc-gray">Add Consumable</div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
             <label className="text-sm font-medium text-slate-700">Name</label>
             <input
@@ -151,6 +184,17 @@ export default function ConsumablesPage() {
               onChange={(e) => setNewQty(e.target.value)}
             />
           </div>
+          <div>
+            <label className="text-sm font-medium text-slate-700">Minimum Stock Qty</label>
+            <input
+              type="number"
+              min="0"
+              className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+              value={newMinQty}
+              onChange={(e) => setNewMinQty(e.target.value)}
+              placeholder="Reorder point"
+            />
+          </div>
         </div>
         <div className="flex justify-end">
           <button
@@ -177,6 +221,20 @@ export default function ConsumablesPage() {
               { key: 'name', header: 'Name' },
               { key: 'unitOfMeasure', header: 'Unit' },
               { key: 'stockOnHand', header: 'Qty On Hand' },
+              { key: 'minimumStockLevel', header: 'Min Qty' },
+              {
+                key: 'setMinQty',
+                header: 'Set Min Qty',
+                render: (item) => (
+                  <MinQtyCell
+                    item={item}
+                    isPending={updateItem.isPending}
+                    onUpdate={(minimumStockLevel) =>
+                      updateItem.mutate({ id: item._id, patch: { minimumStockLevel } })
+                    }
+                  />
+                ),
+              },
               {
                 key: 'restock',
                 header: 'Restock',
@@ -207,6 +265,13 @@ export default function ConsumablesPage() {
               },
             ]}
             rows={items}
+            getRowClassName={(item) =>
+              item.stockOnHand <= 0
+                ? 'bg-red-100'
+                : item.stockOnHand <= item.minimumStockLevel
+                ? 'bg-yellow-50'
+                : ''
+            }
             maxHeight="360px"
           />
         )}
