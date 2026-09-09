@@ -55,6 +55,7 @@ export default function DashboardLayout() {
                 <NavSection title="Tools Management" />
                 <SideLink to="/tools">Tools Inventory</SideLink>
                 <SideLink to="/special-tools">Special Tools</SideLink>
+                <SideLink to="/consumables">Consumables</SideLink>
               </>
             )}
 

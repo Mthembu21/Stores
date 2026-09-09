@@ -4,6 +4,7 @@ import DashboardLayout from '../screens/DashboardLayout';
 import UsersPage from '../screens/UsersPage';
 import ToolsPage from '../screens/ToolsPage';
 import SpecialToolsPage from '../screens/SpecialToolsPage';
+import ConsumablesPage from '../screens/ConsumablesPage';
 import PartsDashboardPage from '../screens/PartsDashboardPage';
 import PartsInventoryPage from '../screens/PartsInventoryPage';
 import IssuePartsPage from '../screens/IssuePartsPage';
@@ -54,6 +55,14 @@ export default function App() {
           element={
             <RequireRole roles={MODULE_ROLES.tools}>
               <SpecialToolsPage />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="consumables"
+          element={
+            <RequireRole roles={MODULE_ROLES.tools}>
+              <ConsumablesPage />
             </RequireRole>
           }
         />
