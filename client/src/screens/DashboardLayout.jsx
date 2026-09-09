@@ -1,6 +1,7 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { logout } from '../services/auth';
 import { useMe } from '../services/auth';
+import logo from '../components/logo.png';
 
 function SideLink({ to, children }) {
   return (
@@ -41,10 +42,9 @@ export default function DashboardLayout() {
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="flex">
-        <aside className="hidden md:block md:w-72 bg-epiroc-blue min-h-screen p-4">
-          <div className="flex items-center justify-between">
-            <div className="text-white font-semibold">Epiroc Workshop</div>
-            <div className="h-2.5 w-10 rounded-full bg-epiroc-yellow" />
+        <aside className="hidden md:block md:w-72 bg-epiroc-gray min-h-screen p-4">
+          <div className="flex items-center">
+            <img src={logo} alt="Epiroc" className="h-9 w-auto" />
           </div>
 
           <nav className="mt-6 space-y-2">
@@ -93,8 +93,8 @@ export default function DashboardLayout() {
         </aside>
 
         <main className="flex-1 min-h-screen">
-          <header className="md:hidden bg-epiroc-blue p-4 flex items-center justify-between">
-            <div className="text-white font-semibold">Epiroc Workshop</div>
+          <header className="md:hidden bg-epiroc-gray p-4 flex items-center justify-between">
+            <img src={logo} alt="Epiroc" className="h-7 w-auto" />
             <button
               className="rounded-xl bg-epiroc-yellow px-3 py-1.5 text-sm font-semibold text-epiroc-black"
               onClick={() => {

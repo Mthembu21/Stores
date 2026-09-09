@@ -92,13 +92,13 @@ export default function KpiTrackerPage() {
   return (
     <div className="space-y-6 max-w-6xl mx-auto w-full">
       <div>
-        <div className="text-2xl font-semibold text-epiroc-blue">Daily KPI Tracker</div>
+        <div className="text-2xl font-semibold text-epiroc-gray">Daily KPI Tracker</div>
         <div className="text-sm text-slate-600">Capture today's warehouse operations KPIs and review recent history.</div>
       </div>
 
       <form className="max-w-2xl mx-auto w-full rounded-xl bg-white shadow-soft p-6 space-y-4" onSubmit={handleSave}>
         <div className="flex items-center justify-between flex-wrap gap-3">
-          <div className="text-sm font-semibold text-epiroc-blue">
+          <div className="text-sm font-semibold text-epiroc-gray">
             {existingEntry ? 'Edit KPIs for' : 'Capture KPIs for'}
           </div>
           <input
@@ -159,7 +159,7 @@ export default function KpiTrackerPage() {
       </form>
 
       <div className="space-y-3">
-        <div className="text-sm font-semibold text-epiroc-blue">Weekly progress (target vs actual)</div>
+        <div className="text-sm font-semibold text-epiroc-gray">Weekly progress (target vs actual)</div>
         {isLoading ? (
           <div className="rounded-xl bg-white shadow-soft p-4 text-sm text-slate-600">Loading KPI history...</div>
         ) : isError ? (
@@ -170,7 +170,7 @@ export default function KpiTrackerPage() {
       </div>
 
       <div className="space-y-3">
-        <div className="text-sm font-semibold text-epiroc-blue">Recent history</div>
+        <div className="text-sm font-semibold text-epiroc-gray">Recent history</div>
         <div className="text-xs text-slate-500">Values marked with * have a comment attached — hover to read it.</div>
         {isLoading ? (
           <div className="rounded-xl bg-white shadow-soft p-4 text-sm text-slate-600">Loading KPI history...</div>

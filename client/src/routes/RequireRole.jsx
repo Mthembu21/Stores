@@ -7,7 +7,7 @@ export function RequireRole({ roles, children }) {
   if (isLoading) {
     return (
       <div className="min-h-screen grid place-items-center bg-slate-50">
-        <div className="text-epiroc-blue font-semibold">Loading...</div>
+        <div className="text-epiroc-gray font-semibold">Loading...</div>
       </div>
     );
   }

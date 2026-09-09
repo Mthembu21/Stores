@@ -1,5 +1,5 @@
 const { ApiError } = require('../utils/ApiError');
-const { PpeRecord } = require('../models/PpeRecord');
+const { ConsumableRecord } = require('../models/ConsumableRecord');
 const { User } = require('../models/User');
 
 function monthRange(year, month) {
@@ -8,10 +8,10 @@ function monthRange(year, month) {
   return { start, end };
 }
 
-async function takePpe(req, res) {
-  const { technicianId, ppeName, quantity, takenAt } = req.body;
+async function takeConsumable(req, res) {
+  const { technicianId, consumableName, quantity, takenAt } = req.body;
 
-  if (!technicianId || !ppeName || !quantity) {
+  if (!technicianId || !consumableName || !quantity) {
     throw new ApiError(400, 'Missing required fields');
   }
 
@@ -25,26 +25,26 @@ async function takePpe(req, res) {
     throw new ApiError(400, 'Invalid quantity');
   }
 
-  const rec = await PpeRecord.create({
+  const rec = await ConsumableRecord.create({
     technician: tech._id,
-    ppeName,
+    consumableName,
     quantity: qty,
     takenAt: takenAt ? new Date(takenAt) : new Date(),
   });
 
-  const populated = await PpeRecord.findById(rec._id).populate('technician');
+  const populated = await ConsumableRecord.findById(rec._id).populate('technician');
   res.status(201).json({ record: populated });
 }
 
-async function listPpe(req, res) {
-  const records = await PpeRecord.find({})
+async function listConsumables(req, res) {
+  const records = await ConsumableRecord.find({})
     .sort({ takenAt: -1 })
     .limit(500)
     .populate('technician');
   res.json({ records });
 }
 
-async function ppeMonthlySummary(req, res) {
+async function consumablesMonthlySummary(req, res) {
   const year = Number(req.query.year);
   const month = Number(req.query.month);
 
@@ -54,7 +54,7 @@ async function ppeMonthlySummary(req, res) {
 
   const { start, end } = monthRange(year, month);
 
-  const rows = await PpeRecord.aggregate([
+  const rows = await ConsumableRecord.aggregate([
     { $match: { takenAt: { $gte: start, $lt: end } } },
     { $group: { _id: '$technician', total: { $sum: '$quantity' } } },
     { $sort: { total: -1 } },
@@ -83,4 +83,4 @@ async function ppeMonthlySummary(req, res) {
   res.json({ year, month, totalThisMonth, perTechnician: rows });
 }
 
-module.exports = { takePpe, listPpe, ppeMonthlySummary };
+module.exports = { takeConsumable, listConsumables, consumablesMonthlySummary };

@@ -254,12 +254,12 @@ export default function PartsInventoryPage() {
   return (
     <div className="space-y-6 max-w-6xl mx-auto w-full">
       <div>
-        <div className="text-2xl font-semibold text-epiroc-blue">Parts Inventory</div>
+        <div className="text-2xl font-semibold text-epiroc-gray">Parts Inventory</div>
         <div className="text-sm text-slate-600">Manage spare parts stock levels and details.</div>
       </div>
 
       <div className="rounded-xl bg-white shadow-soft p-6 max-w-4xl mx-auto">
-        <div className="text-sm font-semibold text-epiroc-blue">Add spare part</div>
+        <div className="text-sm font-semibold text-epiroc-gray">Add spare part</div>
         <div className="text-xs text-slate-500">Returnable spares and tools that get issued and are expected back.</div>
         <form
           className="mt-4 space-y-4"
@@ -329,7 +329,7 @@ export default function PartsInventoryPage() {
       </div>
 
       <div className="rounded-xl bg-white shadow-soft p-6 max-w-4xl mx-auto">
-        <div className="text-sm font-semibold text-epiroc-blue">Add consumable</div>
+        <div className="text-sm font-semibold text-epiroc-gray">Add consumable</div>
         <div className="text-xs text-slate-500">Oils, grease, filters, PPE — issued but never returned. Just a name and quantity.</div>
         <form className="mt-4 space-y-4" onSubmit={handleAddConsumable}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -356,7 +356,7 @@ export default function PartsInventoryPage() {
             </div>
           </div>
           <details className="text-sm">
-            <summary className="cursor-pointer text-epiroc-blue font-medium">More options (optional)</summary>
+            <summary className="cursor-pointer text-epiroc-gray font-medium">More options (optional)</summary>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
               <div>
                 <label className="text-sm font-medium text-slate-700">Minimum stock level</label>
@@ -389,13 +389,13 @@ export default function PartsInventoryPage() {
       <div className="rounded-xl bg-white shadow-soft p-6 space-y-4 max-w-4xl mx-auto">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-sm font-semibold text-epiroc-blue">Bulk add parts</div>
+            <div className="text-sm font-semibold text-epiroc-gray">Bulk add parts</div>
             <div className="text-xs text-slate-500">
               Upload a CSV export, or paste rows copied from a spreadsheet. Include a "Part Type" column set to
               Consumable or Returnable to load consumable stock in one go.
             </div>
           </div>
-          <button type="button" className="text-xs font-semibold text-epiroc-blue underline" onClick={downloadTemplate}>
+          <button type="button" className="text-xs font-semibold text-epiroc-gray underline" onClick={downloadTemplate}>
             Download CSV template
           </button>
         </div>
@@ -498,7 +498,7 @@ export default function PartsInventoryPage() {
       </div>
 
       <div className="space-y-3">
-        <div className="text-sm font-semibold text-epiroc-blue">Parts list</div>
+        <div className="text-sm font-semibold text-epiroc-gray">Parts list</div>
 
         <div className="p-3 bg-blue-50 rounded-xl border border-blue-200 grid grid-cols-1 md:grid-cols-4 gap-3">
           <div className="md:col-span-2">
@@ -558,7 +558,7 @@ export default function PartsInventoryPage() {
 
       <div className="space-y-3">
         <div>
-          <div className="text-sm font-semibold text-epiroc-blue">Consumables tracking</div>
+          <div className="text-sm font-semibold text-epiroc-gray">Consumables tracking</div>
           <div className="text-xs text-slate-500">
             Items added via "Add consumable" above — remaining stock, last restock, and consumption since then.
           </div>

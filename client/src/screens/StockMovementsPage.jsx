@@ -31,7 +31,7 @@ export default function StockMovementsPage() {
   return (
     <div className="space-y-6 max-w-6xl mx-auto w-full">
       <div>
-        <div className="text-2xl font-semibold text-epiroc-blue">Stock Movements</div>
+        <div className="text-2xl font-semibold text-epiroc-gray">Stock Movements</div>
         <div className="text-sm text-slate-600">Full audit trail of every stock change.</div>
       </div>
 

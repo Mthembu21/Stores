@@ -61,12 +61,12 @@ export default function UsersPage() {
   return (
     <div className="space-y-6 max-w-6xl mx-auto w-full">
       <div>
-        <div className="text-2xl font-semibold text-epiroc-blue">Users</div>
+        <div className="text-2xl font-semibold text-epiroc-gray">Users</div>
         <div className="text-sm text-slate-600">Create technicians, interns and apprentices.</div>
       </div>
 
       <div className="rounded-xl bg-white shadow-soft p-6">
-        <div className="text-sm font-semibold text-epiroc-blue">Create user</div>
+        <div className="text-sm font-semibold text-epiroc-gray">Create user</div>
         <form
           className="mt-4 max-w-4xl mx-auto space-y-4"
           onSubmit={(e) => {
@@ -162,7 +162,7 @@ export default function UsersPage() {
       </div>
 
       <div className="space-y-3">
-        <div className="text-sm font-semibold text-epiroc-blue">All users</div>
+        <div className="text-sm font-semibold text-epiroc-gray">All users</div>
         
         {/* Search Bar */}
         <div className="p-3 bg-blue-50 rounded-xl border border-blue-200">

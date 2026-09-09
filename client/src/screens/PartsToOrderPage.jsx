@@ -31,7 +31,7 @@ export default function PartsToOrderPage() {
   return (
     <div className="space-y-6 max-w-5xl mx-auto w-full">
       <div>
-        <div className="text-2xl font-semibold text-epiroc-blue">Parts To Order</div>
+        <div className="text-2xl font-semibold text-epiroc-gray">Parts To Order</div>
         <div className="text-sm text-slate-600">Outstanding quantities that still need to be ordered from a supplier.</div>
       </div>
 

@@ -11,7 +11,7 @@ export function SignaturePad({ label, value, onChange }) {
     const ctx = canvas.getContext('2d');
     ctx.lineWidth = 2;
     ctx.lineCap = 'round';
-    ctx.strokeStyle = '#003A70';
+    ctx.strokeStyle = '#54565B';
 
     if (value) {
       const img = new Image();
@@ -86,7 +86,7 @@ export function SignaturePad({ label, value, onChange }) {
           <button
             type="button"
             onClick={clear}
-            className="text-xs font-semibold text-epiroc-blue hover:underline"
+            className="text-xs font-semibold text-epiroc-gray hover:underline"
           >
             Clear
           </button>

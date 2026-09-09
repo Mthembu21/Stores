@@ -30,7 +30,7 @@ export default function LowStockPage() {
   return (
     <div className="space-y-6 max-w-5xl mx-auto w-full">
       <div>
-        <div className="text-2xl font-semibold text-epiroc-blue">Low Stock</div>
+        <div className="text-2xl font-semibold text-epiroc-gray">Low Stock</div>
         <div className="text-sm text-slate-600">Parts at or below their minimum stock level.</div>
       </div>
 

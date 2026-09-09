@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useLogin } from '../services/auth';
+import logo from '../components/logo.png';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -36,11 +37,11 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen grid place-items-center px-6" style={{ background: '#f6f8fb' }}>
       <div className="w-full max-w-md rounded-xl bg-white shadow-soft p-6" style={{ background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', borderRadius: '12px' }}>
-        <div className="flex items-center justify-between">
-          <div className="text-xl font-semibold text-epiroc-blue" style={{ color: '#1e40af', fontWeight: '600' }}>Workshop System</div>
-          <div className="h-3 w-10 rounded-full bg-epiroc-yellow" style={{ height: '12px', width: '40px', borderRadius: '50%', backgroundColor: '#fbbf24' }} />
+        <div className="flex items-center justify-center">
+          <img src={logo} alt="Epiroc" className="h-10 w-auto" />
         </div>
-        <div className="mt-1 text-sm text-slate-600" style={{ marginTop: '4px', color: '#64748b', fontSize: '14px' }}>Storeman login</div>
+        <div className="mt-3 text-center text-xl font-semibold text-epiroc-gray" style={{ color: '#54565B', fontWeight: '600' }}>Workshop System</div>
+        <div className="mt-1 text-center text-sm text-slate-600" style={{ marginTop: '4px', color: '#64748b', fontSize: '14px' }}>Storeman login</div>
 
         <form
           className="mt-6 space-y-4"

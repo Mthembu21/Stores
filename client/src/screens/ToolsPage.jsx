@@ -128,7 +128,7 @@ export default function ToolsPage() {
             </select>
             <button
               type="button"
-              className="rounded-lg bg-epiroc-blue px-3 py-1 text-xs font-semibold text-white hover:brightness-95 disabled:opacity-60"
+              className="rounded-lg bg-epiroc-gray px-3 py-1 text-xs font-semibold text-white hover:brightness-95 disabled:opacity-60"
               onClick={() => {
                 const id = t._id || t.id;
                 if (!id) {
@@ -303,12 +303,12 @@ export default function ToolsPage() {
   return (
     <div className="space-y-6 max-w-6xl mx-auto w-full">
       <div>
-        <div className="text-2xl font-semibold text-epiroc-blue">Tools</div>
+        <div className="text-2xl font-semibold text-epiroc-gray">Tools</div>
         <div className="text-sm text-slate-600">Borrow and return tools linked to a job number.</div>
       </div>
 
       <div className="rounded-xl bg-white shadow-soft p-6">
-        <div className="text-sm font-semibold text-epiroc-blue">Create tool</div>
+        <div className="text-sm font-semibold text-epiroc-gray">Create tool</div>
 
         <form
           className="mt-4 max-w-4xl mx-auto space-y-4"
@@ -407,7 +407,7 @@ export default function ToolsPage() {
       </div>
 
       <div className="rounded-xl bg-white shadow-soft p-6">
-        <div className="text-sm font-semibold text-epiroc-blue">Borrow tool</div>
+        <div className="text-sm font-semibold text-epiroc-gray">Borrow tool</div>
 
         <form
           className="mt-4 max-w-4xl mx-auto space-y-4"
@@ -568,7 +568,7 @@ export default function ToolsPage() {
       </div>
 
       <div className="space-y-3">
-        <div className="text-sm font-semibold text-epiroc-blue">Tools list</div>
+        <div className="text-sm font-semibold text-epiroc-gray">Tools list</div>
 
         {/* Enhanced Search Bar */}
         <div className="p-3 bg-blue-50 rounded-xl border border-blue-200">
@@ -619,7 +619,7 @@ export default function ToolsPage() {
       </div>
 
       <div className="space-y-3">
-        <div className="text-sm font-semibold text-epiroc-blue">Open borrowings</div>
+        <div className="text-sm font-semibold text-epiroc-gray">Open borrowings</div>
         {borrowLoading ? (
           <div className="rounded-xl bg-white shadow-soft p-4 text-sm text-slate-600">Loading borrowings...</div>
         ) : borrowError ? (

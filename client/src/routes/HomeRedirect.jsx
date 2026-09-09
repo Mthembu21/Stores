@@ -9,7 +9,7 @@ export default function HomeRedirect() {
   if (isLoading) {
     return (
       <div className="min-h-[60vh] grid place-items-center">
-        <div className="text-epiroc-blue font-semibold">Loading…</div>
+        <div className="text-epiroc-gray font-semibold">Loading…</div>
       </div>
     );
   }

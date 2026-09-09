@@ -43,7 +43,7 @@ export default function StoreIssuesPage() {
         render: (i) => (
           <Link
             to={`/spare-parts/store-issues/${i.issueId}/print`}
-            className="text-epiroc-blue font-semibold hover:underline"
+            className="text-epiroc-gray font-semibold hover:underline"
           >
             Print
           </Link>
@@ -56,7 +56,7 @@ export default function StoreIssuesPage() {
   return (
     <div className="space-y-6 max-w-6xl mx-auto w-full">
       <div>
-        <div className="text-2xl font-semibold text-epiroc-blue">Store Issues</div>
+        <div className="text-2xl font-semibold text-epiroc-gray">Store Issues</div>
         <div className="text-sm text-slate-600">All spare part issues recorded by the Parts Storeman.</div>
       </div>
 

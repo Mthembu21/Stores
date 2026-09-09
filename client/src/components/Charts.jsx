@@ -12,10 +12,10 @@ import {
 } from 'recharts';
 import { formatMonthLabel } from '../utils/format';
 
-export function PpePerTechnicianChart({ data }) {
+export function ConsumablesPerTechnicianChart({ data }) {
   return (
     <div className="rounded-xl bg-white shadow-soft p-4">
-      <div className="text-sm font-semibold text-epiroc-blue">PPE Usage per Technician</div>
+      <div className="text-sm font-semibold text-epiroc-gray">Consumables Usage per Technician</div>
       <div className="mt-4 h-72">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data || []} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
@@ -24,7 +24,7 @@ export function PpePerTechnicianChart({ data }) {
             <YAxis allowDecimals={false} />
             <Tooltip />
             <Legend />
-            <Bar dataKey="total" name="PPE Taken" fill="#FFCD00" radius={[10, 10, 0, 0]} />
+            <Bar dataKey="total" name="Consumables Taken" fill="#FFCD00" radius={[10, 10, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -40,7 +40,7 @@ export function MonthlyBorrowTrendsChart({ data }) {
 
   return (
     <div className="rounded-xl bg-white shadow-soft p-4">
-      <div className="text-sm font-semibold text-epiroc-blue">Monthly Borrowing Trends</div>
+      <div className="text-sm font-semibold text-epiroc-gray">Monthly Borrowing Trends</div>
       <div className="mt-4 h-72">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={formatted} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
@@ -49,7 +49,7 @@ export function MonthlyBorrowTrendsChart({ data }) {
             <YAxis allowDecimals={false} />
             <Tooltip />
             <Legend />
-            <Line type="monotone" dataKey="count" name="Borrowings" stroke="#003A70" strokeWidth={3} dot={false} />
+            <Line type="monotone" dataKey="count" name="Borrowings" stroke="#54565B" strokeWidth={3} dot={false} />
           </LineChart>
         </ResponsiveContainer>
       </div>

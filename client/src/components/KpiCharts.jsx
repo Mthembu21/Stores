@@ -11,7 +11,7 @@ import {
 } from 'recharts';
 import { KPI_DEFINITIONS } from '../config/kpiDefinitions';
 
-const BAR_COLORS = ['#003A70', '#FFCD00', '#16a34a', '#dc2626', '#7c3aed', '#0891b2', '#ea580c', '#db2777'];
+const BAR_COLORS = ['#54565B', '#FFCD00', '#16a34a', '#dc2626', '#7c3aed', '#0891b2', '#ea580c', '#db2777'];
 
 function shortDayLabel(iso) {
   const d = new Date(`${iso}T00:00:00`);
@@ -54,7 +54,7 @@ export function KpiOverviewChart({ entries, days }) {
 
   return (
     <div className="rounded-xl bg-white shadow-soft p-4">
-      <div className="text-sm font-semibold text-epiroc-blue">Weekly KPI performance (% of target)</div>
+      <div className="text-sm font-semibold text-epiroc-gray">Weekly KPI performance (% of target)</div>
       <div className="text-xs text-slate-500 mb-2">
         Each bar is a KPI's actual value as a percentage of its target for that day. The dashed line at 100% is target achieved.
       </div>

@@ -198,7 +198,7 @@ export default function IssuePrintPage() {
       `}</style>
 
       <div className="print-toolbar no-print">
-        <Link to="/spare-parts/store-issues" className="text-sm text-epiroc-blue font-semibold hover:underline">
+        <Link to="/spare-parts/store-issues" className="text-sm text-epiroc-gray font-semibold hover:underline">
           &larr; Back to Store Issues
         </Link>
         <button

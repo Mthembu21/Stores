@@ -65,12 +65,12 @@ export default function PartReturnsPage() {
   return (
     <div className="space-y-6 max-w-4xl mx-auto w-full">
       <div>
-        <div className="text-2xl font-semibold text-epiroc-blue">Returns</div>
+        <div className="text-2xl font-semibold text-epiroc-gray">Returns</div>
         <div className="text-sm text-slate-600">Find a store issue and record returned stock.</div>
       </div>
 
       <div className="rounded-xl bg-white shadow-soft p-6 space-y-3">
-        <div className="text-sm font-semibold text-epiroc-blue">Find store issue</div>
+        <div className="text-sm font-semibold text-epiroc-gray">Find store issue</div>
         <input
           className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
           value={search}
@@ -100,7 +100,7 @@ export default function PartReturnsPage() {
                       <div className="font-medium text-slate-900">{line.issueNumber} — {line.partNumber}</div>
                       <div className="text-sm text-slate-600">{line.partDescription}</div>
                     </div>
-                    <div className="text-sm font-semibold text-epiroc-blue">
+                    <div className="text-sm font-semibold text-epiroc-gray">
                       {line.quantityIssued - line.quantityReturned} issued out
                     </div>
                   </div>
@@ -113,7 +113,7 @@ export default function PartReturnsPage() {
 
       {selectedIssue && (
         <form className="rounded-xl bg-white shadow-soft p-6 space-y-4" onSubmit={handleSubmit}>
-          <div className="text-sm font-semibold text-epiroc-blue">
+          <div className="text-sm font-semibold text-epiroc-gray">
             Record return for {selectedIssue.issueNumber} ({selectedIssue.partNumber})
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -147,7 +147,7 @@ export default function PartReturnsPage() {
       )}
 
       <div className="space-y-3">
-        <div className="text-sm font-semibold text-epiroc-blue">Parts issued out</div>
+        <div className="text-sm font-semibold text-epiroc-gray">Parts issued out</div>
         <Table emptyLabel="No parts issued out" columns={columns} rows={outstandingIssues} maxHeight="400px" />
       </div>
     </div>

@@ -193,14 +193,42 @@ export default function SpecialToolsPage() {
       {
         key: 'lastCalibrationAt',
         header: 'Last Calibration',
-        render: (tool) => (tool.lastCalibrationAt ? new Date(tool.lastCalibrationAt).toLocaleDateString() : 'Never'),
+        render: (tool) => {
+          if (!tool.calibrationEnabled) return 'Calibration Not Required';
+          return tool.lastCalibrationAt ? new Date(tool.lastCalibrationAt).toLocaleDateString() : 'Never';
+        },
       },
       {
         key: 'nextCalibrationDueAt',
         header: 'Next Calibration',
         render: (tool) => {
+          if (!tool.calibrationEnabled) return 'Calibration Not Required';
           if (!tool.nextCalibrationDueAt) return 'Not Set';
           const date = new Date(tool.nextCalibrationDueAt);
+          const now = new Date();
+          const isOverdue = date < now;
+          return (
+            <span className={isOverdue ? 'text-red-600 font-semibold' : ''}>
+              {date.toLocaleDateString()}
+            </span>
+          );
+        },
+      },
+      {
+        key: 'lastInspectionAt',
+        header: 'Last Inspection',
+        render: (tool) => {
+          if (!tool.inspectionEnabled) return 'Inspection Not Required';
+          return tool.lastInspectionAt ? new Date(tool.lastInspectionAt).toLocaleDateString() : 'Never';
+        },
+      },
+      {
+        key: 'nextInspectionDueAt',
+        header: 'Next Inspection',
+        render: (tool) => {
+          if (!tool.inspectionEnabled) return 'Inspection Not Required';
+          if (!tool.nextInspectionDueAt) return 'Not Set';
+          const date = new Date(tool.nextInspectionDueAt);
           const now = new Date();
           const isOverdue = date < now;
           return (
@@ -256,12 +284,12 @@ export default function SpecialToolsPage() {
   return (
     <div className="space-y-6 max-w-6xl mx-auto w-full">
       <div>
-        <div className="text-2xl font-semibold text-epiroc-blue">Special Tools</div>
+        <div className="text-2xl font-semibold text-epiroc-gray">Special Tools</div>
         <div className="text-sm text-slate-600">Manage and track special tools with calibration alerts.</div>
       </div>
 
       <div className="rounded-xl bg-white shadow-soft p-6">
-        <div className="text-sm font-semibold text-epiroc-blue">All Special Tools</div>
+        <div className="text-sm font-semibold text-epiroc-gray">All Special Tools</div>
         
         {/* Search Bar */}
         <div className="p-3 bg-blue-50 rounded-xl border border-blue-200">

@@ -6,7 +6,7 @@ export default {
       colors: {
         epiroc: {
           yellow: '#FFCD00',
-          blue: '#003A70',
+          gray: '#54565B',
           black: '#000000',
           white: '#FFFFFF',
         },

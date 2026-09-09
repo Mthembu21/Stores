@@ -261,7 +261,7 @@ export default function IssuePartsPage() {
   return (
     <div className="space-y-6 max-w-4xl mx-auto w-full">
       <div>
-        <div className="text-2xl font-semibold text-epiroc-blue">Issue Parts</div>
+        <div className="text-2xl font-semibold text-epiroc-gray">Issue Parts</div>
         <div className="text-sm text-slate-600">Add one or more parts, capture job details, justification and quantities.</div>
       </div>
 
@@ -290,7 +290,7 @@ export default function IssuePartsPage() {
 
       <form className="rounded-xl bg-white shadow-soft p-6 space-y-6" onSubmit={handleSubmit}>
         <div className="space-y-3">
-          <div className="text-sm font-semibold text-epiroc-blue">Add parts</div>
+          <div className="text-sm font-semibold text-epiroc-gray">Add parts</div>
           <input
             type="text"
             className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
@@ -328,7 +328,7 @@ export default function IssuePartsPage() {
         </div>
 
         <div className="space-y-3 border-t border-slate-100 pt-6">
-          <div className="text-sm font-semibold text-epiroc-blue">Selected parts ({items.length})</div>
+          <div className="text-sm font-semibold text-epiroc-gray">Selected parts ({items.length})</div>
           {items.length === 0 ? (
             <div className="p-4 text-sm text-slate-500 text-center border border-dashed border-slate-200 rounded-xl">
               No parts added yet. Click a part above to add it.
@@ -416,7 +416,7 @@ export default function IssuePartsPage() {
         </div>
 
         <div className="space-y-4 border-t border-slate-100 pt-6">
-          <div className="text-sm font-semibold text-epiroc-blue">Job information</div>
+          <div className="text-sm font-semibold text-epiroc-gray">Job information</div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium text-slate-700">Machine number</label>
@@ -442,7 +442,7 @@ export default function IssuePartsPage() {
         </div>
 
         <div className="space-y-4 border-t border-slate-100 pt-6">
-          <div className="text-sm font-semibold text-epiroc-blue">Machine area / location</div>
+          <div className="text-sm font-semibold text-epiroc-gray">Machine area / location</div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium text-slate-700">Location</label>
@@ -464,7 +464,7 @@ export default function IssuePartsPage() {
         </div>
 
         <div className="space-y-4 border-t border-slate-100 pt-6">
-          <div className="text-sm font-semibold text-epiroc-blue">Maintenance executed</div>
+          <div className="text-sm font-semibold text-epiroc-gray">Maintenance executed</div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium text-slate-700">Date started</label>
@@ -484,7 +484,7 @@ export default function IssuePartsPage() {
             </div>
           </div>
 
-          <div className="text-sm font-semibold text-epiroc-blue pt-2">Hour meter readings</div>
+          <div className="text-sm font-semibold text-epiroc-gray pt-2">Hour meter readings</div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
               <label className="text-sm font-medium text-slate-700">Engine</label>
@@ -506,7 +506,7 @@ export default function IssuePartsPage() {
         </div>
 
         <div className="space-y-4 border-t border-slate-100 pt-6">
-          <div className="text-sm font-semibold text-epiroc-blue">Nature of downtime</div>
+          <div className="text-sm font-semibold text-epiroc-gray">Nature of downtime</div>
           <div className="flex flex-wrap gap-4">
             <label className="flex items-center gap-2 text-sm text-slate-700">
               <input type="checkbox" checked={damage} onChange={(e) => setDamage(e.target.checked)} /> Damage
@@ -544,7 +544,7 @@ export default function IssuePartsPage() {
         </div>
 
         <div className="space-y-4 border-t border-slate-100 pt-6">
-          <div className="text-sm font-semibold text-epiroc-blue">Component / equipment information</div>
+          <div className="text-sm font-semibold text-epiroc-gray">Component / equipment information</div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium text-slate-700">Sub system</label>
@@ -575,10 +575,10 @@ export default function IssuePartsPage() {
 
         <div className="space-y-3 border-t border-slate-100 pt-6">
           <div className="flex items-center justify-between">
-            <div className="text-sm font-semibold text-epiroc-blue">Labour</div>
+            <div className="text-sm font-semibold text-epiroc-gray">Labour</div>
             <button
               type="button"
-              className="text-xs font-semibold text-epiroc-blue hover:underline"
+              className="text-xs font-semibold text-epiroc-gray hover:underline"
               onClick={addLaborEntry}
             >
               + Add artisan
@@ -633,7 +633,7 @@ export default function IssuePartsPage() {
         </div>
 
         <div className="space-y-4 border-t border-slate-100 pt-6">
-          <div className="text-sm font-semibold text-epiroc-blue">Requestor</div>
+          <div className="text-sm font-semibold text-epiroc-gray">Requestor</div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium text-slate-700">Requestor name</label>
@@ -667,7 +667,7 @@ export default function IssuePartsPage() {
         </div>
 
         <div className="space-y-4 border-t border-slate-100 pt-6">
-          <div className="text-sm font-semibold text-epiroc-blue">Foreman & Storeman</div>
+          <div className="text-sm font-semibold text-epiroc-gray">Foreman & Storeman</div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium text-slate-700">Foreman name</label>

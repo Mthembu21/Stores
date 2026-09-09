@@ -14,7 +14,7 @@ export default function PartsDashboardPage() {
   if (isLoading) {
     return (
       <div className="min-h-[60vh] grid place-items-center">
-        <div className="text-epiroc-blue font-semibold">Loading dashboard…</div>
+        <div className="text-epiroc-gray font-semibold">Loading dashboard…</div>
       </div>
     );
   }
@@ -22,7 +22,7 @@ export default function PartsDashboardPage() {
   if (isError || !data) {
     return (
       <div className="rounded-xl bg-white shadow-soft p-6">
-        <div className="text-sm font-semibold text-epiroc-blue">Could not load dashboard</div>
+        <div className="text-sm font-semibold text-epiroc-gray">Could not load dashboard</div>
         <div className="mt-1 text-sm text-slate-600">Check that the API is running and you are logged in.</div>
       </div>
     );
@@ -31,7 +31,7 @@ export default function PartsDashboardPage() {
   return (
     <div className="space-y-6">
       <div>
-        <div className="text-2xl font-semibold text-epiroc-blue">Spare Parts & Stores</div>
+        <div className="text-2xl font-semibold text-epiroc-gray">Spare Parts & Stores</div>
         <div className="text-sm text-slate-600">Overview of parts inventory, issues and stock health.</div>
       </div>
 
@@ -50,7 +50,7 @@ export default function PartsDashboardPage() {
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         <div className="space-y-3">
-          <div className="text-sm font-semibold text-epiroc-blue">Low Stock Parts</div>
+          <div className="text-sm font-semibold text-epiroc-gray">Low Stock Parts</div>
           <Table
             emptyLabel="No low stock parts"
             getRowClassName={(p) => (p.stockOnHand <= 0 ? 'bg-red-50' : 'bg-epiroc-yellow/15')}
@@ -71,7 +71,7 @@ export default function PartsDashboardPage() {
         </div>
 
         <div className="space-y-3">
-          <div className="text-sm font-semibold text-epiroc-blue">Recent Issues</div>
+          <div className="text-sm font-semibold text-epiroc-gray">Recent Issues</div>
           <Table
             emptyLabel="No issues yet"
             columns={[

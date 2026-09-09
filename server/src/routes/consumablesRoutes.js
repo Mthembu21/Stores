@@ -1,5 +1,5 @@
 const express = require('express');
-const { takePpe, listPpe, ppeMonthlySummary } = require('../controllers/ppeController');
+const { takeConsumable, listConsumables, consumablesMonthlySummary } = require('../controllers/consumablesController');
 const { requireAuth } = require('../middleware/auth');
 const { requireRole } = require('../middleware/requireRole');
 const { Roles } = require('../config/roles');
@@ -9,8 +9,8 @@ const router = express.Router();
 router.use(requireAuth);
 router.use(requireRole(Roles.Admin));
 
-router.get('/', listPpe);
-router.post('/', takePpe);
-router.get('/monthly-summary', ppeMonthlySummary);
+router.get('/', listConsumables);
+router.post('/', takeConsumable);
+router.get('/monthly-summary', consumablesMonthlySummary);
 
-module.exports = { ppeRoutes: router };
+module.exports = { consumablesRoutes: router };

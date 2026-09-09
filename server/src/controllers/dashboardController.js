@@ -1,7 +1,8 @@
-const { User } = require('../models/User');
 const { Tool } = require('../models/Tool');
 const { BorrowRecord } = require('../models/BorrowRecord');
-const { PpeRecord } = require('../models/PpeRecord');
+const { ConsumableRecord } = require('../models/ConsumableRecord');
+
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 function utcMonthRange(date) {
   const year = date.getUTCFullYear();
@@ -21,26 +22,35 @@ async function getDashboard(req, res) {
 
   const trendStart = addUtcMonths(now, -5);
   const trendEnd = addUtcMonths(now, 1);
+  const dueSoonEnd = new Date(now.getTime() + 30 * DAY_MS);
 
   const [
-    totalUsers,
-    totalTools,
+    totalNormalTools,
+    totalSpecialTools,
+    specialToolsDueSoon,
     borrowedTools,
     damagedTools,
     missingTools,
     openBorrowings,
     recentBorrowings,
-    ppeAgg,
+    consumablesAgg,
     borrowTrendAgg,
   ] = await Promise.all([
-    User.countDocuments({}),
-    Tool.countDocuments({}),
+    Tool.countDocuments({ isSpecialTool: false }),
+    Tool.countDocuments({ isSpecialTool: true }),
+    Tool.countDocuments({
+      isSpecialTool: true,
+      $or: [
+        { nextCalibrationDueAt: { $gte: now, $lte: dueSoonEnd } },
+        { nextInspectionDueAt: { $gte: now, $lte: dueSoonEnd } },
+      ],
+    }),
     BorrowRecord.countDocuments({ returnedAt: null }),
     Tool.countDocuments({ flag: 'Damaged' }),
     Tool.countDocuments({ flag: 'Missing' }),
     BorrowRecord.find({ returnedAt: null }).populate('tool').populate('borrower'),
     BorrowRecord.find({}).sort({ borrowedAt: -1 }).limit(10).populate('tool').populate('borrower'),
-    PpeRecord.aggregate([
+    ConsumableRecord.aggregate([
       { $match: { takenAt: { $gte: start, $lt: end } } },
       { $group: { _id: '$technician', total: { $sum: '$quantity' } } },
       { $sort: { total: -1 } },
@@ -86,17 +96,18 @@ async function getDashboard(req, res) {
 
   const overdue = openBorrowings.filter((r) => r.isOverdue);
 
-  const ppeThisMonth = ppeAgg.reduce((acc, r) => acc + (r.total || 0), 0);
+  const consumablesThisMonth = consumablesAgg.reduce((acc, r) => acc + (r.total || 0), 0);
 
   res.json({
     cards: {
-      totalUsers,
-      totalTools,
+      totalNormalTools,
+      totalSpecialTools,
+      specialToolsDueSoon,
       borrowedTools,
       overdueTools: overdue.length,
       damagedTools,
       missingTools,
-      ppeTakenThisMonth: ppeThisMonth,
+      consumablesTakenThisMonth: consumablesThisMonth,
     },
     tables: {
       overdueTools: overdue.slice(0, 10),
@@ -105,7 +116,7 @@ async function getDashboard(req, res) {
       recentBorrowings,
     },
     charts: {
-      ppeUsagePerTechnician: ppeAgg,
+      consumablesUsagePerTechnician: consumablesAgg,
       monthlyBorrowingTrends: borrowTrendAgg,
     },
     meta: {

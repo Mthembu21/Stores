@@ -18,7 +18,7 @@ export function LowStockChart({ data }) {
 
   return (
     <div className="rounded-xl bg-white shadow-soft p-4">
-      <div className="text-sm font-semibold text-epiroc-blue">Low Stock Parts</div>
+      <div className="text-sm font-semibold text-epiroc-gray">Low Stock Parts</div>
       <div className="mt-4 h-72">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={formatted} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
@@ -28,7 +28,7 @@ export function LowStockChart({ data }) {
             <Tooltip />
             <Legend />
             <Bar dataKey="stockOnHand" name="Stock On Hand" fill="#FFCD00" radius={[10, 10, 0, 0]} />
-            <Bar dataKey="minimumStockLevel" name="Minimum Level" fill="#003A70" radius={[10, 10, 0, 0]} />
+            <Bar dataKey="minimumStockLevel" name="Minimum Level" fill="#54565B" radius={[10, 10, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>
