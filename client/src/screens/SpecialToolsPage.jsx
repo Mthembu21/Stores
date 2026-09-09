@@ -40,6 +40,7 @@ export default function SpecialToolsPage() {
   const [assignToolId, setAssignToolId] = useState('');
   const [dispatchToolId, setDispatchToolId] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
 
   // Form states
   const [editForm, setEditForm] = useState({
@@ -134,19 +135,36 @@ export default function SpecialToolsPage() {
     };
 
     return filteredSpecialTools.map((tool) => {
-      const calDays = daysUntil(tool.nextCalibrationDueAt);
-      const inspDays = daysUntil(tool.nextInspectionDueAt);
+      const calDays = tool.calibrationEnabled ? daysUntil(tool.nextCalibrationDueAt) : null;
+      const inspDays = tool.inspectionEnabled ? daysUntil(tool.nextInspectionDueAt) : null;
 
-      const rowState =
-        calDays < 0 || inspDays < 0
-          ? 'overdue'
-          : calDays <= ALERT_DAYS || inspDays <= ALERT_DAYS
-          ? 'soon'
-          : 'ok';
+      const isOverdue = (calDays !== null && calDays < 0) || (inspDays !== null && inspDays < 0);
+      const isSoon =
+        (calDays !== null && calDays >= 0 && calDays <= ALERT_DAYS) ||
+        (inspDays !== null && inspDays >= 0 && inspDays <= ALERT_DAYS);
+      const rowState = isOverdue ? 'overdue' : isSoon ? 'soon' : 'ok';
 
-      return { ...tool, __calDays: calDays, __inspDays: inspDays, __rowState: rowState };
+      const isNever =
+        (tool.calibrationEnabled && !tool.lastCalibrationAt) ||
+        (tool.inspectionEnabled && !tool.lastInspectionAt);
+
+      return {
+        ...tool,
+        __calDays: calDays,
+        __inspDays: inspDays,
+        __rowState: rowState,
+        __isDue: rowState === 'overdue' || rowState === 'soon',
+        __isNever: isNever,
+      };
     });
   }, [filteredSpecialTools]);
+
+  // Apply the "Never" / "Due" status filter on top of the search results
+  const visibleSpecialTools = useMemo(() => {
+    if (statusFilter === 'never') return specialToolsWithAlerts.filter((t) => t.__isNever);
+    if (statusFilter === 'due') return specialToolsWithAlerts.filter((t) => t.__isDue);
+    return specialToolsWithAlerts;
+  }, [specialToolsWithAlerts, statusFilter]);
 
   // Handle edit button click
   const handleEditClick = (tool) => {
@@ -314,15 +332,37 @@ export default function SpecialToolsPage() {
           </div>
         </div>
 
+        {/* Status Filter */}
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Filter:</span>
+          {[
+            { key: 'all', label: 'All' },
+            { key: 'never', label: 'Never Calibrated/Inspected' },
+            { key: 'due', label: 'Due Soon / Overdue' },
+          ].map((opt) => (
+            <button
+              key={opt.key}
+              onClick={() => setStatusFilter(opt.key)}
+              className={`rounded-lg px-3 py-1 text-xs font-semibold transition ${
+                statusFilter === opt.key
+                  ? 'bg-epiroc-gray text-white'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+
         {toolsLoading ? (
           <div className="rounded-xl bg-white shadow-soft p-4 text-sm text-slate-600">Loading special tools...</div>
         ) : toolsError ? (
           <div className="rounded-xl bg-white shadow-soft p-4 text-sm text-slate-600">Could not load special tools</div>
         ) : (
-          <Table 
-            emptyLabel="No special tools found" 
-            columns={columns} 
-            rows={specialToolsWithAlerts}
+          <Table
+            emptyLabel="No special tools found"
+            columns={columns}
+            rows={visibleSpecialTools}
             getRowClassName={(tool) =>
               tool.__rowState === 'overdue'
                 ? 'bg-red-100 border-2 border-red-300'
