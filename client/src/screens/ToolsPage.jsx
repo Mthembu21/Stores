@@ -91,6 +91,28 @@ export default function ToolsPage() {
       { key: 'category', header: 'Category' },
       { key: 'quantityAvailable', header: 'Available' },
       { key: 'quantityTotal', header: 'Total' },
+      {
+        key: 'isSpecialTool',
+        header: 'Special Tool',
+        render: (t) => (
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={Boolean(t.isSpecialTool)}
+              onChange={(e) => {
+                const id = t._id || t.id;
+                if (!id) {
+                  toast.error('Could not update tool: missing id');
+                  return;
+                }
+                updateTool.mutate({ id, patch: { isSpecialTool: e.target.checked } });
+              }}
+              disabled={updateTool.isPending}
+            />
+            <span className="text-xs text-slate-600">{t.isSpecialTool ? 'Yes' : 'No'}</span>
+          </label>
+        ),
+      },
       { key: 'status', header: 'Status', render: (t) => t.status || '' },
       {
         key: 'flag',

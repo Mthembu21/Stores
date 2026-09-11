@@ -16,6 +16,7 @@ async function createTool(req, res) {
     quantityTotal,
     quantityAvailable,
     status,
+    isSpecialTool,
   } = req.body;
 
   if (!toolName || !toolCode || !category || quantityTotal === undefined) {
@@ -44,6 +45,7 @@ async function createTool(req, res) {
     quantityTotal: qtyTotalNum,
     quantityAvailable: qtyAvailNum,
     status: status || (qtyAvailNum > 0 ? 'Available' : 'Borrowed'),
+    isSpecialTool: Boolean(isSpecialTool),
   });
 
   res.status(201).json({ tool });

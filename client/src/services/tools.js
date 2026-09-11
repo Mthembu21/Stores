@@ -64,13 +64,14 @@ export function useDeleteTool() {
 export function useCreateTool() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ toolName, toolCode, category, quantityTotal, quantityAvailable }) => {
+    mutationFn: async ({ toolName, toolCode, category, quantityTotal, quantityAvailable, isSpecialTool }) => {
       const { data } = await http.post('/tools', {
         toolName,
         toolCode,
         category,
         quantityTotal,
         quantityAvailable,
+        isSpecialTool,
       });
       return data;
     },
