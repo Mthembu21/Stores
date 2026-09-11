@@ -114,24 +114,24 @@ async function updateTool(req, res) {
 
   if (calibrationEnabled !== undefined) tool.calibrationEnabled = Boolean(calibrationEnabled);
   if (calibrationIntervalDays !== undefined) {
-    const v = calibrationIntervalDays === null ? null : Number(calibrationIntervalDays);
+    const v = calibrationIntervalDays === null || calibrationIntervalDays === '' ? null : Number(calibrationIntervalDays);
     if (v !== null && (Number.isNaN(v) || v < 1)) throw new ApiError(400, 'Invalid Calibration Interval');
     tool.calibrationIntervalDays = v;
   }
 
   if (lastCalibrationAt !== undefined) {
-    tool.lastCalibrationAt = lastCalibrationAt === null ? null : new Date(lastCalibrationAt);
+    tool.lastCalibrationAt = lastCalibrationAt ? new Date(lastCalibrationAt) : null;
   }
 
   if (inspectionEnabled !== undefined) tool.inspectionEnabled = Boolean(inspectionEnabled);
   if (inspectionIntervalDays !== undefined) {
-    const v = inspectionIntervalDays === null ? null : Number(inspectionIntervalDays);
+    const v = inspectionIntervalDays === null || inspectionIntervalDays === '' ? null : Number(inspectionIntervalDays);
     if (v !== null && (Number.isNaN(v) || v < 1)) throw new ApiError(400, 'Invalid Inspection Interval');
     tool.inspectionIntervalDays = v;
   }
 
   if (lastInspectionAt !== undefined) {
-    tool.lastInspectionAt = lastInspectionAt === null ? null : new Date(lastInspectionAt);
+    tool.lastInspectionAt = lastInspectionAt ? new Date(lastInspectionAt) : null;
   }
 
   // Respect an explicitly provided due date (e.g. a manual override in the edit form);
