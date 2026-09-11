@@ -37,6 +37,15 @@ export default function ToolsPage() {
     return d.toISOString().slice(0, 16);
   });
 
+  // Per-tool "Assign" modal — borrow a specific tool to a technician for a chosen duration
+  const [assignToolId, setAssignToolId] = useState('');
+  const [assignForm, setAssignForm] = useState({
+    technicianId: '',
+    jobNumber: '',
+    startAt: '',
+    durationDays: '30',
+  });
+
   // Borrow form search and filter states
   const [borrowToolSearch, setBorrowToolSearch] = useState('');
   const [borrowToolCategoryFilter, setBorrowToolCategoryFilter] = useState('All');
@@ -193,24 +202,50 @@ export default function ToolsPage() {
       {
         key: 'actions',
         header: '',
-        render: (t) => (
-          <button
-            type="button"
-            className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-            onClick={() => {
-              const id = t._id || t.id;
-              if (!id) {
-                toast.error('Could not delete tool: missing id');
-                return;
-              }
-              if (!window.confirm('Delete this tool?')) return;
-              deleteTool.mutate(id);
-            }}
-            disabled={deleteTool.isPending}
-          >
-            Delete
-          </button>
-        ),
+        render: (t) => {
+          const id = t._id || t.id;
+          const canAssign = Number(t.quantityAvailable) > 0 && (t.flag || 'None') === 'None';
+          return (
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className="rounded-lg bg-epiroc-gray px-3 py-1.5 text-xs font-semibold text-white hover:brightness-95 disabled:opacity-50"
+                onClick={() => {
+                  if (!id) {
+                    toast.error('Could not assign tool: missing id');
+                    return;
+                  }
+                  setAssignToolId(id);
+                  setAssignForm({
+                    technicianId: '',
+                    jobNumber: '',
+                    startAt: new Date().toISOString().slice(0, 16),
+                    durationDays: '30',
+                  });
+                }}
+                disabled={!canAssign}
+                title={canAssign ? 'Assign this tool to a technician for a chosen period' : 'Not available to assign'}
+              >
+                Assign
+              </button>
+              <button
+                type="button"
+                className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                onClick={() => {
+                  if (!id) {
+                    toast.error('Could not delete tool: missing id');
+                    return;
+                  }
+                  if (!window.confirm('Delete this tool?')) return;
+                  deleteTool.mutate(id);
+                }}
+                disabled={deleteTool.isPending}
+              >
+                Delete
+              </button>
+            </div>
+          );
+        },
       },
     ],
     [deleteTool, updateTool]
@@ -587,6 +622,111 @@ export default function ToolsPage() {
           <Table emptyLabel="No open borrowings" columns={borrowingColumns} rows={openBorrowings} maxHeight="400px" />
         )}
       </div>
+
+      {assignToolId && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div className="bg-white p-6 rounded-xl max-w-md w-full">
+            <h2 className="text-xl font-semibold mb-4">Assign Tool</h2>
+            <form
+              className="space-y-4"
+              onSubmit={(e) => {
+                e.preventDefault();
+                const durationDays = Number(assignForm.durationDays) || 1;
+                const expectedReturn = new Date(
+                  new Date(assignForm.startAt).getTime() + durationDays * 24 * 60 * 60 * 1000
+                ).toISOString();
+
+                borrowTool.mutate(
+                  {
+                    toolId: assignToolId,
+                    borrowerId: assignForm.technicianId,
+                    jobNumber: assignForm.jobNumber,
+                    expectedReturnAt: expectedReturn,
+                  },
+                  {
+                    onSuccess: () => {
+                      setAssignToolId('');
+                      setAssignForm({ technicianId: '', jobNumber: '', startAt: '', durationDays: '30' });
+                    },
+                  }
+                );
+              }}
+            >
+              <div>
+                <label className="block text-sm font-medium text-slate-700">Technician</label>
+                <select
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                  value={assignForm.technicianId}
+                  onChange={(e) => setAssignForm({ ...assignForm, technicianId: e.target.value })}
+                  required
+                >
+                  <option value="">Select technician...</option>
+                  {users
+                    .filter((u) => u.role !== 'Admin')
+                    .map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.fullName} ({u.role})
+                      </option>
+                    ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700">Job number</label>
+                <input
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                  value={assignForm.jobNumber}
+                  onChange={(e) => setAssignForm({ ...assignForm, jobNumber: e.target.value })}
+                  required
+                  placeholder="e.g. JOB-001"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700">Start Date</label>
+                <input
+                  type="datetime-local"
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                  value={assignForm.startAt}
+                  onChange={(e) => setAssignForm({ ...assignForm, startAt: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700">Duration (days)</label>
+                <input
+                  type="number"
+                  min="1"
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                  value={assignForm.durationDays}
+                  onChange={(e) => setAssignForm({ ...assignForm, durationDays: e.target.value })}
+                  required
+                />
+                <div className="mt-1 text-xs text-slate-500">
+                  The tool won't be flagged overdue until this period ends.
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  type="submit"
+                  className="flex-1 rounded-xl bg-epiroc-yellow px-4 py-2 font-semibold text-epiroc-black hover:brightness-95 disabled:opacity-60"
+                  disabled={borrowTool.isPending}
+                >
+                  {borrowTool.isPending ? 'Assigning...' : 'Assign Tool'}
+                </button>
+                <button
+                  type="button"
+                  className="flex-1 rounded-xl border border-slate-200 px-4 py-2 font-semibold text-slate-700 hover:bg-slate-50"
+                  onClick={() => {
+                    setAssignToolId('');
+                    setAssignForm({ technicianId: '', jobNumber: '', startAt: '', durationDays: '30' });
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

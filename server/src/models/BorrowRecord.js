@@ -20,9 +20,8 @@ const borrowRecordSchema = new mongoose.Schema(
 
 borrowRecordSchema.virtual('isOverdue').get(function isOverdue() {
   if (this.returnedAt) return false;
-  const borrowedAt = this.borrowedAt ? new Date(this.borrowedAt).getTime() : 0;
-  const now = Date.now();
-  return now - borrowedAt > 24 * 60 * 60 * 1000;
+  if (!this.expectedReturnAt) return false;
+  return Date.now() > new Date(this.expectedReturnAt).getTime();
 });
 
 borrowRecordSchema.set('toJSON', { virtuals: true });

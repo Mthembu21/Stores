@@ -54,7 +54,7 @@ export default function DashboardHome() {
         <Card title="Total Special Tools" value={cards.totalSpecialTools} />
         <Card title="Special Tools Due (Next 30 Days)" value={cards.specialToolsDueSoon} tone="warning" />
         <Card title="Borrowed Tools" value={cards.borrowedTools} />
-        <Card title="Overdue Tools (24+ hrs)" value={cards.overdueTools} tone="warning" />
+        <Card title="Overdue Tools" value={cards.overdueTools} tone="warning" />
         <Card title="Damaged Tools" value={cards.damagedTools} tone="danger" />
         <Card title="Missing Tools" value={cards.missingTools} tone="danger" />
         <Card title="Consumables Taken This Month" value={cards.consumablesTakenThisMonth} />
