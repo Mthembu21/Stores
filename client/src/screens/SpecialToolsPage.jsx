@@ -52,8 +52,8 @@ export default function SpecialToolsPage() {
     inspectionEnabled: true,
     lastCalibrationAt: '',
     lastInspectionAt: '',
-    calibrationDurationDays: '365',
-    inspectionDurationDays: '180',
+    calibrationIntervalDays: '365',
+    inspectionIntervalDays: '180',
     nextCalibrationDueAt: '',
     nextInspectionDueAt: '',
   });
@@ -178,8 +178,8 @@ export default function SpecialToolsPage() {
       inspectionEnabled: tool.inspectionEnabled !== false,
       lastCalibrationAt: tool.lastCalibrationAt ? new Date(tool.lastCalibrationAt).toISOString().split('T')[0] : '',
       lastInspectionAt: tool.lastInspectionAt ? new Date(tool.lastInspectionAt).toISOString().split('T')[0] : '',
-      calibrationDurationDays: tool.calibrationDurationDays?.toString() || '365',
-      inspectionDurationDays: tool.inspectionDurationDays?.toString() || '180',
+      calibrationIntervalDays: tool.calibrationIntervalDays?.toString() || '365',
+      inspectionIntervalDays: tool.inspectionIntervalDays?.toString() || '180',
       nextCalibrationDueAt: tool.nextCalibrationDueAt ? new Date(tool.nextCalibrationDueAt).toISOString().split('T')[0] : '',
       nextInspectionDueAt: tool.nextInspectionDueAt ? new Date(tool.nextInspectionDueAt).toISOString().split('T')[0] : '',
     });
@@ -466,7 +466,7 @@ export default function SpecialToolsPage() {
                           const today = new Date().toISOString().split('T')[0];
                           const nextCalibrationDueAt = (() => {
                             const lastDate = new Date(today);
-                            const durationDays = parseInt(editForm.calibrationDurationDays) || 365;
+                            const durationDays = parseInt(editForm.calibrationIntervalDays) || 365;
                             const nextDate = new Date(lastDate.getTime() + (durationDays * 24 * 60 * 60 * 1000));
                             return nextDate.toISOString().split('T')[0];
                           })();
@@ -492,7 +492,7 @@ export default function SpecialToolsPage() {
                   const nextCalibrationDueAt = newLastCalibrationAt && editForm.calibrationEnabled
                     ? (() => {
                         const lastDate = new Date(newLastCalibrationAt);
-                        const durationDays = parseInt(editForm.calibrationDurationDays) || 365;
+                        const durationDays = parseInt(editForm.calibrationIntervalDays) || 365;
                         const nextDate = new Date(lastDate.getTime() + (durationDays * 24 * 60 * 60 * 1000));
                         return nextDate.toISOString().split('T')[0];
                       })()
@@ -507,7 +507,7 @@ export default function SpecialToolsPage() {
                         type="number"
                         min="1"
                         className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
-                        value={editForm.calibrationDurationDays}
+                        value={editForm.calibrationIntervalDays}
                         onChange={(e) => {
                   const newDurationDays = e.target.value;
                   const nextCalibrationDueAt = editForm.lastCalibrationAt && editForm.calibrationEnabled
@@ -518,7 +518,7 @@ export default function SpecialToolsPage() {
                         return nextDate.toISOString().split('T')[0];
                       })()
                     : editForm.nextCalibrationDueAt;
-                  setEditForm({ ...editForm, calibrationDurationDays: newDurationDays, nextCalibrationDueAt });
+                  setEditForm({ ...editForm, calibrationIntervalDays: newDurationDays, nextCalibrationDueAt });
                 }}
                       />
                     </div>
@@ -557,7 +557,7 @@ export default function SpecialToolsPage() {
                           const today = new Date().toISOString().split('T')[0];
                           const nextInspectionDueAt = (() => {
                             const lastDate = new Date(today);
-                            const durationDays = parseInt(editForm.inspectionDurationDays) || 180;
+                            const durationDays = parseInt(editForm.inspectionIntervalDays) || 180;
                             const nextDate = new Date(lastDate.getTime() + (durationDays * 24 * 60 * 60 * 1000));
                             return nextDate.toISOString().split('T')[0];
                           })();
@@ -583,7 +583,7 @@ export default function SpecialToolsPage() {
                   const nextInspectionDueAt = newLastInspectionAt && editForm.inspectionEnabled
                     ? (() => {
                         const lastDate = new Date(newLastInspectionAt);
-                        const durationDays = parseInt(editForm.inspectionDurationDays) || 180;
+                        const durationDays = parseInt(editForm.inspectionIntervalDays) || 180;
                         const nextDate = new Date(lastDate.getTime() + (durationDays * 24 * 60 * 60 * 1000));
                         return nextDate.toISOString().split('T')[0];
                       })()
@@ -598,7 +598,7 @@ export default function SpecialToolsPage() {
                         type="number"
                         min="1"
                         className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
-                        value={editForm.inspectionDurationDays}
+                        value={editForm.inspectionIntervalDays}
                         onChange={(e) => {
                   const newDurationDays = e.target.value;
                   const nextInspectionDueAt = editForm.lastInspectionAt && editForm.inspectionEnabled
@@ -609,7 +609,7 @@ export default function SpecialToolsPage() {
                         return nextDate.toISOString().split('T')[0];
                       })()
                     : editForm.nextInspectionDueAt;
-                  setEditForm({ ...editForm, inspectionDurationDays: newDurationDays, nextInspectionDueAt });
+                  setEditForm({ ...editForm, inspectionIntervalDays: newDurationDays, nextInspectionDueAt });
                 }}
                       />
                     </div>
@@ -648,8 +648,8 @@ export default function SpecialToolsPage() {
                       inspectionEnabled: true,
                       lastCalibrationAt: '',
                       lastInspectionAt: '',
-                      calibrationDurationDays: '365',
-                      inspectionDurationDays: '180',
+                      calibrationIntervalDays: '365',
+                      inspectionIntervalDays: '180',
                       nextCalibrationDueAt: '',
                       nextInspectionDueAt: '',
                     });

@@ -70,9 +70,11 @@ async function updateTool(req, res) {
     calibrationEnabled,
     calibrationIntervalDays,
     lastCalibrationAt,
+    nextCalibrationDueAt,
     inspectionEnabled,
     inspectionIntervalDays,
     lastInspectionAt,
+    nextInspectionDueAt,
   } = req.body;
 
   if (toolCode && String(toolCode).trim() !== tool.toolCode) {
@@ -132,13 +134,24 @@ async function updateTool(req, res) {
     tool.lastInspectionAt = lastInspectionAt === null ? null : new Date(lastInspectionAt);
   }
 
-  if (tool.calibrationEnabled && tool.calibrationIntervalDays && tool.lastCalibrationAt) {
+  // Respect an explicitly provided due date (e.g. a manual override in the edit form);
+  // otherwise derive it from the last check date + interval, as before. Disabled checks
+  // never carry a due date, regardless of what was sent.
+  if (!tool.calibrationEnabled) {
+    tool.nextCalibrationDueAt = null;
+  } else if (nextCalibrationDueAt !== undefined) {
+    tool.nextCalibrationDueAt = nextCalibrationDueAt ? new Date(nextCalibrationDueAt) : null;
+  } else if (tool.calibrationIntervalDays && tool.lastCalibrationAt) {
     tool.nextCalibrationDueAt = new Date(new Date(tool.lastCalibrationAt).getTime() + Number(tool.calibrationIntervalDays) * DAY_MS);
   } else {
     tool.nextCalibrationDueAt = null;
   }
 
-  if (tool.inspectionEnabled && tool.inspectionIntervalDays && tool.lastInspectionAt) {
+  if (!tool.inspectionEnabled) {
+    tool.nextInspectionDueAt = null;
+  } else if (nextInspectionDueAt !== undefined) {
+    tool.nextInspectionDueAt = nextInspectionDueAt ? new Date(nextInspectionDueAt) : null;
+  } else if (tool.inspectionIntervalDays && tool.lastInspectionAt) {
     tool.nextInspectionDueAt = new Date(new Date(tool.lastInspectionAt).getTime() + Number(tool.inspectionIntervalDays) * DAY_MS);
   } else {
     tool.nextInspectionDueAt = null;
