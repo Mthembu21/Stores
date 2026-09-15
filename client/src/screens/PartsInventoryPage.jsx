@@ -85,6 +85,20 @@ export default function PartsInventoryPage() {
     restockPart.mutate({ id: part._id, quantity, reason });
   }
 
+  function handleSetStock(part) {
+    const raw = window.prompt(
+      `Set current physical count for ${part.partNumber} (${part.partDescription}):`,
+      String(part.stockOnHand)
+    );
+    if (raw === null) return;
+    const next = Number.parseInt(raw, 10);
+    if (raw.trim() === '' || Number.isNaN(next) || next < 0) {
+      window.alert('Enter a valid number (0 or higher)');
+      return;
+    }
+    updatePart.mutate({ id: part._id, patch: { stockOnHand: next } });
+  }
+
   const consumablesColumns = useMemo(
     () => [
       { key: 'partNumber', header: 'Part Number' },
@@ -119,18 +133,30 @@ export default function PartsInventoryPage() {
         key: 'actions',
         header: '',
         render: (p) => (
-          <button
-            type="button"
-            className="rounded-lg border border-slate-200 px-2 py-0.5 text-xs hover:bg-slate-50"
-            onClick={() => handleRestock(p)}
-            disabled={restockPart.isPending}
-          >
-            Restock
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className="rounded-lg border border-slate-200 px-2 py-0.5 text-xs hover:bg-slate-50"
+              onClick={() => handleSetStock(p)}
+              disabled={updatePart.isPending}
+              title="Set the stock on hand to match a physical count"
+            >
+              Set Stock
+            </button>
+            <button
+              type="button"
+              className="rounded-lg border border-slate-200 px-2 py-0.5 text-xs hover:bg-slate-50"
+              onClick={() => handleRestock(p)}
+              disabled={restockPart.isPending}
+              title="Add newly received stock"
+            >
+              Restock
+            </button>
+          </div>
         ),
       },
     ],
-    [restockPart]
+    [restockPart, updatePart]
   );
 
   const fileInputRef = useRef(null);
