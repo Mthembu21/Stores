@@ -4,6 +4,7 @@ import {
   useBulkCreateSpareParts,
   useConsumablesTracking,
   useCreateSparePart,
+  useDeleteSparePart,
   useRestockSparePart,
   useSpareParts,
   useUpdateSparePart,
@@ -69,11 +70,17 @@ export default function PartsInventoryPage() {
 
   const createPart = useCreateSparePart();
   const updatePart = useUpdateSparePart();
+  const deletePart = useDeleteSparePart();
   const bulkCreateParts = useBulkCreateSpareParts();
 
   const { data: consumablesData, isLoading: consumablesLoading, isError: consumablesError } = useConsumablesTracking();
   const consumables = consumablesData?.consumables || [];
   const restockPart = useRestockSparePart();
+
+  function handleDelete(part) {
+    if (!window.confirm(`Delete "${part.partDescription}" (${part.partNumber})? This cannot be undone.`)) return;
+    deletePart.mutate(part._id);
+  }
 
   function handleRestock(part) {
     const raw = window.prompt(`Quantity received for ${part.partNumber} (${part.partDescription}):`);
@@ -154,11 +161,19 @@ export default function PartsInventoryPage() {
             >
               Restock
             </button>
+            <button
+              type="button"
+              className="rounded-lg border border-red-200 text-red-600 px-2 py-0.5 text-xs hover:bg-red-50"
+              onClick={() => handleDelete(p)}
+              disabled={deletePart.isPending}
+            >
+              Delete
+            </button>
           </div>
         ),
       },
     ],
-    [restockPart, updatePart]
+    [restockPart, updatePart, deletePart]
   );
 
   const fileInputRef = useRef(null);
@@ -280,8 +295,22 @@ export default function PartsInventoryPage() {
           return <span className={badge.className}>{badge.label}</span>;
         },
       },
+      {
+        key: 'actions',
+        header: '',
+        render: (p) => (
+          <button
+            type="button"
+            className="rounded-lg border border-red-200 text-red-600 px-2 py-0.5 text-xs hover:bg-red-50"
+            onClick={() => handleDelete(p)}
+            disabled={deletePart.isPending}
+          >
+            Delete
+          </button>
+        ),
+      },
     ],
-    [updatePart]
+    [updatePart, deletePart]
   );
 
   return (

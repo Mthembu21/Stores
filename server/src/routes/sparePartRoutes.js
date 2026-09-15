@@ -4,6 +4,7 @@ const {
   getSparePart,
   createSparePart,
   updateSparePart,
+  deleteSparePart,
   bulkCreateSpareParts,
   restockSparePart,
   getConsumablesTracking,
@@ -24,5 +25,6 @@ router.post('/', createSparePart);
 router.post('/bulk', bulkCreateSpareParts);
 router.post('/:id/restock', restockSparePart);
 router.patch('/:id', updateSparePart);
+router.delete('/:id', deleteSparePart);
 
 module.exports = { sparePartRoutes: router };

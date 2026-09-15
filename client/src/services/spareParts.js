@@ -31,6 +31,25 @@ export function useCreateSparePart() {
   });
 }
 
+export function useDeleteSparePart() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id) => {
+      const { data } = await http.delete(`/spare-parts/${id}`);
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['spare-parts'], exact: false });
+      qc.invalidateQueries({ queryKey: ['parts-dashboard'] });
+      qc.invalidateQueries({ queryKey: ['consumables-tracking'] });
+      toast.success('Deleted');
+    },
+    onError: (err) => {
+      toast.error(err?.response?.data?.message || 'Could not delete');
+    },
+  });
+}
+
 export function useBulkCreateSpareParts() {
   const qc = useQueryClient();
   return useMutation({

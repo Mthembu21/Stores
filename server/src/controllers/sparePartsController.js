@@ -131,6 +131,16 @@ async function updateSparePart(req, res) {
   res.json({ part });
 }
 
+async function deleteSparePart(req, res) {
+  const { id } = req.params;
+  const part = await SparePart.findById(id);
+  if (!part) {
+    throw new ApiError(404, 'Spare part not found');
+  }
+  await part.deleteOne();
+  res.json({ ok: true });
+}
+
 async function bulkCreateSpareParts(req, res) {
   const rows = Array.isArray(req.body.parts) ? req.body.parts : [];
 
@@ -310,6 +320,7 @@ module.exports = {
   getSparePart,
   createSparePart,
   updateSparePart,
+  deleteSparePart,
   bulkCreateSpareParts,
   restockSparePart,
   getConsumablesTracking,
