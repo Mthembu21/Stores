@@ -13,9 +13,11 @@ const router = express.Router();
 
 router.use(requireAuth);
 
+const MANAGE_USERS_ROLES = [Roles.Admin, Roles.ToolsStoreman, Roles.PartsStoreman, Roles.Supervisor];
+
 router.get('/', listUsers);
-router.post('/', requireRole(Roles.Admin, Roles.ToolsStoreman), createUser);
-router.patch('/:id', requireRole(Roles.Admin, Roles.ToolsStoreman), updateUser);
-router.delete('/:id', requireRole(Roles.Admin, Roles.ToolsStoreman), deleteUser);
+router.post('/', requireRole(...MANAGE_USERS_ROLES), createUser);
+router.patch('/:id', requireRole(...MANAGE_USERS_ROLES), updateUser);
+router.delete('/:id', requireRole(...MANAGE_USERS_ROLES), deleteUser);
 
 module.exports = { userRoutes: router };

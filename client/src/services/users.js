@@ -16,13 +16,15 @@ export function useUsers() {
 export function useCreateUser() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ fullName, employeeNumber, role, department, contactNumber, password }) => {
+    mutationFn: async ({ fullName, employeeNumber, role, department, contactNumber, zNumber, allowedPages, password }) => {
       const { data } = await http.post('/users', {
         fullName,
         employeeNumber,
         role,
         department,
         contactNumber,
+        zNumber,
+        allowedPages,
         password,
       });
       return data;
@@ -33,6 +35,23 @@ export function useCreateUser() {
     },
     onError: (err) => {
       toast.error(err?.response?.data?.message || 'Could not create user');
+    },
+  });
+}
+
+export function useUpdateUser() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, patch }) => {
+      const { data } = await http.patch(`/users/${id}`, patch);
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['users'] });
+      toast.success('User updated');
+    },
+    onError: (err) => {
+      toast.error(err?.response?.data?.message || 'Could not update user');
     },
   });
 }

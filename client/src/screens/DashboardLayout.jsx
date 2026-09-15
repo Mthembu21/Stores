@@ -1,6 +1,7 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { logout } from '../services/auth';
 import { useMe } from '../services/auth';
+import { hasPartsPageAccess } from '../config/partsPages';
 import logo from '../components/logo.png';
 
 function SideLink({ to, children }) {
@@ -62,16 +63,28 @@ export default function DashboardLayout() {
             {canSeeSpareParts && (
               <>
                 <NavSection title="Spare Parts & Stores" />
-                <SideLink to="/spare-parts">Parts Dashboard</SideLink>
-                <SideLink to="/spare-parts/inventory">Parts Inventory</SideLink>
-                <SideLink to="/spare-parts/issue">Issue Parts</SideLink>
-                <SideLink to="/spare-parts/issue-consumables">Issue Consumables</SideLink>
-                <SideLink to="/spare-parts/store-issues">Store Issues</SideLink>
-                <SideLink to="/spare-parts/returns">Returns</SideLink>
-                <SideLink to="/spare-parts/low-stock">Low Stock</SideLink>
-                <SideLink to="/spare-parts/to-order">Parts To Order</SideLink>
-                <SideLink to="/spare-parts/movements">Stock Movements</SideLink>
-                <SideLink to="/spare-parts/kpi">Daily KPIs</SideLink>
+                {hasPartsPageAccess(user, 'spare-parts') && <SideLink to="/spare-parts">Parts Dashboard</SideLink>}
+                {hasPartsPageAccess(user, 'spare-parts/inventory') && (
+                  <SideLink to="/spare-parts/inventory">Parts Inventory</SideLink>
+                )}
+                {hasPartsPageAccess(user, 'spare-parts/issue') && <SideLink to="/spare-parts/issue">Issue Parts</SideLink>}
+                {hasPartsPageAccess(user, 'spare-parts/issue-consumables') && (
+                  <SideLink to="/spare-parts/issue-consumables">Issue Consumables</SideLink>
+                )}
+                {hasPartsPageAccess(user, 'spare-parts/store-issues') && (
+                  <SideLink to="/spare-parts/store-issues">Store Issues</SideLink>
+                )}
+                {hasPartsPageAccess(user, 'spare-parts/returns') && <SideLink to="/spare-parts/returns">Returns</SideLink>}
+                {hasPartsPageAccess(user, 'spare-parts/low-stock') && (
+                  <SideLink to="/spare-parts/low-stock">Low Stock</SideLink>
+                )}
+                {hasPartsPageAccess(user, 'spare-parts/to-order') && (
+                  <SideLink to="/spare-parts/to-order">Parts To Order</SideLink>
+                )}
+                {hasPartsPageAccess(user, 'spare-parts/movements') && (
+                  <SideLink to="/spare-parts/movements">Stock Movements</SideLink>
+                )}
+                {hasPartsPageAccess(user, 'spare-parts/kpi') && <SideLink to="/spare-parts/kpi">Daily KPIs</SideLink>}
               </>
             )}
 

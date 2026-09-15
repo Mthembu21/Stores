@@ -71,7 +71,7 @@ export default function App() {
         <Route
           path="spare-parts"
           element={
-            <RequireRole roles={MODULE_ROLES.spareParts}>
+            <RequireRole roles={MODULE_ROLES.spareParts} pageKey="spare-parts">
               <PartsDashboardPage />
             </RequireRole>
           }
@@ -79,7 +79,7 @@ export default function App() {
         <Route
           path="spare-parts/inventory"
           element={
-            <RequireRole roles={MODULE_ROLES.spareParts}>
+            <RequireRole roles={MODULE_ROLES.spareParts} pageKey="spare-parts/inventory">
               <PartsInventoryPage />
             </RequireRole>
           }
@@ -87,7 +87,7 @@ export default function App() {
         <Route
           path="spare-parts/issue"
           element={
-            <RequireRole roles={MODULE_ROLES.spareParts}>
+            <RequireRole roles={MODULE_ROLES.spareParts} pageKey="spare-parts/issue">
               <IssuePartsPage />
             </RequireRole>
           }
@@ -95,7 +95,7 @@ export default function App() {
         <Route
           path="spare-parts/issue-consumables"
           element={
-            <RequireRole roles={MODULE_ROLES.spareParts}>
+            <RequireRole roles={MODULE_ROLES.spareParts} pageKey="spare-parts/issue-consumables">
               <IssueConsumablesPage />
             </RequireRole>
           }
@@ -103,7 +103,7 @@ export default function App() {
         <Route
           path="spare-parts/store-issues"
           element={
-            <RequireRole roles={MODULE_ROLES.spareParts}>
+            <RequireRole roles={MODULE_ROLES.spareParts} pageKey="spare-parts/store-issues">
               <StoreIssuesPage />
             </RequireRole>
           }
@@ -111,7 +111,7 @@ export default function App() {
         <Route
           path="spare-parts/returns"
           element={
-            <RequireRole roles={MODULE_ROLES.spareParts}>
+            <RequireRole roles={MODULE_ROLES.spareParts} pageKey="spare-parts/returns">
               <PartReturnsPage />
             </RequireRole>
           }
@@ -119,7 +119,7 @@ export default function App() {
         <Route
           path="spare-parts/low-stock"
           element={
-            <RequireRole roles={MODULE_ROLES.spareParts}>
+            <RequireRole roles={MODULE_ROLES.spareParts} pageKey="spare-parts/low-stock">
               <LowStockPage />
             </RequireRole>
           }
@@ -127,7 +127,7 @@ export default function App() {
         <Route
           path="spare-parts/to-order"
           element={
-            <RequireRole roles={MODULE_ROLES.spareParts}>
+            <RequireRole roles={MODULE_ROLES.spareParts} pageKey="spare-parts/to-order">
               <PartsToOrderPage />
             </RequireRole>
           }
@@ -135,7 +135,7 @@ export default function App() {
         <Route
           path="spare-parts/movements"
           element={
-            <RequireRole roles={MODULE_ROLES.spareParts}>
+            <RequireRole roles={MODULE_ROLES.spareParts} pageKey="spare-parts/movements">
               <StockMovementsPage />
             </RequireRole>
           }
@@ -143,7 +143,7 @@ export default function App() {
         <Route
           path="spare-parts/kpi"
           element={
-            <RequireRole roles={MODULE_ROLES.spareParts}>
+            <RequireRole roles={MODULE_ROLES.spareParts} pageKey="spare-parts/kpi">
               <KpiTrackerPage />
             </RequireRole>
           }
@@ -154,7 +154,7 @@ export default function App() {
         path="spare-parts/store-issues/:id/print"
         element={
           <RequireAuth>
-            <RequireRole roles={MODULE_ROLES.spareParts}>
+            <RequireRole roles={MODULE_ROLES.spareParts} pageKey="spare-parts/store-issues">
               <IssuePrintPage />
             </RequireRole>
           </RequireAuth>

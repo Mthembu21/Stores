@@ -19,8 +19,12 @@ const userSchema = new mongoose.Schema(
         Roles.Supervisor,
       ],
     },
-    department: { type: String, required: true, trim: true },
-    contactNumber: { type: String, required: true, trim: true },
+    department: { type: String, trim: true, default: '' },
+    contactNumber: { type: String, trim: true, default: '' },
+    zNumber: { type: String, trim: true, default: '' },
+    // When non-empty, this user's access is restricted to exactly these page keys,
+    // overriding the normal role-based page set. Empty means "use role defaults".
+    allowedPages: { type: [String], default: [] },
     passwordHash: { type: String, required: true },
   },
   { timestamps: true }
@@ -38,6 +42,8 @@ userSchema.methods.toSafeJSON = function toSafeJSON() {
     role: this.role,
     department: this.department,
     contactNumber: this.contactNumber,
+    zNumber: this.zNumber,
+    allowedPages: this.allowedPages,
     createdAt: this.createdAt,
     updatedAt: this.updatedAt,
   };

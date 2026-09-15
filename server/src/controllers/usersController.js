@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 const { ApiError } = require('../utils/ApiError');
 const { User } = require('../models/User');
 const { Roles } = require('../config/roles');
+const { PARTS_PAGE_KEYS } = require('../config/partsPages');
 
 const ASSIGNABLE_ROLES = [
   Roles.Technician,
@@ -18,16 +19,31 @@ async function listUsers(req, res) {
   res.json({ users: users.map((u) => u.toSafeJSON()) });
 }
 
-async function createUser(req, res) {
-  const { fullName, employeeNumber, role, department, contactNumber, password } = req.body;
+function validateAllowedPages(allowedPages) {
+  if (allowedPages === undefined) return undefined;
+  if (!Array.isArray(allowedPages)) {
+    throw new ApiError(400, 'allowedPages must be a list');
+  }
+  const cleaned = allowedPages.map((p) => String(p).trim()).filter(Boolean);
+  const invalid = cleaned.filter((p) => !PARTS_PAGE_KEYS.includes(p));
+  if (invalid.length > 0) {
+    throw new ApiError(400, `Invalid page key(s): ${invalid.join(', ')}`);
+  }
+  return cleaned;
+}
 
-  if (!fullName || !employeeNumber || !role || !department || !contactNumber || !password) {
+async function createUser(req, res) {
+  const { fullName, employeeNumber, role, department, contactNumber, zNumber, allowedPages, password } = req.body;
+
+  if (!fullName || !employeeNumber || !role || !password) {
     throw new ApiError(400, 'Missing required fields');
   }
 
   if (!ASSIGNABLE_ROLES.includes(role)) {
     throw new ApiError(400, 'Invalid role');
   }
+
+  const cleanedAllowedPages = validateAllowedPages(allowedPages);
 
   const exists = await User.findOne({ employeeNumber: String(employeeNumber).trim() });
   if (exists) {
@@ -39,8 +55,10 @@ async function createUser(req, res) {
     fullName,
     employeeNumber: String(employeeNumber).trim(),
     role,
-    department,
-    contactNumber,
+    department: department || '',
+    contactNumber: contactNumber || '',
+    zNumber: zNumber || '',
+    allowedPages: cleanedAllowedPages || [],
     passwordHash,
   });
 
@@ -49,7 +67,7 @@ async function createUser(req, res) {
 
 async function updateUser(req, res) {
   const { id } = req.params;
-  const { fullName, role, department, contactNumber } = req.body;
+  const { fullName, role, department, contactNumber, zNumber, allowedPages } = req.body;
 
   const user = await User.findById(id);
   if (!user) {
@@ -60,10 +78,14 @@ async function updateUser(req, res) {
     throw new ApiError(400, 'Invalid role');
   }
 
+  const cleanedAllowedPages = validateAllowedPages(allowedPages);
+
   if (fullName !== undefined) user.fullName = fullName;
   if (role !== undefined) user.role = role;
   if (department !== undefined) user.department = department;
   if (contactNumber !== undefined) user.contactNumber = contactNumber;
+  if (zNumber !== undefined) user.zNumber = zNumber;
+  if (cleanedAllowedPages !== undefined) user.allowedPages = cleanedAllowedPages;
 
   await user.save();
   res.json({ user: user.toSafeJSON() });
