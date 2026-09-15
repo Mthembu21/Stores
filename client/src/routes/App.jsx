@@ -8,6 +8,7 @@ import ConsumablesPage from '../screens/ConsumablesPage';
 import PartsDashboardPage from '../screens/PartsDashboardPage';
 import PartsInventoryPage from '../screens/PartsInventoryPage';
 import IssuePartsPage from '../screens/IssuePartsPage';
+import IssueConsumablesPage from '../screens/IssueConsumablesPage';
 import StoreIssuesPage from '../screens/StoreIssuesPage';
 import PartReturnsPage from '../screens/PartReturnsPage';
 import LowStockPage from '../screens/LowStockPage';
@@ -88,6 +89,14 @@ export default function App() {
           element={
             <RequireRole roles={MODULE_ROLES.spareParts}>
               <IssuePartsPage />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="spare-parts/issue-consumables"
+          element={
+            <RequireRole roles={MODULE_ROLES.spareParts}>
+              <IssueConsumablesPage />
             </RequireRole>
           }
         />

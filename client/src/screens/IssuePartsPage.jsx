@@ -19,7 +19,8 @@ function computeAuto(part, requested) {
 
 export default function IssuePartsPage() {
   const { data: partsData, isLoading: partsLoading } = useSpareParts();
-  const parts = partsData?.parts || [];
+  // Consumables are issued separately via the Issue Consumables page
+  const parts = useMemo(() => (partsData?.parts || []).filter((p) => p.partType !== 'Consumable'), [partsData]);
   const createIssue = useCreateStoreIssue();
 
   const [partSearch, setPartSearch] = useState('');
@@ -262,7 +263,10 @@ export default function IssuePartsPage() {
     <div className="space-y-6 max-w-4xl mx-auto w-full">
       <div>
         <div className="text-2xl font-semibold text-epiroc-gray">Issue Parts</div>
-        <div className="text-sm text-slate-600">Add one or more parts, capture job details, justification and quantities.</div>
+        <div className="text-sm text-slate-600">
+          Add one or more returnable parts, capture job details, justification and quantities. Consumables are issued
+          separately on the Issue Consumables page.
+        </div>
       </div>
 
       {lastCreatedIssue && (
