@@ -10,6 +10,11 @@ function todayLocalDate() {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
+function allocatableOf(part) {
+  if (!part) return 0;
+  return part.allocatableStock === null || part.allocatableStock === undefined ? part.stockOnHand : part.allocatableStock;
+}
+
 export default function IssueConsumablesPage() {
   const { data: partsData, isLoading: partsLoading } = useSpareParts();
   const { data: issuesData, isLoading: issuesLoading, isError: issuesError } = useConsumablePartIssues();
@@ -78,7 +83,7 @@ export default function IssueConsumablesPage() {
             <option value="">Select consumable...</option>
             {consumableParts.map((p) => (
               <option key={p._id} value={p._id}>
-                {p.partDescription} ({p.partNumber}) — {p.stockOnHand} {p.unitOfMeasure} in stock
+                {p.partDescription} ({p.partNumber}) — {allocatableOf(p)} {p.unitOfMeasure} available
               </option>
             ))}
           </select>
@@ -90,7 +95,7 @@ export default function IssueConsumablesPage() {
             <input
               type="number"
               min="1"
-              max={selectedPart?.stockOnHand || undefined}
+              max={allocatableOf(selectedPart) || undefined}
               className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}

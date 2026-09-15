@@ -98,8 +98,12 @@ async function createStoreIssue(req, res) {
       throw new ApiError(400, `Quantity requested must be greater than 0 for ${part.partNumber}`);
     }
 
-    const autoIssued = Math.min(part.stockOnHand, requested);
-    const autoToOrder = Math.max(0, requested - part.stockOnHand);
+    // Allocatable (bookable) stock, not raw On Hand, is what can actually be issued —
+    // some of On Hand may be tied up in other incomplete transactions.
+    const allocatable = part.allocatableStock === null || part.allocatableStock === undefined ? part.stockOnHand : part.allocatableStock;
+
+    const autoIssued = Math.min(allocatable, requested);
+    const autoToOrder = Math.max(0, requested - allocatable);
 
     const quantityIssued =
       quantityIssuedInput !== undefined && quantityIssuedInput !== null
@@ -110,7 +114,7 @@ async function createStoreIssue(req, res) {
         ? Number(quantityToOrderInput)
         : autoToOrder;
 
-    if (quantityIssued < 0 || quantityIssued > part.stockOnHand || quantityIssued > requested) {
+    if (quantityIssued < 0 || quantityIssued > allocatable || quantityIssued > requested) {
       throw new ApiError(400, `Quantity issued is invalid for ${part.partNumber}`);
     }
 
@@ -126,6 +130,7 @@ async function createStoreIssue(req, res) {
     const afterIssueStock = previousStock - quantityIssued;
     const finalStock = afterIssueStock + quantityReturned;
     part.stockOnHand = finalStock;
+    part.allocatableStock = allocatable - quantityIssued + quantityReturned;
     await part.save();
 
     const status = deriveItemStatus(requested, quantityIssued, quantityReturned);

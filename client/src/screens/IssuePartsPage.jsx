@@ -8,12 +8,17 @@ function nextKey() {
   return `line-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+function allocatableOf(part) {
+  if (!part) return 0;
+  return part.allocatableStock === null || part.allocatableStock === undefined ? part.stockOnHand : part.allocatableStock;
+}
+
 function computeAuto(part, requested) {
-  const stockOnHand = part?.stockOnHand ?? 0;
+  const allocatable = allocatableOf(part);
   const requestedNum = Number(requested) || 0;
   return {
-    autoIssued: Math.max(0, Math.min(stockOnHand, requestedNum)),
-    autoToOrder: Math.max(0, requestedNum - stockOnHand),
+    autoIssued: Math.max(0, Math.min(allocatable, requestedNum)),
+    autoToOrder: Math.max(0, requestedNum - allocatable),
   };
 }
 
@@ -321,8 +326,8 @@ export default function IssuePartsPage() {
                       </div>
                       <div className="text-sm text-slate-600">{part.partDescription}</div>
                     </div>
-                    <div className={`text-sm font-semibold ${part.stockOnHand > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {part.stockOnHand} in stock
+                    <div className={`text-sm font-semibold ${allocatableOf(part) > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {allocatableOf(part)} available ({part.stockOnHand} on hand)
                     </div>
                   </div>
                 </div>

@@ -9,6 +9,7 @@ const SPREADSHEET_TEMPLATE_HEADERS = [
   'Machine Type',
   'Serial Number',
   'Stock On Hand',
+  'Allocatable Stock',
   'Minimum Stock Level',
   'Maximum Stock Level',
   'Unit Of Measure',

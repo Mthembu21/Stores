@@ -27,7 +27,7 @@ function bulkRowError(row) {
 }
 
 function downloadTemplate() {
-  const csv = `${SPREADSHEET_TEMPLATE_HEADERS.join(',')}\n,Example bracket assembly,Returnable,,,,,,,10,2,20,EA,Bin A1,Active\n,Example brake cleaner,Consumable,,,,,,,24,6,48,EA,Bin B2,Active\n`;
+  const csv = `${SPREADSHEET_TEMPLATE_HEADERS.join(',')}\n,Example bracket assembly,Returnable,,,,,,,10,8,2,20,EA,Bin A1,Active\n,Example brake cleaner,Consumable,,,,,,,24,20,6,48,EA,Bin B2,Active\n`;
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -108,19 +108,43 @@ export default function PartsInventoryPage() {
     updatePart.mutate({ id: part._id, patch: { stockOnHand: next } });
   }
 
+  function handleSetAllocatable(part) {
+    const current = part.allocatableStock === null || part.allocatableStock === undefined ? part.stockOnHand : part.allocatableStock;
+    const raw = window.prompt(
+      `Set allocatable (bookable) quantity for ${part.partNumber} (${part.partDescription}). On Hand is ${part.stockOnHand}:`,
+      String(current)
+    );
+    if (raw === null) return;
+    const next = Number.parseInt(raw, 10);
+    if (raw.trim() === '' || Number.isNaN(next) || next < 0) {
+      window.alert('Enter a valid number (0 or higher)');
+      return;
+    }
+    if (next > part.stockOnHand) {
+      window.alert('Allocatable stock cannot exceed Stock On Hand');
+      return;
+    }
+    updatePart.mutate({ id: part._id, patch: { allocatableStock: next } });
+  }
+
   const consumablesColumns = useMemo(
     () => [
       { key: 'partNumber', header: 'Part Number' },
       { key: 'partDescription', header: 'Description' },
       {
         key: 'stockOnHand',
-        header: 'Remaining',
+        header: 'On Hand',
         render: (p) => (
           <div className="flex items-center gap-2">
             <span>{p.stockOnHand}</span>
             <span className={stockBadge(p).className}>{stockBadge(p).label}</span>
           </div>
         ),
+      },
+      {
+        key: 'allocatableStock',
+        header: 'Allocatable',
+        render: (p) => (p.allocatableStock === null || p.allocatableStock === undefined ? p.stockOnHand : p.allocatableStock),
       },
       { key: 'minimumStockLevel', header: 'Min Level' },
       { key: 'maximumStockLevel', header: 'Max Level' },
@@ -151,6 +175,15 @@ export default function PartsInventoryPage() {
               title="Set the stock on hand to match a physical count"
             >
               Set Stock
+            </button>
+            <button
+              type="button"
+              className="rounded-lg border border-slate-200 px-2 py-0.5 text-xs hover:bg-slate-50"
+              onClick={() => handleSetAllocatable(p)}
+              disabled={updatePart.isPending}
+              title="Set how much of On Hand is actually bookable right now"
+            >
+              Set Allocatable
             </button>
             <button
               type="button"
@@ -217,6 +250,7 @@ export default function PartsInventoryPage() {
   const [partDescription, setPartDescription] = useState('');
   const [serialNumber, setSerialNumber] = useState('');
   const [stockOnHand, setStockOnHand] = useState('0');
+  const [allocatableStock, setAllocatableStock] = useState('');
   const [minimumStockLevel, setMinimumStockLevel] = useState('0');
   const [maximumStockLevel, setMaximumStockLevel] = useState('0');
   const [unitOfMeasure, setUnitOfMeasure] = useState('EA');
@@ -261,7 +295,7 @@ export default function PartsInventoryPage() {
       { key: 'machineType', header: 'Machine Type' },
       {
         key: 'stockOnHand',
-        header: 'Stock',
+        header: 'On Hand',
         render: (p) => (
           <div className="flex items-center gap-2">
             <span>{p.stockOnHand}</span>
@@ -276,6 +310,24 @@ export default function PartsInventoryPage() {
                 updatePart.mutate({ id: p._id, patch: { stockOnHand: next } });
               }}
               disabled={updatePart.isPending}
+            >
+              Set
+            </button>
+          </div>
+        ),
+      },
+      {
+        key: 'allocatableStock',
+        header: 'Allocatable',
+        render: (p) => (
+          <div className="flex items-center gap-2">
+            <span>{p.allocatableStock === null || p.allocatableStock === undefined ? p.stockOnHand : p.allocatableStock}</span>
+            <button
+              type="button"
+              className="rounded-lg border border-slate-200 px-2 py-0.5 text-xs hover:bg-slate-50"
+              onClick={() => handleSetAllocatable(p)}
+              disabled={updatePart.isPending}
+              title="Set how much of On Hand is actually bookable right now"
             >
               Set
             </button>
@@ -472,6 +524,7 @@ export default function PartsInventoryPage() {
                     partType: 'Returnable',
                     serialNumber,
                     stockOnHand: Number(stockOnHand),
+                    allocatableStock: allocatableStock === '' ? undefined : Number(allocatableStock),
                     minimumStockLevel: Number(minimumStockLevel),
                     maximumStockLevel: Number(maximumStockLevel),
                     unitOfMeasure,
@@ -483,6 +536,7 @@ export default function PartsInventoryPage() {
                       setPartDescription('');
                       setSerialNumber('');
                       setStockOnHand('0');
+                      setAllocatableStock('');
                       setMinimumStockLevel('0');
                       setMaximumStockLevel('0');
                       setStorageLocationInput('');
@@ -507,6 +561,10 @@ export default function PartsInventoryPage() {
                 <div>
                   <label className="text-sm font-medium text-slate-700">Stock on hand</label>
                   <input className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" type="number" min="0" value={stockOnHand} onChange={(e) => setStockOnHand(e.target.value)} required />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-slate-700">Allocatable stock (blank = same as On Hand)</label>
+                  <input className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" type="number" min="0" value={allocatableStock} onChange={(e) => setAllocatableStock(e.target.value)} placeholder={stockOnHand} />
                 </div>
                 <div>
                   <label className="text-sm font-medium text-slate-700">Minimum stock level</label>

@@ -19,6 +19,10 @@ const sparePartSchema = new mongoose.Schema(
     machineType: { type: String, trim: true, default: '' },
     serialNumber: { type: String, trim: true, default: '' },
     stockOnHand: { type: Number, required: true, min: 0, default: 0 },
+    // Quantity actually available to book out (On Hand minus quantity tied up in
+    // incomplete/pending transactions). null on older records means "not tracked
+    // separately yet" — always fall back to stockOnHand, never treat as 0.
+    allocatableStock: { type: Number, min: 0, default: null },
     minimumStockLevel: { type: Number, required: true, min: 0, default: 0 },
     maximumStockLevel: { type: Number, required: true, min: 0, default: 0 },
     unitOfMeasure: { type: String, required: true, trim: true, default: 'EA' },

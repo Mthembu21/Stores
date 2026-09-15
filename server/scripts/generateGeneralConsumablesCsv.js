@@ -73,9 +73,9 @@ const rows = [SPREADSHEET_TEMPLATE_HEADERS.join(',')];
 
 for (const [partDescription, min, max] of ITEMS) {
   // Part Number, Part Description, Part Type, Component Part Number, Component Description,
-  // Functional System, Sub-System, Machine Type, Serial Number, Stock On Hand,
+  // Functional System, Sub-System, Machine Type, Serial Number, Stock On Hand, Allocatable Stock,
   // Minimum Stock Level, Maximum Stock Level, Unit Of Measure, Storage Location, Status
-  rows.push(`,"${partDescription}",Consumable,,,,,,,0,${min},${max},EA,,Active`);
+  rows.push(`,"${partDescription}",Consumable,,,,,,,0,0,${min},${max},EA,,Active`);
 }
 
 const outPath = path.join(__dirname, 'output', 'general-consumables-part-stores-cleaned.csv');

@@ -9,9 +9,9 @@ for (const category of CATEGORIES) {
   for (const [size, min, max] of category.sizes) {
     const partDescription = `${category.name} - ${size}`;
     // Part Number, Part Description, Part Type, Component Part Number, Component Description,
-    // Functional System, Sub-System, Machine Type, Serial Number, Stock On Hand,
+    // Functional System, Sub-System, Machine Type, Serial Number, Stock On Hand, Allocatable Stock,
     // Minimum Stock Level, Maximum Stock Level, Unit Of Measure, Storage Location, Status
-    rows.push(`,"${partDescription}",Consumable,,,,,,,0,${min},${max},${unitOfMeasure},,Active`);
+    rows.push(`,"${partDescription}",Consumable,,,,,,,0,0,${min},${max},${unitOfMeasure},,Active`);
   }
 }
 

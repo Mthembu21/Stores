@@ -51,6 +51,7 @@ async function createSparePart(req, res) {
     machineType,
     serialNumber,
     stockOnHand,
+    allocatableStock,
     minimumStockLevel,
     maximumStockLevel,
     unitOfMeasure,
@@ -60,6 +61,15 @@ async function createSparePart(req, res) {
 
   if (!partDescription || stockOnHand === undefined || stockOnHand === null) {
     throw new ApiError(400, 'Missing required fields');
+  }
+
+  // Allocatable (bookable) stock can never exceed physical On Hand; default to
+  // fully allocatable when not specified.
+  const finalAllocatable = allocatableStock === undefined || allocatableStock === null || allocatableStock === ''
+    ? Number(stockOnHand)
+    : Number(allocatableStock);
+  if (Number.isNaN(finalAllocatable) || finalAllocatable < 0 || finalAllocatable > Number(stockOnHand)) {
+    throw new ApiError(400, 'Allocatable stock must be between 0 and Stock On Hand');
   }
 
   let finalPartNumber = partNumber ? String(partNumber).trim() : '';
@@ -86,6 +96,7 @@ async function createSparePart(req, res) {
     machineType,
     serialNumber,
     stockOnHand,
+    allocatableStock: finalAllocatable,
     minimumStockLevel: minimumStockLevel || 0,
     maximumStockLevel: maximumStockLevel || 0,
     unitOfMeasure: unitOfMeasure || 'EA',
@@ -114,6 +125,7 @@ async function updateSparePart(req, res) {
     'machineType',
     'serialNumber',
     'stockOnHand',
+    'allocatableStock',
     'minimumStockLevel',
     'maximumStockLevel',
     'unitOfMeasure',
@@ -125,6 +137,11 @@ async function updateSparePart(req, res) {
     if (req.body[field] !== undefined) {
       part[field] = req.body[field];
     }
+  }
+
+  // Allocatable can never exceed physical On Hand.
+  if (part.allocatableStock !== null && part.allocatableStock !== undefined && part.allocatableStock > part.stockOnHand) {
+    part.allocatableStock = part.stockOnHand;
   }
 
   await part.save();
@@ -187,6 +204,13 @@ async function bulkCreateSpareParts(req, res) {
         throw new Error('Invalid maximum stock level');
       }
 
+      const allocatableStock = row.allocatableStock === '' || row.allocatableStock === undefined || row.allocatableStock === null
+        ? stockOnHand
+        : Number(row.allocatableStock);
+      if (Number.isNaN(allocatableStock) || allocatableStock < 0 || allocatableStock > stockOnHand) {
+        throw new Error('Allocatable stock must be between 0 and Stock On Hand');
+      }
+
       let finalPartNumber = row.partNumber ? String(row.partNumber).trim() : '';
 
       if (finalPartNumber) {
@@ -216,6 +240,7 @@ async function bulkCreateSpareParts(req, res) {
         machineType: row.machineType || '',
         serialNumber: row.serialNumber || '',
         stockOnHand,
+        allocatableStock,
         minimumStockLevel,
         maximumStockLevel,
         unitOfMeasure: row.unitOfMeasure || 'EA',
@@ -251,7 +276,9 @@ async function restockSparePart(req, res) {
   }
 
   const previousStock = part.stockOnHand;
+  const previousAllocatable = part.allocatableStock === null || part.allocatableStock === undefined ? previousStock : part.allocatableStock;
   part.stockOnHand += quantity;
+  part.allocatableStock = previousAllocatable + quantity;
   part.lastRestockedAt = new Date();
   part.lastRestockedQuantity = quantity;
   await part.save();

@@ -24,12 +24,17 @@ async function createConsumablePartIssue(req, res) {
   if (Number.isNaN(qty) || qty <= 0) {
     throw new ApiError(400, 'Invalid quantity');
   }
-  if (qty > part.stockOnHand) {
-    throw new ApiError(400, `Insufficient stock: only ${part.stockOnHand} available`);
+
+  // Allocatable (bookable) stock, not raw On Hand, is what can actually be issued —
+  // some of On Hand may be tied up in other incomplete transactions.
+  const allocatable = part.allocatableStock === null || part.allocatableStock === undefined ? part.stockOnHand : part.allocatableStock;
+  if (qty > allocatable) {
+    throw new ApiError(400, `Insufficient stock: only ${allocatable} available`);
   }
 
   const previousStock = part.stockOnHand;
   part.stockOnHand -= qty;
+  part.allocatableStock = allocatable - qty;
   await part.save();
 
   const store = await getDefaultStoreId();
