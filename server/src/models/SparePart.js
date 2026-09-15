@@ -20,6 +20,7 @@ const sparePartSchema = new mongoose.Schema(
     serialNumber: { type: String, trim: true, default: '' },
     stockOnHand: { type: Number, required: true, min: 0, default: 0 },
     minimumStockLevel: { type: Number, required: true, min: 0, default: 0 },
+    maximumStockLevel: { type: Number, required: true, min: 0, default: 0 },
     unitOfMeasure: { type: String, required: true, trim: true, default: 'EA' },
     storageLocation: { type: String, trim: true, default: '' },
     status: {

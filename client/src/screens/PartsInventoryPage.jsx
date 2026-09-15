@@ -26,7 +26,7 @@ function bulkRowError(row) {
 }
 
 function downloadTemplate() {
-  const csv = `${SPREADSHEET_TEMPLATE_HEADERS.join(',')}\n,Example bracket assembly,Returnable,,,,,,,10,2,EA,Bin A1,Active\n,Example brake cleaner,Consumable,,,,,,,24,6,EA,Bin B2,Active\n`;
+  const csv = `${SPREADSHEET_TEMPLATE_HEADERS.join(',')}\n,Example bracket assembly,Returnable,,,,,,,10,2,20,EA,Bin A1,Active\n,Example brake cleaner,Consumable,,,,,,,24,6,48,EA,Bin B2,Active\n`;
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -100,6 +100,7 @@ export default function PartsInventoryPage() {
         ),
       },
       { key: 'minimumStockLevel', header: 'Min Level' },
+      { key: 'maximumStockLevel', header: 'Max Level' },
       { key: 'unitOfMeasure', header: 'UoM' },
       {
         key: 'lastRestockedAt',
@@ -174,12 +175,14 @@ export default function PartsInventoryPage() {
   const [serialNumber, setSerialNumber] = useState('');
   const [stockOnHand, setStockOnHand] = useState('0');
   const [minimumStockLevel, setMinimumStockLevel] = useState('0');
+  const [maximumStockLevel, setMaximumStockLevel] = useState('0');
   const [unitOfMeasure, setUnitOfMeasure] = useState('EA');
   const [storageLocationInput, setStorageLocationInput] = useState('');
 
   const [consumableName, setConsumableName] = useState('');
   const [consumableQuantity, setConsumableQuantity] = useState('0');
   const [consumableMinLevel, setConsumableMinLevel] = useState('0');
+  const [consumableMaxLevel, setConsumableMaxLevel] = useState('0');
   const [consumableLocation, setConsumableLocation] = useState('');
 
   function handleAddConsumable(e) {
@@ -190,6 +193,7 @@ export default function PartsInventoryPage() {
         partType: 'Consumable',
         stockOnHand: Number(consumableQuantity),
         minimumStockLevel: Number(consumableMinLevel) || 0,
+        maximumStockLevel: Number(consumableMaxLevel) || 0,
         unitOfMeasure: 'EA',
         storageLocation: consumableLocation,
       },
@@ -198,6 +202,7 @@ export default function PartsInventoryPage() {
           setConsumableName('');
           setConsumableQuantity('0');
           setConsumableMinLevel('0');
+          setConsumableMaxLevel('0');
           setConsumableLocation('');
         },
       }
@@ -236,6 +241,7 @@ export default function PartsInventoryPage() {
         ),
       },
       { key: 'minimumStockLevel', header: 'Min Level' },
+      { key: 'maximumStockLevel', header: 'Max Level' },
       { key: 'unitOfMeasure', header: 'UoM' },
       { key: 'storageLocation', header: 'Location' },
       { key: 'status', header: 'Status' },
@@ -273,6 +279,7 @@ export default function PartsInventoryPage() {
                 serialNumber,
                 stockOnHand: Number(stockOnHand),
                 minimumStockLevel: Number(minimumStockLevel),
+                maximumStockLevel: Number(maximumStockLevel),
                 unitOfMeasure,
                 storageLocation: storageLocationInput,
               },
@@ -283,6 +290,7 @@ export default function PartsInventoryPage() {
                   setSerialNumber('');
                   setStockOnHand('0');
                   setMinimumStockLevel('0');
+                  setMaximumStockLevel('0');
                   setStorageLocationInput('');
                 },
               }
@@ -309,6 +317,10 @@ export default function PartsInventoryPage() {
             <div>
               <label className="text-sm font-medium text-slate-700">Minimum stock level</label>
               <input className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" type="number" min="0" value={minimumStockLevel} onChange={(e) => setMinimumStockLevel(e.target.value)} />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-slate-700">Maximum stock level</label>
+              <input className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" type="number" min="0" value={maximumStockLevel} onChange={(e) => setMaximumStockLevel(e.target.value)} />
             </div>
             <div>
               <label className="text-sm font-medium text-slate-700">Unit of measure</label>
@@ -366,6 +378,16 @@ export default function PartsInventoryPage() {
                   min="0"
                   value={consumableMinLevel}
                   onChange={(e) => setConsumableMinLevel(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-slate-700">Maximum stock level</label>
+                <input
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                  type="number"
+                  min="0"
+                  value={consumableMaxLevel}
+                  onChange={(e) => setConsumableMaxLevel(e.target.value)}
                 />
               </div>
               <div>

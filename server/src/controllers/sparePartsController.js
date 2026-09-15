@@ -52,6 +52,7 @@ async function createSparePart(req, res) {
     serialNumber,
     stockOnHand,
     minimumStockLevel,
+    maximumStockLevel,
     unitOfMeasure,
     storageLocation,
     status,
@@ -86,6 +87,7 @@ async function createSparePart(req, res) {
     serialNumber,
     stockOnHand,
     minimumStockLevel: minimumStockLevel || 0,
+    maximumStockLevel: maximumStockLevel || 0,
     unitOfMeasure: unitOfMeasure || 'EA',
     storageLocation,
     status: status || 'Active',
@@ -113,6 +115,7 @@ async function updateSparePart(req, res) {
     'serialNumber',
     'stockOnHand',
     'minimumStockLevel',
+    'maximumStockLevel',
     'unitOfMeasure',
     'storageLocation',
     'status',
@@ -167,6 +170,13 @@ async function bulkCreateSpareParts(req, res) {
         throw new Error('Invalid minimum stock level');
       }
 
+      const maximumStockLevel = row.maximumStockLevel === '' || row.maximumStockLevel === undefined || row.maximumStockLevel === null
+        ? 0
+        : Number(row.maximumStockLevel);
+      if (Number.isNaN(maximumStockLevel) || maximumStockLevel < 0) {
+        throw new Error('Invalid maximum stock level');
+      }
+
       let finalPartNumber = row.partNumber ? String(row.partNumber).trim() : '';
 
       if (finalPartNumber) {
@@ -197,6 +207,7 @@ async function bulkCreateSpareParts(req, res) {
         serialNumber: row.serialNumber || '',
         stockOnHand,
         minimumStockLevel,
+        maximumStockLevel,
         unitOfMeasure: row.unitOfMeasure || 'EA',
         storageLocation: row.storageLocation || '',
         status,
