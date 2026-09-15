@@ -75,6 +75,26 @@ function splitLine(line, delimiter) {
   return cells.map((c) => c.trim());
 }
 
+// Shared by the CSV/paste parser and the direct .xlsx parser: given a header row
+// and the data rows (each already split into cells), map them onto our field names.
+export function mapSpreadsheetRows(headerCells, dataRowsOfCells) {
+  const fieldKeys = headerCells.map((h) => FIELD_ALIASES[normalizeHeader(h)] || null);
+  const unmatchedHeaders = headerCells.filter((h, i) => !fieldKeys[i]);
+
+  const rows = dataRowsOfCells.map((cells) => {
+    const row = {};
+    fieldKeys.forEach((key, i) => {
+      if (key) row[key] = cells[i] !== undefined && cells[i] !== null ? String(cells[i]).trim() : '';
+    });
+    if (row.partType) {
+      row.partType = /consumable/i.test(row.partType) ? 'Consumable' : 'Returnable';
+    }
+    return row;
+  });
+
+  return { rows, unmatchedHeaders };
+}
+
 export function parseSpreadsheetText(text) {
   const lines = String(text || '')
     .replace(/\r\n/g, '\n')
@@ -87,22 +107,9 @@ export function parseSpreadsheetText(text) {
 
   const delimiter = lines[0].includes('\t') ? '\t' : ',';
   const headerCells = splitLine(lines[0], delimiter);
-  const fieldKeys = headerCells.map((h) => FIELD_ALIASES[normalizeHeader(h)] || null);
-  const unmatchedHeaders = headerCells.filter((h, i) => !fieldKeys[i]);
+  const dataRowsOfCells = lines.slice(1).map((line) => splitLine(line, delimiter));
 
-  const rows = lines.slice(1).map((line) => {
-    const cells = splitLine(line, delimiter);
-    const row = {};
-    fieldKeys.forEach((key, i) => {
-      if (key) row[key] = cells[i] !== undefined ? cells[i] : '';
-    });
-    if (row.partType) {
-      row.partType = /consumable/i.test(row.partType) ? 'Consumable' : 'Returnable';
-    }
-    return row;
-  });
-
-  return { rows, unmatchedHeaders };
+  return mapSpreadsheetRows(headerCells, dataRowsOfCells);
 }
 
 export const SPREADSHEET_TEMPLATE_HEADERS = [

@@ -164,15 +164,16 @@ async function bulkCreateSpareParts(req, res) {
   if (rows.length === 0) {
     throw new ApiError(400, 'No parts provided');
   }
-  if (rows.length > 1000) {
-    throw new ApiError(400, 'Too many rows in one batch (max 1000)');
+  if (rows.length > 2000) {
+    throw new ApiError(400, 'Too many rows in one batch (max 2000)');
   }
 
   const store = await getDefaultStoreId();
   const seenPartNumbers = new Set();
-  const created = [];
   const errors = [];
+  const prepared = []; // { rowNum, explicitPartNumber, doc }
 
+  // Pass 1: validate every row in memory — no DB calls yet.
   for (let i = 0; i < rows.length; i += 1) {
     const row = rows[i] || {};
     const rowNum = i + 1;
@@ -211,47 +212,77 @@ async function bulkCreateSpareParts(req, res) {
         throw new Error('Allocatable stock must be between 0 and Stock On Hand');
       }
 
-      let finalPartNumber = row.partNumber ? String(row.partNumber).trim() : '';
-
-      if (finalPartNumber) {
-        if (seenPartNumbers.has(finalPartNumber)) {
-          throw new Error(`Duplicate part number in file: ${finalPartNumber}`);
+      const explicitPartNumber = row.partNumber ? String(row.partNumber).trim() : '';
+      if (explicitPartNumber) {
+        if (seenPartNumbers.has(explicitPartNumber)) {
+          throw new Error(`Duplicate part number in file: ${explicitPartNumber}`);
         }
-        const exists = await SparePart.findOne({ partNumber: finalPartNumber });
-        if (exists) {
-          throw new Error(`Part number already exists: ${finalPartNumber}`);
-        }
-      } else {
-        finalPartNumber = await getNextSequence('sparePartNumber', 'SP');
+        seenPartNumbers.add(explicitPartNumber);
       }
-      seenPartNumbers.add(finalPartNumber);
 
       const status = ['Active', 'Obsolete'].includes(row.status) ? row.status : 'Active';
       const rowPartType = ['Returnable', 'Consumable'].includes(row.partType) ? row.partType : 'Returnable';
 
-      const part = await SparePart.create({
-        partNumber: finalPartNumber,
-        partDescription,
-        partType: rowPartType,
-        componentPartNumber: row.componentPartNumber || '',
-        componentDescription: row.componentDescription || '',
-        functionalSystem: row.functionalSystem || '',
-        subSystem: row.subSystem || '',
-        machineType: row.machineType || '',
-        serialNumber: row.serialNumber || '',
-        stockOnHand,
-        allocatableStock,
-        minimumStockLevel,
-        maximumStockLevel,
-        unitOfMeasure: row.unitOfMeasure || 'EA',
-        storageLocation: row.storageLocation || '',
-        status,
-        store,
+      prepared.push({
+        rowNum,
+        explicitPartNumber,
+        doc: {
+          partDescription,
+          partType: rowPartType,
+          componentPartNumber: row.componentPartNumber || '',
+          componentDescription: row.componentDescription || '',
+          functionalSystem: row.functionalSystem || '',
+          subSystem: row.subSystem || '',
+          machineType: row.machineType || '',
+          serialNumber: row.serialNumber || '',
+          stockOnHand,
+          allocatableStock,
+          minimumStockLevel,
+          maximumStockLevel,
+          unitOfMeasure: row.unitOfMeasure || 'EA',
+          storageLocation: row.storageLocation || '',
+          status,
+          store,
+        },
       });
-
-      created.push(part);
     } catch (err) {
       errors.push({ row: rowNum, partNumber: row.partNumber || '', message: err.message || 'Could not create part' });
+    }
+  }
+
+  // Pass 2: one query to find any part numbers that already exist, instead of one per row.
+  const explicitNumbers = prepared.map((p) => p.explicitPartNumber).filter(Boolean);
+  const existing = explicitNumbers.length
+    ? await SparePart.find({ partNumber: { $in: explicitNumbers } }).select('partNumber').lean()
+    : [];
+  const existingSet = new Set(existing.map((e) => e.partNumber));
+
+  // Pass 3: assign part numbers (auto-sequence only where needed) and build the insert list.
+  const toInsert = [];
+  for (const p of prepared) {
+    if (p.explicitPartNumber) {
+      if (existingSet.has(p.explicitPartNumber)) {
+        errors.push({ row: p.rowNum, partNumber: p.explicitPartNumber, message: `Part number already exists: ${p.explicitPartNumber}` });
+        continue;
+      }
+      p.doc.partNumber = p.explicitPartNumber;
+    } else {
+      p.doc.partNumber = await getNextSequence('sparePartNumber', 'SP');
+    }
+    toInsert.push(p.doc);
+  }
+
+  // Pass 4: one bulk insert instead of one create() per row.
+  let created = [];
+  if (toInsert.length > 0) {
+    try {
+      created = await SparePart.insertMany(toInsert, { ordered: false });
+    } catch (bulkErr) {
+      created = Array.isArray(bulkErr.insertedDocs) ? bulkErr.insertedDocs : [];
+      const failedCount = toInsert.length - created.length;
+      if (failedCount > 0) {
+        errors.push({ row: 0, partNumber: '', message: `${failedCount} row(s) failed to save: ${bulkErr.message}` });
+      }
     }
   }
 

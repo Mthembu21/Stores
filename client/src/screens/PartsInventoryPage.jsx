@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
+import * as XLSX from 'xlsx';
 import { Table } from '../components/Table';
 import {
   useBulkCreateSpareParts,
@@ -9,7 +10,7 @@ import {
   useSpareParts,
   useUpdateSparePart,
 } from '../services/spareParts';
-import { parseSpreadsheetText, SPREADSHEET_TEMPLATE_HEADERS } from '../utils/parseSpreadsheet';
+import { parseSpreadsheetText, mapSpreadsheetRows, SPREADSHEET_TEMPLATE_HEADERS } from '../utils/parseSpreadsheet';
 import { formatDateTime } from '../utils/format';
 
 function stockBadge(part) {
@@ -226,9 +227,44 @@ export default function PartsInventoryPage() {
   function handleFileChange(e) {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => parseBulkText(String(reader.result || ''));
-    reader.readAsText(file);
+
+    const isExcel = /\.xlsx?$/i.test(file.name);
+    if (isExcel) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        setBulkResult(null);
+        try {
+          const data = new Uint8Array(reader.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const sheet = workbook.Sheets[workbook.SheetNames[0]];
+          const rows2d = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+          if (rows2d.length === 0) {
+            setBulkText('');
+            setBulkRows([]);
+            setBulkUnmatchedHeaders([]);
+            return;
+          }
+          const [headerRow, ...dataRows] = rows2d;
+          const { rows, unmatchedHeaders } = mapSpreadsheetRows(
+            headerRow.map((h) => String(h)),
+            dataRows
+          );
+          setBulkText(`Loaded ${rows.length} row(s) from ${file.name}`);
+          setBulkRows(rows);
+          setBulkUnmatchedHeaders(unmatchedHeaders);
+        } catch (err) {
+          setBulkText('');
+          setBulkRows([]);
+          setBulkUnmatchedHeaders([]);
+          window.alert(`Could not read ${file.name}: ${err.message || 'invalid file'}`);
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    } else {
+      const reader = new FileReader();
+      reader.onload = () => parseBulkText(String(reader.result || ''));
+      reader.readAsText(file);
+    }
   }
 
   const bulkValidRows = useMemo(() => bulkRows.filter((r) => !bulkRowError(r)), [bulkRows]);
@@ -402,8 +438,8 @@ export default function PartsInventoryPage() {
           <div>
             <div className="text-sm font-semibold text-epiroc-gray">Bulk add {activeTab === 'consumables' ? 'consumables' : 'parts'}</div>
             <div className="text-xs text-slate-500">
-              Upload a CSV export, or paste rows copied from a spreadsheet. Include a "Part Type" column set to
-              Consumable or Returnable to load either from the same file.
+              Upload a CSV or Excel (.xlsx) export, or paste rows copied from a spreadsheet. Include a "Part Type"
+              column set to Consumable or Returnable to load either from the same file.
             </div>
           </div>
           <button type="button" className="text-xs font-semibold text-epiroc-gray underline" onClick={downloadTemplate}>
@@ -413,11 +449,11 @@ export default function PartsInventoryPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="text-sm font-medium text-slate-700">Upload CSV file</label>
+            <label className="text-sm font-medium text-slate-700">Upload CSV or Excel file</label>
             <input
               ref={fileInputRef}
               type="file"
-              accept=".csv,text/csv"
+              accept=".csv,text/csv,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
               className="mt-1 w-full text-sm"
               onChange={handleFileChange}
             />
