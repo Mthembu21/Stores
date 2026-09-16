@@ -8,8 +8,8 @@ export default function LoginPage() {
   const location = useLocation();
   const login = useLogin();
 
+  const [username, setUsername] = useState('');
   const [employeeNumber, setEmployeeNumber] = useState('');
-  const [password, setPassword] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   const from = location.state?.from?.pathname || '/';
@@ -48,30 +48,30 @@ export default function LoginPage() {
           style={{ marginTop: '24px' }}
           onSubmit={(e) => {
             e.preventDefault();
-            login.mutate({ employeeNumber, password });
+            login.mutate({ username, employeeNumber });
           }}
         >
           <div>
-            <label className="text-sm font-medium text-slate-700" style={{ display: 'block', color: '#334155', fontSize: '14px', fontWeight: '500' }}>Employee Number</label>
+            <label className="text-sm font-medium text-slate-700" style={{ display: 'block', color: '#334155', fontSize: '14px', fontWeight: '500' }}>Username</label>
             <input
               className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-epiroc-yellow"
               style={{ marginTop: '4px', width: '100%', borderRadius: '8px', border: '1px solid #e2e8f0', padding: '8px 12px', fontSize: '14px' }}
-              value={employeeNumber}
-              onChange={(e) => setEmployeeNumber(e.target.value)}
-              placeholder="e.g. 12345"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Your full name"
               autoComplete="username"
             />
           </div>
 
           <div>
-            <label className="text-sm font-medium text-slate-700" style={{ display: 'block', color: '#334155', fontSize: '14px', fontWeight: '500' }}>Password</label>
+            <label className="text-sm font-medium text-slate-700" style={{ display: 'block', color: '#334155', fontSize: '14px', fontWeight: '500' }}>Employee Number</label>
             <input
               className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-epiroc-yellow"
               type="password"
               style={{ marginTop: '4px', width: '100%', borderRadius: '8px', border: '1px solid #e2e8f0', padding: '8px 12px', fontSize: '14px' }}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
+              value={employeeNumber}
+              onChange={(e) => setEmployeeNumber(e.target.value)}
+              placeholder="e.g. Z12345"
               autoComplete="current-password"
             />
           </div>

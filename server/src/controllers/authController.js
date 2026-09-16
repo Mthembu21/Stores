@@ -5,19 +5,21 @@ const { User } = require('../models/User');
 const { Roles } = require('../config/roles');
 
 async function login(req, res) {
-  const { employeeNumber, password } = req.body;
+  const { username, employeeNumber } = req.body;
 
-  if (!employeeNumber || !password) {
-    throw new ApiError(400, 'Employee Number and password are required');
+  if (!username || !employeeNumber) {
+    throw new ApiError(400, 'Username and Employee Number are required');
   }
 
+  // Employee Number (== Z Number) doubles as the password: log in with the
+  // person's name plus their employee number, no separate password.
   const user = await User.findOne({ employeeNumber: String(employeeNumber).trim() });
   if (!user) {
     throw new ApiError(401, 'Invalid credentials');
   }
 
-  const ok = await user.verifyPassword(password);
-  if (!ok) {
+  const nameMatches = user.fullName.trim().toLowerCase() === String(username).trim().toLowerCase();
+  if (!nameMatches) {
     throw new ApiError(401, 'Invalid credentials');
   }
 

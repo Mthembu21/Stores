@@ -112,7 +112,6 @@ export default function PartsUsersTab() {
 
   const [storemanName, setStoremanName] = useState('');
   const [storemanZNumber, setStoremanZNumber] = useState('');
-  const [storemanPassword, setStoremanPassword] = useState('');
   const [storemanPages, setStoremanPages] = useState([]);
 
   function handleAddStoreman(e) {
@@ -126,13 +125,11 @@ export default function PartsUsersTab() {
         department: 'Parts Store',
         contactNumber: '',
         allowedPages: storemanPages,
-        password: storemanPassword,
       },
       {
         onSuccess: () => {
           setStoremanName('');
           setStoremanZNumber('');
-          setStoremanPassword('');
           setStoremanPages([]);
         },
       }
@@ -215,12 +212,13 @@ export default function PartsUsersTab() {
         <div>
           <div className="text-sm font-semibold text-epiroc-gray">Add Storeman</div>
           <div className="text-xs text-slate-500">
-            Creates a login account. Tick which Spare Parts pages they can access — leave all unticked to give them
-            every page a Storeman normally has.
+            Creates a login account — the Storeman logs in with their Name as username and their Z Number as the
+            password. Tick which Spare Parts pages they can access — leave all unticked to give them every page a
+            Storeman normally has.
           </div>
         </div>
         <form className="space-y-4" onSubmit={handleAddStoreman}>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium text-slate-700">Name</label>
               <input
@@ -236,17 +234,7 @@ export default function PartsUsersTab() {
                 className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
                 value={storemanZNumber}
                 onChange={(e) => setStoremanZNumber(e.target.value)}
-                placeholder="Also used to log in"
-                required
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-slate-700">Password</label>
-              <input
-                type="password"
-                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
-                value={storemanPassword}
-                onChange={(e) => setStoremanPassword(e.target.value)}
+                placeholder="Also used to log in, as the password"
                 required
               />
             </div>

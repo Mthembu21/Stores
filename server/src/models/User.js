@@ -25,7 +25,9 @@ const userSchema = new mongoose.Schema(
     // When non-empty, this user's access is restricted to exactly these page keys,
     // overriding the normal role-based page set. Empty means "use role defaults".
     allowedPages: { type: [String], default: [] },
-    passwordHash: { type: String, required: true },
+    // Login is now username (fullName) + employeeNumber, so a real password is
+    // no longer required. Kept optional for any legacy/bootstrap accounts.
+    passwordHash: { type: String, default: '' },
   },
   { timestamps: true }
 );

@@ -16,7 +16,6 @@ export default function UsersPage() {
   const [role, setRole] = useState('Technician');
   const [department, setDepartment] = useState('');
   const [contactNumber, setContactNumber] = useState('');
-  const [password, setPassword] = useState('');
 
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
@@ -72,14 +71,13 @@ export default function UsersPage() {
           onSubmit={(e) => {
             e.preventDefault();
             createUser.mutate(
-              { fullName, employeeNumber, role, department, contactNumber, password },
+              { fullName, employeeNumber, role, department, contactNumber },
               {
                 onSuccess: () => {
                   setFullName('');
                   setEmployeeNumber('');
                   setDepartment('');
                   setContactNumber('');
-                  setPassword('');
                   setRole('Technician');
                 },
               }
@@ -137,16 +135,9 @@ export default function UsersPage() {
                 required
               />
             </div>
-            <div>
-              <label className="text-sm font-medium text-slate-700">Password</label>
-              <input
-                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
+          </div>
+          <div className="text-xs text-slate-500">
+            Employee number doubles as the login password — no separate password needed.
           </div>
 
           <div className="flex justify-center">

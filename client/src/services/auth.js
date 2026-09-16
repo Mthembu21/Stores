@@ -5,8 +5,8 @@ import { http } from './http';
 export function useLogin() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ employeeNumber, password }) => {
-      const { data } = await http.post('/auth/login', { employeeNumber, password });
+    mutationFn: async ({ username, employeeNumber }) => {
+      const { data } = await http.post('/auth/login', { username, employeeNumber });
       return data;
     },
     onSuccess: (data) => {

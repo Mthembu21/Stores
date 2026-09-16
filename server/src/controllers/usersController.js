@@ -35,7 +35,8 @@ function validateAllowedPages(allowedPages) {
 async function createUser(req, res) {
   const { fullName, employeeNumber, role, department, contactNumber, zNumber, allowedPages, password } = req.body;
 
-  if (!fullName || !employeeNumber || !role || !password) {
+  // Login is username (fullName) + Employee Number, so a password is optional now.
+  if (!fullName || !employeeNumber || !role) {
     throw new ApiError(400, 'Missing required fields');
   }
 
@@ -44,20 +45,22 @@ async function createUser(req, res) {
   }
 
   const cleanedAllowedPages = validateAllowedPages(allowedPages);
+  const finalEmployeeNumber = String(employeeNumber).trim();
 
-  const exists = await User.findOne({ employeeNumber: String(employeeNumber).trim() });
+  const exists = await User.findOne({ employeeNumber: finalEmployeeNumber });
   if (exists) {
     throw new ApiError(409, 'Employee Number already exists');
   }
 
-  const passwordHash = await bcrypt.hash(password, 10);
+  const passwordHash = password ? await bcrypt.hash(password, 10) : '';
   const user = await User.create({
     fullName,
-    employeeNumber: String(employeeNumber).trim(),
+    employeeNumber: finalEmployeeNumber,
     role,
     department: department || '',
     contactNumber: contactNumber || '',
-    zNumber: zNumber || '',
+    // Z Number and Employee Number are the same identifier — keep them in sync.
+    zNumber: zNumber ? String(zNumber).trim() : finalEmployeeNumber,
     allowedPages: cleanedAllowedPages || [],
     passwordHash,
   });
