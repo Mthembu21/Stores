@@ -12,7 +12,6 @@ import {
 } from '../services/spareParts';
 import { parseSpreadsheetText, mapSpreadsheetRows, SPREADSHEET_TEMPLATE_HEADERS } from '../utils/parseSpreadsheet';
 import { formatDateTime } from '../utils/format';
-import PartsUsersTab from './PartsUsersTab';
 
 function stockBadge(part) {
   if (part.stockOnHand <= 0) return { label: 'OUT OF STOCK', className: 'text-red-600 font-semibold' };
@@ -438,20 +437,8 @@ export default function PartsInventoryPage() {
         >
           Consumables Inventory
         </button>
-        <button
-          type="button"
-          className={`px-4 py-2 text-sm font-semibold border-b-2 -mb-px transition ${
-            activeTab === 'users'
-              ? 'border-epiroc-yellow text-epiroc-gray'
-              : 'border-transparent text-slate-500 hover:text-slate-700'
-          }`}
-          onClick={() => setActiveTab('users')}
-        >
-          Users
-        </button>
       </div>
 
-      {activeTab !== 'users' && (
       <div className="rounded-xl bg-white shadow-soft p-6 space-y-4 max-w-4xl mx-auto">
         <div className="flex items-center justify-between">
           <div>
@@ -569,7 +556,6 @@ export default function PartsInventoryPage() {
           </div>
         )}
       </div>
-      )}
 
       {activeTab === 'parts' && (
         <>
@@ -801,8 +787,6 @@ export default function PartsInventoryPage() {
           </div>
         </>
       )}
-
-      {activeTab === 'users' && <PartsUsersTab />}
     </div>
   );
 }

@@ -20,4 +20,5 @@ export const PARTS_PAGES = [
   { key: 'spare-parts/to-order', label: 'Parts To Order' },
   { key: 'spare-parts/movements', label: 'Stock Movements' },
   { key: 'spare-parts/kpi', label: 'Daily KPIs' },
+  { key: 'spare-parts/users', label: 'Users' },
 ];

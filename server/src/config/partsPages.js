@@ -11,6 +11,7 @@ const PARTS_PAGE_KEYS = [
   'spare-parts/to-order',
   'spare-parts/movements',
   'spare-parts/kpi',
+  'spare-parts/users',
 ];
 
 module.exports = { PARTS_PAGE_KEYS };

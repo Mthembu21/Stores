@@ -80,7 +80,7 @@ function StoremanAccessCell({ user, onSave, isPending }) {
   );
 }
 
-export default function PartsUsersTab() {
+export default function PartsUsersPage() {
   // Foremen — simple name + Z number directory, no login
   const { data: foremenData, isLoading: foremenLoading } = usePartsPeople('Foreman');
   const foremen = foremenData?.people || [];
@@ -137,7 +137,12 @@ export default function PartsUsersTab() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-4xl mx-auto w-full">
+      <div>
+        <div className="text-2xl font-semibold text-epiroc-gray">Users</div>
+        <div className="text-sm text-slate-600">Manage Foremen and Storemen for the Parts Store.</div>
+      </div>
+
       {/* Foremen */}
       <div className="rounded-xl bg-white shadow-soft p-6 max-w-3xl mx-auto space-y-4">
         <div>

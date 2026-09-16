@@ -85,6 +85,7 @@ export default function DashboardLayout() {
                   <SideLink to="/spare-parts/movements">Stock Movements</SideLink>
                 )}
                 {hasPartsPageAccess(user, 'spare-parts/kpi') && <SideLink to="/spare-parts/kpi">Daily KPIs</SideLink>}
+                {hasPartsPageAccess(user, 'spare-parts/users') && <SideLink to="/spare-parts/users">Users</SideLink>}
               </>
             )}
 
