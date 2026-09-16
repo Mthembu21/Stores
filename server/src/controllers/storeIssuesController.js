@@ -37,14 +37,11 @@ async function createStoreIssue(req, res) {
     items: itemsInput,
     laborEntries: laborEntriesInput,
     requestorName,
-    requestorSurname,
     requestorClockNumber,
     requestorContactNumber,
     justification,
     foremanName,
-    foremanSurname,
-    storemanName,
-    storemanSurname,
+    foremanZNumber,
   } = req.body;
 
   const toNullableNumber = (v) => (v === undefined || v === null || v === '' ? null : Number(v));
@@ -64,7 +61,7 @@ async function createStoreIssue(req, res) {
 
   if (
     !requestorName ||
-    !requestorSurname ||
+    !requestorClockNumber ||
     !justification ||
     !Array.isArray(itemsInput) ||
     itemsInput.length === 0
@@ -195,14 +192,15 @@ async function createStoreIssue(req, res) {
     items,
     laborEntries,
     requestorName,
-    requestorSurname,
     requestorClockNumber,
     requestorContactNumber,
     justification,
-    foremanName,
-    foremanSurname,
-    storemanName,
-    storemanSurname,
+    foremanName: foremanName || '',
+    foremanZNumber: foremanZNumber || '',
+    // Storeman is whoever is logged in and submitting this — never trust a
+    // client-supplied name/Z number for this field.
+    storemanName: req.user.fullName || '',
+    storemanZNumber: req.user.zNumber || req.user.employeeNumber || '',
     issuedBy: req.user._id,
     issueDate: new Date(),
     status,

@@ -31,7 +31,7 @@ export default function StoreIssuesPage() {
       { key: 'machineNumber', header: 'Machine #' },
       { key: 'serviceOrderNumber', header: 'Service Order' },
       { key: 'workOrderNumber', header: 'Work Order' },
-      { key: 'requestorName', header: 'Requestor', render: (i) => `${i.requestorName} ${i.requestorSurname}` },
+      { key: 'requestorName', header: 'Requestor', render: (i) => [i.requestorName, i.requestorSurname].filter(Boolean).join(' ') },
       { key: 'requestorClockNumber', header: 'Clock #' },
       { key: 'justification', header: 'Justification' },
       { key: 'issuedBy', header: 'Issued By', render: (i) => i.issuedBy?.fullName || '' },

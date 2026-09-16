@@ -349,16 +349,16 @@ export default function IssuePrintPage() {
           <div>
             <div className="field-label">Spares issued to (Requestor)</div>
             <div className="field-value">
-              {issue.requestorName} {issue.requestorSurname}
-              {hasText(issue.requestorClockNumber) ? ` (${issue.requestorClockNumber})` : ''}
+              {[issue.requestorName, issue.requestorSurname].filter(hasText).join(' ')}
+              {hasText(issue.requestorClockNumber) ? ` (Clock #${issue.requestorClockNumber})` : ''}
             </div>
             <div className="signature-box">Signature</div>
           </div>
           <div>
             <div className="field-label">Foreman</div>
             <div className="field-value">
-              {hasText(issue.foremanName) || hasText(issue.foremanSurname)
-                ? `${issue.foremanName || ''} ${issue.foremanSurname || ''}`
+              {hasText(issue.foremanName)
+                ? `${[issue.foremanName, issue.foremanSurname].filter(hasText).join(' ')}${hasText(issue.foremanZNumber) ? ` (${issue.foremanZNumber})` : ''}`
                 : ' '}
             </div>
             <div className="signature-box">Signature</div>
@@ -366,8 +366,8 @@ export default function IssuePrintPage() {
           <div>
             <div className="field-label">Storeman</div>
             <div className="field-value">
-              {hasText(issue.storemanName) || hasText(issue.storemanSurname)
-                ? `${issue.storemanName || ''} ${issue.storemanSurname || ''}`
+              {hasText(issue.storemanName)
+                ? `${[issue.storemanName, issue.storemanSurname].filter(hasText).join(' ')}${hasText(issue.storemanZNumber) ? ` (${issue.storemanZNumber})` : ''}`
                 : ' '}
             </div>
             <div className="signature-box">Signature</div>

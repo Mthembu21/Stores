@@ -21,7 +21,7 @@ export default function PartsToOrderPage() {
       { key: 'quantityToOrder', header: 'Qty To Order' },
       { key: 'serviceOrderNumber', header: 'Service Order' },
       { key: 'workOrderNumber', header: 'Work Order' },
-      { key: 'requestorName', header: 'Requestor', render: (i) => `${i.requestorName} ${i.requestorSurname}` },
+      { key: 'requestorName', header: 'Requestor', render: (i) => [i.requestorName, i.requestorSurname].filter(Boolean).join(' ') },
       { key: 'issueDate', header: 'Date', render: (i) => formatDateTime(i.issueDate) },
       { key: 'status', header: 'Status' },
     ],

@@ -96,18 +96,23 @@ const storeIssueSchema = new mongoose.Schema(
     laborEntries: { type: [laborEntrySchema], default: [] },
 
     requestorName: { type: String, required: true, trim: true },
-    requestorSurname: { type: String, required: true, trim: true },
-    requestorClockNumber: { type: String, trim: true, default: '' },
+    // Kept for older records; the current form collects name only (first + surname
+    // together, or just a name) and leaves this blank.
+    requestorSurname: { type: String, trim: true, default: '' },
+    requestorClockNumber: { type: String, required: true, trim: true },
     requestorContactNumber: { type: String, trim: true, default: '' },
 
     justification: { type: String, trim: true, default: '' },
 
     foremanName: { type: String, trim: true, default: '' },
     foremanSurname: { type: String, trim: true, default: '' },
+    foremanZNumber: { type: String, trim: true, default: '' },
     foremanSignature: { type: String, default: '' },
 
+    // Auto-filled server-side from the logged-in Storeman, not client-supplied.
     storemanName: { type: String, trim: true, default: '' },
     storemanSurname: { type: String, trim: true, default: '' },
+    storemanZNumber: { type: String, trim: true, default: '' },
     storemanSignature: { type: String, default: '' },
 
     issuedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },

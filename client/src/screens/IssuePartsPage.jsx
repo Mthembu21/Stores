@@ -3,6 +3,9 @@ import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useSpareParts } from '../services/spareParts';
 import { useCreateStoreIssue } from '../services/storeIssues';
+import { useMachines, useCreateMachine } from '../services/machines';
+import { usePartsPeople } from '../services/partsPeople';
+import { useMe } from '../services/auth';
 
 function nextKey() {
   return `line-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -28,6 +31,16 @@ export default function IssuePartsPage() {
   const parts = useMemo(() => (partsData?.parts || []).filter((p) => p.partType !== 'Consumable'), [partsData]);
   const createIssue = useCreateStoreIssue();
 
+  const { data: machinesData } = useMachines();
+  const machines = machinesData?.machines || [];
+  const createMachine = useCreateMachine();
+
+  const { data: foremenData } = usePartsPeople('Foreman');
+  const foremen = foremenData?.people || [];
+
+  const { data: meData } = useMe();
+  const me = meData?.user;
+
   const [partSearch, setPartSearch] = useState('');
   const [items, setItems] = useState([]);
   const [lastCreatedIssue, setLastCreatedIssue] = useState(null);
@@ -45,6 +58,9 @@ export default function IssuePartsPage() {
 
   const [machineNumber, setMachineNumber] = useState('');
   const [machineType, setMachineType] = useState('');
+  const [showAddMachine, setShowAddMachine] = useState(false);
+  const [newMachineNumber, setNewMachineNumber] = useState('');
+  const [newMachineType, setNewMachineType] = useState('');
   const [serviceOrderNumber, setServiceOrderNumber] = useState('');
   const [workOrderNumber, setWorkOrderNumber] = useState('');
   const [riskAssessmentNumber, setRiskAssessmentNumber] = useState('');
@@ -81,16 +97,49 @@ export default function IssuePartsPage() {
   const [laborEntries, setLaborEntries] = useState([]);
 
   const [requestorName, setRequestorName] = useState('');
-  const [requestorSurname, setRequestorSurname] = useState('');
   const [requestorClockNumber, setRequestorClockNumber] = useState('');
   const [requestorContactNumber, setRequestorContactNumber] = useState('');
 
   const [justification, setJustification] = useState('');
 
+  const [selectedForemanId, setSelectedForemanId] = useState('');
   const [foremanName, setForemanName] = useState('');
-  const [foremanSurname, setForemanSurname] = useState('');
-  const [storemanName, setStoremanName] = useState('');
-  const [storemanSurname, setStoremanSurname] = useState('');
+  const [foremanZNumber, setForemanZNumber] = useState('');
+
+  function handleSelectMachine(id) {
+    const machine = machines.find((m) => m._id === id);
+    setMachineNumber(machine ? machine.machineNumber : '');
+    setMachineType(machine ? machine.machineType : '');
+  }
+
+  function handleSelectForeman(id) {
+    setSelectedForemanId(id);
+    const person = foremen.find((p) => p._id === id);
+    setForemanName(person ? person.name : '');
+    setForemanZNumber(person ? person.zNumber : '');
+  }
+
+  function handleAddMachine() {
+    if (!newMachineNumber.trim() || !newMachineType.trim()) {
+      toast.error('Provide both a machine number and machine type');
+      return;
+    }
+    createMachine.mutate(
+      { machineNumber: newMachineNumber.trim(), machineType: newMachineType.trim() },
+      {
+        onSuccess: (data) => {
+          const machine = data?.machine;
+          if (machine) {
+            setMachineNumber(machine.machineNumber);
+            setMachineType(machine.machineType);
+          }
+          setNewMachineNumber('');
+          setNewMachineType('');
+          setShowAddMachine(false);
+        },
+      }
+    );
+  }
 
   function addPart(part) {
     setItems((prev) => {
@@ -143,6 +192,9 @@ export default function IssuePartsPage() {
     setPartSearch('');
     setMachineNumber('');
     setMachineType('');
+    setShowAddMachine(false);
+    setNewMachineNumber('');
+    setNewMachineType('');
     setServiceOrderNumber('');
     setWorkOrderNumber('');
     setRiskAssessmentNumber('');
@@ -172,20 +224,26 @@ export default function IssuePartsPage() {
     setSerialNumberReturned('');
     setLaborEntries([]);
     setRequestorName('');
-    setRequestorSurname('');
     setRequestorClockNumber('');
     setRequestorContactNumber('');
     setJustification('');
+    setSelectedForemanId('');
     setForemanName('');
-    setForemanSurname('');
-    setStoremanName('');
-    setStoremanSurname('');
+    setForemanZNumber('');
   }
 
   function handleSubmit(e) {
     e.preventDefault();
     if (items.length === 0) {
       toast.error('Add at least one part');
+      return;
+    }
+    if (!requestorName.trim()) {
+      toast.error('Provide the requestor name');
+      return;
+    }
+    if (!requestorClockNumber.trim()) {
+      toast.error('Provide the requestor clock number');
       return;
     }
     if (!justification.trim()) {
@@ -246,14 +304,11 @@ export default function IssuePartsPage() {
         items: payloadItems,
         laborEntries: payloadLaborEntries,
         requestorName,
-        requestorSurname,
         requestorClockNumber,
         requestorContactNumber,
         justification,
         foremanName,
-        foremanSurname,
-        storemanName,
-        storemanSurname,
+        foremanZNumber,
       },
       {
         onSuccess: (data) => {
@@ -429,11 +484,53 @@ export default function IssuePartsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium text-slate-700">Machine number</label>
-              <input className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" value={machineNumber} onChange={(e) => setMachineNumber(e.target.value)} />
+              <select
+                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                value={machines.find((m) => m.machineNumber === machineNumber)?._id || ''}
+                onChange={(e) => handleSelectMachine(e.target.value)}
+              >
+                <option value="">Select a machine...</option>
+                {machines.map((m) => (
+                  <option key={m._id} value={m._id}>
+                    {m.machineNumber}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                className="mt-1 text-xs font-semibold text-epiroc-gray hover:underline"
+                onClick={() => setShowAddMachine((v) => !v)}
+              >
+                {showAddMachine ? 'Cancel' : "+ Machine not listed"}
+              </button>
+              {showAddMachine && (
+                <div className="mt-2 flex gap-2">
+                  <input
+                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                    placeholder="Machine number"
+                    value={newMachineNumber}
+                    onChange={(e) => setNewMachineNumber(e.target.value)}
+                  />
+                  <input
+                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                    placeholder="Machine type"
+                    value={newMachineType}
+                    onChange={(e) => setNewMachineType(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    className="rounded-xl bg-epiroc-yellow px-3 py-2 text-sm font-semibold text-epiroc-black shadow-soft hover:brightness-95 whitespace-nowrap disabled:opacity-60"
+                    onClick={handleAddMachine}
+                    disabled={createMachine.isPending}
+                  >
+                    Add
+                  </button>
+                </div>
+              )}
             </div>
             <div>
               <label className="text-sm font-medium text-slate-700">Machine type</label>
-              <input className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" value={machineType} onChange={(e) => setMachineType(e.target.value)} />
+              <input className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 bg-slate-50" value={machineType} readOnly />
             </div>
             <div>
               <label className="text-sm font-medium text-slate-700">Service order number</label>
@@ -646,15 +743,17 @@ export default function IssuePartsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium text-slate-700">Requestor name</label>
-              <input className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" value={requestorName} onChange={(e) => setRequestorName(e.target.value)} required />
+              <input
+                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                value={requestorName}
+                onChange={(e) => setRequestorName(e.target.value)}
+                placeholder="Name and surname, or just a name"
+                required
+              />
             </div>
             <div>
-              <label className="text-sm font-medium text-slate-700">Requestor surname</label>
-              <input className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" value={requestorSurname} onChange={(e) => setRequestorSurname(e.target.value)} required />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-slate-700">Clock number (optional)</label>
-              <input className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" value={requestorClockNumber} onChange={(e) => setRequestorClockNumber(e.target.value)} />
+              <label className="text-sm font-medium text-slate-700">Clock number</label>
+              <input className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" value={requestorClockNumber} onChange={(e) => setRequestorClockNumber(e.target.value)} required />
             </div>
             <div>
               <label className="text-sm font-medium text-slate-700">Contact number (optional)</label>
@@ -679,20 +778,31 @@ export default function IssuePartsPage() {
           <div className="text-sm font-semibold text-epiroc-gray">Foreman & Storeman</div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium text-slate-700">Foreman name</label>
-              <input className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" value={foremanName} onChange={(e) => setForemanName(e.target.value)} />
+              <label className="text-sm font-medium text-slate-700">Foreman</label>
+              <select
+                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                value={selectedForemanId}
+                onChange={(e) => handleSelectForeman(e.target.value)}
+              >
+                <option value="">Select a foreman...</option>
+                {foremen.map((p) => (
+                  <option key={p._id} value={p._id}>
+                    {p.name} ({p.zNumber})
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
-              <label className="text-sm font-medium text-slate-700">Foreman surname</label>
-              <input className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" value={foremanSurname} onChange={(e) => setForemanSurname(e.target.value)} />
+              <label className="text-sm font-medium text-slate-700">Foreman Z number</label>
+              <input className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 bg-slate-50" value={foremanZNumber} readOnly />
             </div>
             <div>
-              <label className="text-sm font-medium text-slate-700">Storeman name</label>
-              <input className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" value={storemanName} onChange={(e) => setStoremanName(e.target.value)} />
+              <label className="text-sm font-medium text-slate-700">Storeman (you)</label>
+              <input className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 bg-slate-50" value={me?.fullName || ''} readOnly />
             </div>
             <div>
-              <label className="text-sm font-medium text-slate-700">Storeman surname</label>
-              <input className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" value={storemanSurname} onChange={(e) => setStoremanSurname(e.target.value)} />
+              <label className="text-sm font-medium text-slate-700">Storeman Z number</label>
+              <input className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 bg-slate-50" value={me?.zNumber || me?.employeeNumber || ''} readOnly />
             </div>
           </div>
         </div>
