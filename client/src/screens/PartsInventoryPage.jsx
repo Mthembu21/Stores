@@ -216,13 +216,15 @@ export default function PartsInventoryPage() {
   const [bulkRows, setBulkRows] = useState([]);
   const [bulkUnmatchedHeaders, setBulkUnmatchedHeaders] = useState([]);
   const [bulkResult, setBulkResult] = useState(null);
+  const [bulkSourceRowCount, setBulkSourceRowCount] = useState(null);
 
   function parseBulkText(text) {
     setBulkText(text);
     setBulkResult(null);
-    const { rows, unmatchedHeaders } = parseSpreadsheetText(text);
+    const { rows, unmatchedHeaders, sourceRowCount } = parseSpreadsheetText(text);
     setBulkRows(rows);
     setBulkUnmatchedHeaders(unmatchedHeaders);
+    setBulkSourceRowCount(sourceRowCount ?? null);
   }
 
   function handleFileChange(e) {
@@ -243,20 +245,23 @@ export default function PartsInventoryPage() {
             setBulkText('');
             setBulkRows([]);
             setBulkUnmatchedHeaders([]);
+            setBulkSourceRowCount(null);
             return;
           }
           const [headerRow, ...dataRows] = rows2d;
-          const { rows, unmatchedHeaders } = mapSpreadsheetRows(
+          const { rows, unmatchedHeaders, sourceRowCount } = mapSpreadsheetRows(
             headerRow.map((h) => String(h)),
             dataRows
           );
-          setBulkText(`Loaded ${rows.length} row(s) from ${file.name}`);
+          setBulkText(`Loaded ${sourceRowCount} row(s) from ${file.name}`);
           setBulkRows(rows);
           setBulkUnmatchedHeaders(unmatchedHeaders);
+          setBulkSourceRowCount(sourceRowCount ?? null);
         } catch (err) {
           setBulkText('');
           setBulkRows([]);
           setBulkUnmatchedHeaders([]);
+          setBulkSourceRowCount(null);
           window.alert(`Could not read ${file.name}: ${err.message || 'invalid file'}`);
         }
       };
@@ -278,6 +283,7 @@ export default function PartsInventoryPage() {
         setBulkText('');
         setBulkRows([]);
         setBulkUnmatchedHeaders([]);
+        setBulkSourceRowCount(null);
         if (fileInputRef.current) fileInputRef.current.value = '';
       },
     });
@@ -486,6 +492,13 @@ export default function PartsInventoryPage() {
         {bulkUnmatchedHeaders.length > 0 && (
           <div className="text-xs text-epiroc-yellow">
             Unrecognized column(s) ignored: {bulkUnmatchedHeaders.join(', ')}
+          </div>
+        )}
+
+        {bulkSourceRowCount !== null && bulkSourceRowCount !== bulkRows.length && (
+          <div className="text-xs text-slate-500">
+            Combined {bulkSourceRowCount} source row(s) into {bulkRows.length} part(s) — rows sharing the same Part
+            Number were merged (quantities summed; pool-tracked equipment counted as units not checked out).
           </div>
         )}
 
