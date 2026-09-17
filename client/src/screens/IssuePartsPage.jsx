@@ -403,6 +403,9 @@ export default function IssuePartsPage() {
                         {part.partNumber} <span className="text-xs font-normal text-slate-400">· {part.partType}</span>
                       </div>
                       <div className="text-sm text-slate-600">{part.partDescription}</div>
+                      <div className="text-xs text-slate-500 mt-0.5">
+                        Location: <span className="font-semibold text-slate-700">{part.storageLocation || 'Not set'}</span>
+                      </div>
                     </div>
                     <div className={`text-sm font-semibold ${allocatableOf(part) > 0 ? 'text-green-600' : 'text-red-600'}`}>
                       {allocatableOf(part)} available ({part.stockOnHand} on hand)
@@ -426,6 +429,7 @@ export default function IssuePartsPage() {
                 <thead className="bg-slate-50 text-slate-600">
                   <tr>
                     <th className="text-left p-2">Part</th>
+                    <th className="text-left p-2">Location</th>
                     <th className="text-left p-2 w-24">Requested</th>
                     <th className="text-left p-2 w-24">Issued</th>
                     <th className="text-left p-2 w-24">To order</th>
@@ -442,6 +446,9 @@ export default function IssuePartsPage() {
                         <td className="p-2">
                           <div className="font-medium text-slate-900">{item.part.partNumber}</div>
                           <div className="text-xs text-slate-500">{item.part.partDescription}</div>
+                        </td>
+                        <td className="p-2 text-slate-700 font-semibold">
+                          {item.part.storageLocation || 'Not set'}
                         </td>
                         <td className="p-2">
                           <input

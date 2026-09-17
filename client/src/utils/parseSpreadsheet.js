@@ -118,12 +118,15 @@ export function aggregateByPartNumber(rows) {
     let stockOnHand = 0;
     let allocatableStock = 0;
     const locations = new Set();
+    const poolLocationTally = new Map();
 
     if (anyPool) {
       for (const r of group) {
         const qty = r.stockOnHand === '' || r.stockOnHand === undefined ? 1 : Number(r.stockOnHand) || 1;
         stockOnHand += qty;
-        if (String(r.storageLocation || '').trim().toLowerCase() !== 'pool_out') {
+        const loc = String(r.storageLocation || '').trim() || 'UNSPECIFIED';
+        poolLocationTally.set(loc, (poolLocationTally.get(loc) || 0) + qty);
+        if (loc.toLowerCase() !== 'pool_out') {
           allocatableStock += qty;
         }
       }
@@ -138,11 +141,18 @@ export function aggregateByPartNumber(rows) {
 
     allocatableStock = Math.max(0, Math.min(allocatableStock, stockOnHand));
 
+    // For pool-tracked equipment, show a per-state breakdown (e.g. "POOL_READY (2),
+    // POOL_OUT (1)") rather than just one row's location, since units can be spread
+    // across multiple pool states at once.
+    const poolLocationSummary = [...poolLocationTally.entries()]
+      .map(([loc, qty]) => `${loc} (${qty})`)
+      .join(', ');
+
     return {
       ...group[0],
       stockOnHand: String(stockOnHand),
       allocatableStock: String(allocatableStock),
-      storageLocation: anyPool ? group[0].storageLocation || '' : [...locations].join('; '),
+      storageLocation: anyPool ? poolLocationSummary : [...locations].join('; '),
     };
   });
 }
