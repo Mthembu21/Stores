@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Table } from '../components/Table';
-import { useStoreIssues, useUpdateStoreIssue } from '../services/storeIssues';
+import { useStoreIssues, useUpdateStoreIssue, useDeleteStoreIssue } from '../services/storeIssues';
 import { useMachines, useCreateMachine, useUpdateMachine } from '../services/machines';
 import { formatDateTime } from '../utils/format';
 import { summarizeIssues } from '../utils/storeIssues';
@@ -28,6 +28,7 @@ export default function StoreIssuesPage() {
   }, [machinesData]);
 
   const updateStoreIssue = useUpdateStoreIssue();
+  const deleteStoreIssue = useDeleteStoreIssue();
   const createMachine = useCreateMachine();
   const updateMachine = useUpdateMachine();
 
@@ -37,6 +38,12 @@ export default function StoreIssuesPage() {
       updateMachine.mutate({ id: machine._id, onContract: checked });
     } else if (row.machineNumber) {
       createMachine.mutate({ machineNumber: row.machineNumber, machineType: row.machineType, onContract: checked });
+    }
+  }
+
+  function handleDelete(row) {
+    if (window.confirm(`Delete issue ${row.issueNumber}? Any stock it issued out will be restored.`)) {
+      deleteStoreIssue.mutate(row.issueId);
     }
   }
 
@@ -91,8 +98,22 @@ export default function StoreIssuesPage() {
           </Link>
         ),
       },
+      {
+        key: 'delete',
+        header: '',
+        render: (i) => (
+          <button
+            type="button"
+            className="text-red-500 hover:text-red-700 font-semibold"
+            onClick={() => handleDelete(i)}
+            disabled={deleteStoreIssue.isPending}
+          >
+            Delete
+          </button>
+        ),
+      },
     ],
-    [machinesByNumber, updateStoreIssue, createMachine, updateMachine]
+    [machinesByNumber, updateStoreIssue, deleteStoreIssue, createMachine, updateMachine]
   );
 
   return (

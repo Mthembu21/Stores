@@ -42,6 +42,26 @@ export function useUpdateStoreIssue() {
   });
 }
 
+export function useDeleteStoreIssue() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id) => {
+      const { data } = await http.delete(`/store-issues/${id}`);
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['store-issues'], exact: false });
+      qc.invalidateQueries({ queryKey: ['spare-parts'], exact: false });
+      qc.invalidateQueries({ queryKey: ['parts-dashboard'] });
+      qc.invalidateQueries({ queryKey: ['stock-movements'], exact: false });
+      toast.success('Store issue deleted, stock restored');
+    },
+    onError: (err) => {
+      toast.error(err?.response?.data?.message || 'Could not delete store issue');
+    },
+  });
+}
+
 export function useCreateStoreIssue() {
   const qc = useQueryClient();
   return useMutation({

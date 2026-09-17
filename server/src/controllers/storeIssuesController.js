@@ -293,4 +293,45 @@ async function updateStoreIssue(req, res) {
   res.json({ issue: populated });
 }
 
-module.exports = { createStoreIssue, listStoreIssues, getStoreIssue, updateStoreIssue };
+async function deleteStoreIssue(req, res) {
+  const issue = await StoreIssue.findById(req.params.id);
+  if (!issue) {
+    throw new ApiError(404, 'Store issue not found');
+  }
+
+  // Deleting an issue means it never happened — restore whatever stock it took out
+  // (net of anything already returned) before removing the record.
+  for (const item of issue.items) {
+    const netIssued = (item.quantityIssued || 0) - (item.quantityReturned || 0);
+    if (netIssued <= 0) continue;
+
+    const part = await SparePart.findById(item.sparePart);
+    if (!part) continue;
+
+    const previousStock = part.stockOnHand;
+    const allocatable = part.allocatableStock === null || part.allocatableStock === undefined ? part.stockOnHand : part.allocatableStock;
+
+    part.stockOnHand = previousStock + netIssued;
+    part.allocatableStock = allocatable + netIssued;
+    await part.save();
+
+    await StockMovement.create({
+      movementId: await getNextSequence('stockMovementId', 'MV'),
+      store: issue.store,
+      sparePart: part._id,
+      partNumber: part.partNumber,
+      movementType: 'Adjustment',
+      quantity: netIssued,
+      previousStock,
+      newStock: part.stockOnHand,
+      storeIssue: issue._id,
+      user: req.user._id,
+      reason: `Store issue ${issue.issueNumber} deleted — stock restored`,
+    });
+  }
+
+  await issue.deleteOne();
+  res.json({ ok: true });
+}
+
+module.exports = { createStoreIssue, listStoreIssues, getStoreIssue, updateStoreIssue, deleteStoreIssue };

@@ -4,6 +4,7 @@ const {
   listStoreIssues,
   getStoreIssue,
   updateStoreIssue,
+  deleteStoreIssue,
 } = require('../controllers/storeIssuesController');
 const { requireAuth } = require('../middleware/auth');
 const { requireRole } = require('../middleware/requireRole');
@@ -18,5 +19,6 @@ router.get('/', listStoreIssues);
 router.get('/:id', getStoreIssue);
 router.post('/', createStoreIssue);
 router.patch('/:id', updateStoreIssue);
+router.delete('/:id', deleteStoreIssue);
 
 module.exports = { storeIssueRoutes: router };
