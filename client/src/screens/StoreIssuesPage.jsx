@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Table } from '../components/Table';
 import { useStoreIssues, useUpdateStoreIssue } from '../services/storeIssues';
-import { useMachines, useUpdateMachine } from '../services/machines';
+import { useMachines, useCreateMachine, useUpdateMachine } from '../services/machines';
 import { formatDateTime } from '../utils/format';
 import { summarizeIssues } from '../utils/storeIssues';
 
@@ -28,7 +28,17 @@ export default function StoreIssuesPage() {
   }, [machinesData]);
 
   const updateStoreIssue = useUpdateStoreIssue();
+  const createMachine = useCreateMachine();
   const updateMachine = useUpdateMachine();
+
+  function handleToggleOnContract(row, checked) {
+    const machine = machinesByNumber.get(row.machineNumber);
+    if (machine) {
+      updateMachine.mutate({ id: machine._id, onContract: checked });
+    } else if (row.machineNumber) {
+      createMachine.mutate({ machineNumber: row.machineNumber, machineType: row.machineType, onContract: checked });
+    }
+  }
 
   const columns = useMemo(
     () => [
@@ -58,12 +68,13 @@ export default function StoreIssuesPage() {
         header: 'On Contract',
         render: (i) => {
           const machine = machinesByNumber.get(i.machineNumber);
-          if (!machine) return null;
           return (
             <input
               type="checkbox"
-              checked={Boolean(machine.onContract)}
-              onChange={(e) => updateMachine.mutate({ id: machine._id, onContract: e.target.checked })}
+              checked={Boolean(machine?.onContract)}
+              disabled={!i.machineNumber}
+              title={!i.machineNumber ? 'No machine number on this issue' : undefined}
+              onChange={(e) => handleToggleOnContract(i, e.target.checked)}
             />
           );
         },
@@ -81,7 +92,7 @@ export default function StoreIssuesPage() {
         ),
       },
     ],
-    [machinesByNumber, updateStoreIssue, updateMachine]
+    [machinesByNumber, updateStoreIssue, createMachine, updateMachine]
   );
 
   return (

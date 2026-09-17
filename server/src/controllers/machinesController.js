@@ -7,9 +7,9 @@ async function listMachines(req, res) {
 }
 
 async function createMachine(req, res) {
-  const { machineNumber, machineType } = req.body;
+  const { machineNumber, machineType, onContract } = req.body;
 
-  if (!machineNumber || !machineType) {
+  if (!machineNumber) {
     throw new ApiError(400, 'Missing required fields');
   }
 
@@ -21,7 +21,8 @@ async function createMachine(req, res) {
 
   const machine = await Machine.create({
     machineNumber: finalMachineNumber,
-    machineType: String(machineType).trim(),
+    machineType: machineType ? String(machineType).trim() : '',
+    onContract: Boolean(onContract),
   });
 
   res.status(201).json({ machine });
