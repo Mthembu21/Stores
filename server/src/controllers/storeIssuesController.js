@@ -62,7 +62,6 @@ async function createStoreIssue(req, res) {
   if (
     !requestorName ||
     !requestorClockNumber ||
-    !justification ||
     !Array.isArray(itemsInput) ||
     itemsInput.length === 0
   ) {

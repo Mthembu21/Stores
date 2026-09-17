@@ -17,7 +17,7 @@ function Field({ label, value }) {
   return (
     <div className="field">
       <div className="field-label">{label}</div>
-      <div className="field-value">{hasText(value) ? value : ' '}</div>
+      <div className="field-value">{hasText(value) ? value : ' '}</div>
     </div>
   );
 }
@@ -54,13 +54,7 @@ export default function IssuePrintPage() {
     nature.damage || nature.breakdown || nature.warranty || nature.inspection ||
     hasText(issue.possibleCausesOfFailure) || hasText(issue.workPerformed);
 
-  const hasComponentInfo =
-    hasText(issue.subSystem) ||
-    hasText(issue.functionalSystem) ||
-    hasText(issue.componentDescription) ||
-    hasText(issue.componentPartNumber) ||
-    hasText(issue.serialNumberIssued) ||
-    hasText(issue.serialNumberReturned);
+  const hasComponentInfo = hasText(issue.serialNumberIssued) || hasText(issue.serialNumberReturned);
 
   const laborEntries = issue.laborEntries || [];
 
@@ -69,12 +63,13 @@ export default function IssuePrintPage() {
       <style>{`
         .print-page {
           width: 190mm;
+          min-height: 277mm;
           margin: 8mm auto;
           background: #fff;
           color: #111;
           font-family: Arial, Helvetica, sans-serif;
-          font-size: 9.5pt;
-          line-height: 1.35;
+          font-size: 11.5pt;
+          line-height: 1.6;
         }
         .print-toolbar {
           max-width: 190mm;
@@ -122,73 +117,74 @@ export default function IssuePrintPage() {
         }
         .section {
           border: 1px solid #94a3b8;
-          margin-bottom: 5px;
+          margin-bottom: 10px;
           page-break-inside: avoid;
         }
         .section-title {
           background: #e2e8f0;
           font-weight: 700;
-          font-size: 8pt;
+          font-size: 9.5pt;
           text-transform: uppercase;
           letter-spacing: 0.02em;
-          padding: 4px 6px;
+          padding: 7px 10px;
           border-bottom: 1px solid #94a3b8;
         }
         .section-body {
-          padding: 6px 8px;
+          padding: 12px 14px;
         }
         .grid {
           display: grid;
-          gap: 4px 10px;
+          gap: 14px 20px;
         }
         .grid-2 { grid-template-columns: repeat(2, 1fr); }
         .grid-3 { grid-template-columns: repeat(3, 1fr); }
         .grid-4 { grid-template-columns: repeat(4, 1fr); }
         .field-label {
-          font-size: 7.2pt;
+          font-size: 8.5pt;
           color: #475569;
           text-transform: uppercase;
+          margin-bottom: 4px;
         }
         .field-value {
-          font-size: 9.5pt;
+          font-size: 11.5pt;
           font-weight: 600;
           border-bottom: 1px solid #cbd5e1;
-          min-height: 12pt;
-          padding-bottom: 1px;
+          min-height: 18pt;
+          padding-bottom: 4px;
         }
         table.print-table {
           width: 100%;
           border-collapse: collapse;
-          font-size: 8.8pt;
+          font-size: 10.5pt;
         }
         table.print-table th, table.print-table td {
           border: 1px solid #94a3b8;
-          padding: 3px 6px;
+          padding: 6px 8px;
           text-align: left;
         }
         table.print-table th {
           background: #f1f5f9;
-          font-size: 7.5pt;
+          font-size: 9pt;
           text-transform: uppercase;
         }
         .checkbox-row {
           display: flex;
-          gap: 16px;
-          margin-bottom: 5px;
+          gap: 20px;
+          margin-bottom: 9px;
         }
         .checkbox-row span {
-          font-size: 8.8pt;
+          font-size: 10.5pt;
         }
         .signature-grid {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
-          gap: 10px;
+          gap: 18px;
         }
         .signature-box {
           border-top: 1px solid #111;
-          margin-top: 15px;
-          padding-top: 3px;
-          font-size: 8pt;
+          margin-top: 26px;
+          padding-top: 5px;
+          font-size: 9.5pt;
         }
         @media print {
           .no-print { display: none !important; }
@@ -229,7 +225,6 @@ export default function IssuePrintPage() {
           <Field label="Machine number" value={issue.machineNumber} />
           <Field label="Machine type" value={issue.machineType} />
           <Field label="Service order number" value={issue.serviceOrderNumber} />
-          <Field label="Work order number" value={issue.workOrderNumber} />
           <Field label="Risk assessment number" value={issue.riskAssessmentNumber} />
         </div>
       </Section>
@@ -275,11 +270,7 @@ export default function IssuePrintPage() {
 
       {hasComponentInfo && (
         <Section title="Component / equipment information">
-          <div className="grid grid-3">
-            <Field label="Sub system" value={issue.subSystem} />
-            <Field label="Functional system" value={issue.functionalSystem} />
-            <Field label="Component description" value={issue.componentDescription} />
-            <Field label="Component part number" value={issue.componentPartNumber} />
+          <div className="grid grid-2">
             <Field label="Serial number (issued)" value={issue.serialNumberIssued} />
             <Field label="Serial number (returned)" value={issue.serialNumberReturned} />
           </div>
@@ -338,12 +329,6 @@ export default function IssuePrintPage() {
         </Section>
       )}
 
-      <Section title="Justification">
-        <div className="field-value" style={{ borderBottom: 'none', fontWeight: 400 }}>
-          {hasText(issue.justification) ? issue.justification : ' '}
-        </div>
-      </Section>
-
       <Section title="Sign-off">
         <div className="signature-grid">
           <div>
@@ -359,7 +344,7 @@ export default function IssuePrintPage() {
             <div className="field-value">
               {hasText(issue.foremanName)
                 ? `${[issue.foremanName, issue.foremanSurname].filter(hasText).join(' ')}${hasText(issue.foremanZNumber) ? ` (${issue.foremanZNumber})` : ''}`
-                : ' '}
+                : ' '}
             </div>
             <div className="signature-box">Signature</div>
           </div>
@@ -368,7 +353,7 @@ export default function IssuePrintPage() {
             <div className="field-value">
               {hasText(issue.storemanName)
                 ? `${[issue.storemanName, issue.storemanSurname].filter(hasText).join(' ')}${hasText(issue.storemanZNumber) ? ` (${issue.storemanZNumber})` : ''}`
-                : ' '}
+                : ' '}
             </div>
             <div className="signature-box">Signature</div>
           </div>
