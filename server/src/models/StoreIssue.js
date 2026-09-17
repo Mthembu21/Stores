@@ -101,6 +101,7 @@ const storeIssueSchema = new mongoose.Schema(
     requestorSurname: { type: String, trim: true, default: '' },
     requestorClockNumber: { type: String, required: true, trim: true },
     requestorContactNumber: { type: String, trim: true, default: '' },
+    requestorZNumber: { type: String, trim: true, default: '' },
 
     justification: { type: String, trim: true, default: '' },
 

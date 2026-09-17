@@ -15,7 +15,7 @@ async function createPartsPerson(req, res) {
   if (!name || !zNumber || !role) {
     throw new ApiError(400, 'Missing required fields');
   }
-  if (!['Foreman', 'Storeman'].includes(role)) {
+  if (!['Foreman', 'Storeman', 'Requestor'].includes(role)) {
     throw new ApiError(400, 'Invalid role');
   }
 

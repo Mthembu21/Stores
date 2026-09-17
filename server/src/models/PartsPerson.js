@@ -7,7 +7,7 @@ const partsPersonSchema = new mongoose.Schema(
     role: {
       type: String,
       required: true,
-      enum: ['Foreman', 'Storeman'],
+      enum: ['Foreman', 'Storeman', 'Requestor'],
     },
   },
   { timestamps: true }

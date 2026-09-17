@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import { useSpareParts } from '../services/spareParts';
 import { useCreateStoreIssue } from '../services/storeIssues';
 import { useMachines, useCreateMachine } from '../services/machines';
-import { usePartsPeople } from '../services/partsPeople';
+import { usePartsPeople, useCreatePartsPerson } from '../services/partsPeople';
 import { useMe } from '../services/auth';
 
 function nextKey() {
@@ -37,6 +37,10 @@ export default function IssuePartsPage() {
 
   const { data: foremenData } = usePartsPeople('Foreman');
   const foremen = foremenData?.people || [];
+
+  const { data: requestorsData } = usePartsPeople('Requestor');
+  const requestors = requestorsData?.people || [];
+  const createPartsPerson = useCreatePartsPerson();
 
   const { data: meData } = useMe();
   const me = meData?.user;
@@ -90,9 +94,14 @@ export default function IssuePartsPage() {
 
   const [laborEntries, setLaborEntries] = useState([]);
 
+  const [selectedRequestorId, setSelectedRequestorId] = useState('');
   const [requestorName, setRequestorName] = useState('');
+  const [requestorZNumber, setRequestorZNumber] = useState('');
   const [requestorClockNumber, setRequestorClockNumber] = useState('');
   const [requestorContactNumber, setRequestorContactNumber] = useState('');
+  const [showAddRequestor, setShowAddRequestor] = useState(false);
+  const [newRequestorName, setNewRequestorName] = useState('');
+  const [newRequestorZNumber, setNewRequestorZNumber] = useState('');
 
   const [selectedForemanId, setSelectedForemanId] = useState('');
   const [foremanName, setForemanName] = useState('');
@@ -109,6 +118,36 @@ export default function IssuePartsPage() {
     const person = foremen.find((p) => p._id === id);
     setForemanName(person ? person.name : '');
     setForemanZNumber(person ? person.zNumber : '');
+  }
+
+  function handleSelectRequestor(id) {
+    setSelectedRequestorId(id);
+    const person = requestors.find((p) => p._id === id);
+    setRequestorName(person ? person.name : '');
+    setRequestorZNumber(person ? person.zNumber : '');
+  }
+
+  function handleAddRequestor() {
+    if (!newRequestorName.trim() || !newRequestorZNumber.trim()) {
+      toast.error('Provide both a name and a Z number');
+      return;
+    }
+    createPartsPerson.mutate(
+      { name: newRequestorName.trim(), zNumber: newRequestorZNumber.trim(), role: 'Requestor' },
+      {
+        onSuccess: (data) => {
+          const person = data?.person;
+          if (person) {
+            setSelectedRequestorId(person._id);
+            setRequestorName(person.name);
+            setRequestorZNumber(person.zNumber);
+          }
+          setNewRequestorName('');
+          setNewRequestorZNumber('');
+          setShowAddRequestor(false);
+        },
+      }
+    );
   }
 
   function handleAddMachine() {
@@ -209,9 +248,14 @@ export default function IssuePartsPage() {
     setSerialNumberIssued('');
     setSerialNumberReturned('');
     setLaborEntries([]);
+    setSelectedRequestorId('');
     setRequestorName('');
+    setRequestorZNumber('');
     setRequestorClockNumber('');
     setRequestorContactNumber('');
+    setShowAddRequestor(false);
+    setNewRequestorName('');
+    setNewRequestorZNumber('');
     setSelectedForemanId('');
     setForemanName('');
     setForemanZNumber('');
@@ -283,6 +327,7 @@ export default function IssuePartsPage() {
         items: payloadItems,
         laborEntries: payloadLaborEntries,
         requestorName,
+        requestorZNumber,
         requestorClockNumber,
         requestorContactNumber,
         foremanName,
@@ -534,7 +579,21 @@ export default function IssuePartsPage() {
             </div>
             <div>
               <label className="text-sm font-medium text-slate-700">Responsible foreman</label>
-              <input className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" value={responsibleForeman} onChange={(e) => setResponsibleForeman(e.target.value)} />
+              <select
+                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                value={foremen.find((p) => p.name === responsibleForeman)?._id || ''}
+                onChange={(e) => {
+                  const person = foremen.find((p) => p._id === e.target.value);
+                  setResponsibleForeman(person ? person.name : '');
+                }}
+              >
+                <option value="">Select a foreman...</option>
+                {foremen.map((p) => (
+                  <option key={p._id} value={p._id}>
+                    {p.name} ({p.zNumber})
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
         </div>
@@ -697,13 +756,54 @@ export default function IssuePartsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium text-slate-700">Requestor name</label>
-              <input
+              <select
                 className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
-                value={requestorName}
-                onChange={(e) => setRequestorName(e.target.value)}
-                placeholder="Name and surname, or just a name"
+                value={selectedRequestorId}
+                onChange={(e) => handleSelectRequestor(e.target.value)}
                 required
-              />
+              >
+                <option value="">Select a requestor...</option>
+                {requestors.map((p) => (
+                  <option key={p._id} value={p._id}>
+                    {p.name} ({p.zNumber})
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                className="mt-1 text-xs font-semibold text-epiroc-gray hover:underline"
+                onClick={() => setShowAddRequestor((v) => !v)}
+              >
+                {showAddRequestor ? 'Cancel' : '+ Requestor not listed'}
+              </button>
+              {showAddRequestor && (
+                <div className="mt-2 flex gap-2">
+                  <input
+                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                    placeholder="Name"
+                    value={newRequestorName}
+                    onChange={(e) => setNewRequestorName(e.target.value)}
+                  />
+                  <input
+                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                    placeholder="Z number"
+                    value={newRequestorZNumber}
+                    onChange={(e) => setNewRequestorZNumber(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    className="rounded-xl bg-epiroc-yellow px-3 py-2 text-sm font-semibold text-epiroc-black shadow-soft hover:brightness-95 whitespace-nowrap disabled:opacity-60"
+                    onClick={handleAddRequestor}
+                    disabled={createPartsPerson.isPending}
+                  >
+                    Add
+                  </button>
+                </div>
+              )}
+            </div>
+            <div>
+              <label className="text-sm font-medium text-slate-700">Requestor Z number</label>
+              <input className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 bg-slate-50" value={requestorZNumber} readOnly />
             </div>
             <div>
               <label className="text-sm font-medium text-slate-700">Clock number</label>

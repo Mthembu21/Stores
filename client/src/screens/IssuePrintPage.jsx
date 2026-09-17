@@ -334,6 +334,7 @@ export default function IssuePrintPage() {
             <div className="field-label">Spares issued to (Requestor)</div>
             <div className="field-value">
               {[issue.requestorName, issue.requestorSurname].filter(hasText).join(' ')}
+              {hasText(issue.requestorZNumber) ? ` (${issue.requestorZNumber})` : ''}
               {hasText(issue.requestorClockNumber) ? ` (Clock #${issue.requestorClockNumber})` : ''}
             </div>
             <div className="signature-box">Signature</div>
