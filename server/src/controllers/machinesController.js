@@ -27,6 +27,23 @@ async function createMachine(req, res) {
   res.status(201).json({ machine });
 }
 
+async function updateMachine(req, res) {
+  const { id } = req.params;
+  const { onContract } = req.body;
+
+  const machine = await Machine.findById(id);
+  if (!machine) {
+    throw new ApiError(404, 'Machine not found');
+  }
+
+  if (onContract !== undefined) {
+    machine.onContract = Boolean(onContract);
+  }
+
+  await machine.save();
+  res.json({ machine });
+}
+
 async function deleteMachine(req, res) {
   const { id } = req.params;
   const machine = await Machine.findById(id);
@@ -37,4 +54,4 @@ async function deleteMachine(req, res) {
   res.json({ ok: true });
 }
 
-module.exports = { listMachines, createMachine, deleteMachine };
+module.exports = { listMachines, createMachine, updateMachine, deleteMachine };

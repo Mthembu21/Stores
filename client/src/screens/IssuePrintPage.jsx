@@ -230,10 +230,9 @@ export default function IssuePrintPage() {
       </Section>
 
       <Section title="Machine area / location">
-        <div className="grid grid-4">
+        <div className="grid grid-3">
           <Field label="Location" value={issue.location} />
           <Field label="Section" value={issue.section} />
-          <Field label="Workplace" value={issue.workplace} />
           <Field label="Responsible foreman" value={issue.responsibleForeman} />
         </div>
       </Section>

@@ -30,6 +30,22 @@ export function useCreateMachine() {
   });
 }
 
+export function useUpdateMachine() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...patch }) => {
+      const { data } = await http.patch(`/machines/${id}`, patch);
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['machines'] });
+    },
+    onError: (err) => {
+      toast.error(err?.response?.data?.message || 'Could not update machine');
+    },
+  });
+}
+
 export function useDeleteMachine() {
   const qc = useQueryClient();
   return useMutation({

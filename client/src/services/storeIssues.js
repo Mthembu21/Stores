@@ -25,6 +25,23 @@ export function useStoreIssue(id) {
   });
 }
 
+export function useUpdateStoreIssue() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...patch }) => {
+      const { data } = await http.patch(`/store-issues/${id}`, patch);
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['store-issues'], exact: false });
+      qc.invalidateQueries({ queryKey: ['store-issue'], exact: false });
+    },
+    onError: (err) => {
+      toast.error(err?.response?.data?.message || 'Could not update store issue');
+    },
+  });
+}
+
 export function useCreateStoreIssue() {
   const qc = useQueryClient();
   return useMutation({

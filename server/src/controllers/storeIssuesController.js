@@ -62,6 +62,7 @@ async function createStoreIssue(req, res) {
   if (
     !requestorName ||
     !requestorClockNumber ||
+    !foremanName ||
     !Array.isArray(itemsInput) ||
     itemsInput.length === 0
   ) {
@@ -273,4 +274,21 @@ async function getStoreIssue(req, res) {
   res.json({ issue });
 }
 
-module.exports = { createStoreIssue, listStoreIssues, getStoreIssue };
+async function updateStoreIssue(req, res) {
+  const { signed } = req.body;
+
+  const issue = await StoreIssue.findById(req.params.id);
+  if (!issue) {
+    throw new ApiError(404, 'Store issue not found');
+  }
+
+  if (signed !== undefined) {
+    issue.signed = Boolean(signed);
+  }
+
+  await issue.save();
+  const populated = await StoreIssue.findById(issue._id).populate('items.sparePart').populate('issuedBy');
+  res.json({ issue: populated });
+}
+
+module.exports = { createStoreIssue, listStoreIssues, getStoreIssue, updateStoreIssue };

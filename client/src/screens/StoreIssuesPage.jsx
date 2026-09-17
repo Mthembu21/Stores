@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Table } from '../components/Table';
-import { useStoreIssues } from '../services/storeIssues';
+import { useStoreIssues, useUpdateStoreIssue } from '../services/storeIssues';
+import { useMachines, useUpdateMachine } from '../services/machines';
 import { formatDateTime } from '../utils/format';
-import { flattenIssueItems } from '../utils/storeIssues';
+import { summarizeIssues } from '../utils/storeIssues';
 
 const STATUS_OPTIONS = ['Issued', 'Partially Issued', 'Awaiting Order', 'Returned', 'Closed'];
 
@@ -17,26 +18,56 @@ export default function StoreIssuesPage() {
   );
 
   const { data, isLoading, isError } = useStoreIssues(filters);
-  const lines = useMemo(() => flattenIssueItems(data?.issues || []), [data]);
+  const rows = useMemo(() => summarizeIssues(data?.issues || []), [data]);
+
+  const { data: machinesData } = useMachines();
+  const machinesByNumber = useMemo(() => {
+    const map = new Map();
+    (machinesData?.machines || []).forEach((m) => map.set(m.machineNumber, m));
+    return map;
+  }, [machinesData]);
+
+  const updateStoreIssue = useUpdateStoreIssue();
+  const updateMachine = useUpdateMachine();
 
   const columns = useMemo(
     () => [
       { key: 'issueNumber', header: 'Issue #' },
-      { key: 'partNumber', header: 'Part Number' },
-      { key: 'partDescription', header: 'Description' },
+      { key: 'machineNumber', header: 'Machine #' },
+      { key: 'machineType', header: 'Machine Type' },
+      { key: 'requestorName', header: 'Requestor' },
+      { key: 'serviceOrderNumber', header: 'Service Order' },
       { key: 'quantityRequested', header: 'Requested' },
       { key: 'quantityIssued', header: 'Issued' },
-      { key: 'quantityToOrder', header: 'To Order' },
       { key: 'quantityReturned', header: 'Returned' },
-      { key: 'machineNumber', header: 'Machine #' },
-      { key: 'serviceOrderNumber', header: 'Service Order' },
-      { key: 'workOrderNumber', header: 'Work Order' },
-      { key: 'requestorName', header: 'Requestor', render: (i) => [i.requestorName, i.requestorSurname].filter(Boolean).join(' ') },
-      { key: 'requestorClockNumber', header: 'Clock #' },
-      { key: 'justification', header: 'Justification' },
-      { key: 'issuedBy', header: 'Issued By', render: (i) => i.issuedBy?.fullName || '' },
+      { key: 'issuedBy', header: 'Issued By' },
       { key: 'issueDate', header: 'Date', render: (i) => formatDateTime(i.issueDate) },
-      { key: 'status', header: 'Status' },
+      {
+        key: 'signed',
+        header: 'Signed',
+        render: (i) => (
+          <input
+            type="checkbox"
+            checked={i.signed}
+            onChange={(e) => updateStoreIssue.mutate({ id: i.issueId, signed: e.target.checked })}
+          />
+        ),
+      },
+      {
+        key: 'onContract',
+        header: 'On Contract',
+        render: (i) => {
+          const machine = machinesByNumber.get(i.machineNumber);
+          if (!machine) return null;
+          return (
+            <input
+              type="checkbox"
+              checked={Boolean(machine.onContract)}
+              onChange={(e) => updateMachine.mutate({ id: machine._id, onContract: e.target.checked })}
+            />
+          );
+        },
+      },
       {
         key: 'print',
         header: '',
@@ -50,7 +81,7 @@ export default function StoreIssuesPage() {
         ),
       },
     ],
-    []
+    [machinesByNumber, updateStoreIssue, updateMachine]
   );
 
   return (
@@ -81,7 +112,7 @@ export default function StoreIssuesPage() {
       ) : isError ? (
         <div className="rounded-xl bg-white shadow-soft p-4 text-sm text-slate-600">Could not load store issues</div>
       ) : (
-        <Table emptyLabel="No store issues found" columns={columns} rows={lines} maxHeight="600px" />
+        <Table emptyLabel="No store issues found" columns={columns} rows={rows} maxHeight="600px" />
       )}
     </div>
   );

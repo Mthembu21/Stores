@@ -66,7 +66,6 @@ export default function IssuePartsPage() {
 
   const [location, setLocation] = useState('');
   const [section, setSection] = useState('');
-  const [workplace, setWorkplace] = useState('');
   const [responsibleForeman, setResponsibleForeman] = useState('');
 
   const [dateStarted, setDateStarted] = useState('');
@@ -192,7 +191,6 @@ export default function IssuePartsPage() {
     setRiskAssessmentNumber('');
     setLocation('');
     setSection('');
-    setWorkplace('');
     setResponsibleForeman('');
     setDateStarted('');
     setDateCompleted('');
@@ -233,6 +231,10 @@ export default function IssuePartsPage() {
       toast.error('Provide the requestor clock number');
       return;
     }
+    if (!selectedForemanId || !foremanName) {
+      toast.error('Select a foreman before issuing');
+      return;
+    }
 
     const payloadItems = items.map((item) => {
       const requestedNum = Number(item.quantityRequested) || 0;
@@ -264,7 +266,6 @@ export default function IssuePartsPage() {
         riskAssessmentNumber,
         location,
         section,
-        workplace,
         responsibleForeman,
         dateStarted: dateStarted || null,
         dateCompleted: dateCompleted || null,
@@ -532,10 +533,6 @@ export default function IssuePartsPage() {
               <input className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" value={section} onChange={(e) => setSection(e.target.value)} />
             </div>
             <div>
-              <label className="text-sm font-medium text-slate-700">Workplace</label>
-              <input className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" value={workplace} onChange={(e) => setWorkplace(e.target.value)} />
-            </div>
-            <div>
               <label className="text-sm font-medium text-slate-700">Responsible foreman</label>
               <input className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" value={responsibleForeman} onChange={(e) => setResponsibleForeman(e.target.value)} />
             </div>
@@ -728,6 +725,7 @@ export default function IssuePartsPage() {
                 className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
                 value={selectedForemanId}
                 onChange={(e) => handleSelectForeman(e.target.value)}
+                required
               >
                 <option value="">Select a foreman...</option>
                 {foremen.map((p) => (

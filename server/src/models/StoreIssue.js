@@ -117,6 +117,9 @@ const storeIssueSchema = new mongoose.Schema(
 
     issuedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
     issueDate: { type: Date, required: true, default: Date.now },
+    // Whether the printed issue slip has come back with a signature. Not required for
+    // machines on contract — see Machine.onContract.
+    signed: { type: Boolean, default: false },
     status: {
       type: String,
       required: true,
