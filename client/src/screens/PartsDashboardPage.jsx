@@ -35,15 +35,31 @@ export default function PartsDashboardPage() {
         <div className="text-sm text-slate-600">Overview of parts inventory, issues and stock health.</div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-        <Card title="Total Parts" value={cards.totalParts} />
-        <Card title="Available Parts" value={cards.activeParts} />
-        <Card title="Low Stock Parts" value={cards.lowStockParts} tone="warning" />
-        <Card title="Out of Stock Parts" value={cards.outOfStockParts} tone="danger" />
-        <Card title="Parts Issued Today" value={cards.partsIssuedToday} />
-        <Card title="Parts Issued This Month" value={cards.partsIssuedThisMonth} />
-        <Card title="Parts Awaiting Order" value={cards.partsAwaitingOrder} tone="warning" />
-        <Card title="Parts Returned" value={cards.partsReturned} />
+      <div className="space-y-3">
+        <div className="text-sm font-semibold text-epiroc-gray">Parts</div>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+          <Card title="Total Parts" value={cards.totalParts} />
+          <Card title="Available Parts" value={cards.activeParts} />
+          <Card title="Low Stock Parts" value={cards.lowStockParts} tone="warning" />
+          <Card title="Out of Stock Parts" value={cards.outOfStockParts} tone="danger" />
+          <Card title="Parts Issued Today" value={cards.partsIssuedToday} />
+          <Card title="Parts Issued This Month" value={cards.partsIssuedThisMonth} />
+          <Card title="Parts Awaiting Order" value={cards.partsAwaitingOrder} tone="warning" />
+          <Card title="Parts Returned" value={cards.partsReturned} />
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        <div className="text-sm font-semibold text-epiroc-gray">Consumables</div>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+          <Card title="Total Consumables" value={cards.totalConsumables} />
+          <Card title="Available Consumables" value={cards.activeConsumables} />
+          <Card title="Low Stock Consumables" value={cards.lowStockConsumables} tone="warning" />
+          <Card title="Out of Stock Consumables" value={cards.outOfStockConsumables} tone="danger" />
+          <Card title="Consumables Issued Today" value={cards.consumablesIssuedToday} />
+          <Card title="Consumables Issued This Month" value={cards.consumablesIssuedThisMonth} />
+          <Card title="Consumables Awaiting Order" value={cards.consumablesAwaitingOrder} tone="warning" />
+        </div>
       </div>
 
       <LowStockChart data={tables?.lowStockParts || []} />

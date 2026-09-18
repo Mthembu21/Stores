@@ -3,6 +3,7 @@ import * as XLSX from 'xlsx';
 import { Table } from '../components/Table';
 import {
   useBulkCreateSpareParts,
+  useBulkReplaceSpareParts,
   useConsumablesTracking,
   useCreateSparePart,
   useDeleteSparePart,
@@ -73,6 +74,7 @@ export default function PartsInventoryPage() {
   const updatePart = useUpdateSparePart();
   const deletePart = useDeleteSparePart();
   const bulkCreateParts = useBulkCreateSpareParts();
+  const bulkReplaceParts = useBulkReplaceSpareParts();
 
   const { data: consumablesData, isLoading: consumablesLoading, isError: consumablesError } = useConsumablesTracking();
   const consumables = consumablesData?.consumables || [];
@@ -216,6 +218,7 @@ export default function PartsInventoryPage() {
   const [bulkUnmatchedHeaders, setBulkUnmatchedHeaders] = useState([]);
   const [bulkResult, setBulkResult] = useState(null);
   const [bulkSourceRowCount, setBulkSourceRowCount] = useState(null);
+  const [replaceMode, setReplaceMode] = useState(false);
 
   function parseBulkText(text) {
     setBulkText(text);
@@ -276,16 +279,28 @@ export default function PartsInventoryPage() {
 
   function handleBulkUpload() {
     if (bulkValidRows.length === 0) return;
-    bulkCreateParts.mutate(bulkValidRows, {
-      onSuccess: (data) => {
-        setBulkResult(data);
-        setBulkText('');
-        setBulkRows([]);
-        setBulkUnmatchedHeaders([]);
-        setBulkSourceRowCount(null);
-        if (fileInputRef.current) fileInputRef.current.value = '';
-      },
-    });
+
+    const onSuccess = (data) => {
+      setBulkResult(data);
+      setBulkText('');
+      setBulkRows([]);
+      setBulkUnmatchedHeaders([]);
+      setBulkSourceRowCount(null);
+      setReplaceMode(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    };
+
+    if (replaceMode) {
+      const typesInFile = [...new Set(bulkValidRows.map((r) => r.partType || 'Returnable'))];
+      if (!window.confirm(
+        `This clears ALL existing ${typesInFile.join(' and ')} inventory and replaces it with these ${bulkValidRows.length} row(s). This cannot be undone. Continue?`
+      )) {
+        return;
+      }
+      bulkReplaceParts.mutate(bulkValidRows, { onSuccess });
+    } else {
+      bulkCreateParts.mutate(bulkValidRows, { onSuccess });
+    }
   }
 
   const [partNumber, setPartNumber] = useState('');
@@ -495,6 +510,19 @@ export default function PartsInventoryPage() {
               {bulkValidRows.length} of {bulkRows.length} row(s) ready to import
               {bulkRows.length - bulkValidRows.length > 0 ? ` (${bulkRows.length - bulkValidRows.length} will be skipped)` : ''}
             </div>
+            <label className="flex items-start gap-2 text-xs text-slate-700 bg-amber-50 border border-amber-200 rounded-lg p-2">
+              <input
+                type="checkbox"
+                className="mt-0.5"
+                checked={replaceMode}
+                onChange={(e) => setReplaceMode(e.target.checked)}
+              />
+              <span>
+                This is today's full list — <strong>replace</strong> the existing inventory (of whichever part
+                type(s) this file contains) instead of adding to it. Existing parts of that type not in this file
+                will be deleted.
+              </span>
+            </label>
             <div className="max-h-64 overflow-auto border border-slate-200 rounded-xl">
               <table className="w-full text-xs">
                 <thead className="bg-slate-50 sticky top-0">
@@ -531,11 +559,17 @@ export default function PartsInventoryPage() {
             <div className="flex justify-center">
               <button
                 type="button"
-                className="rounded-xl bg-epiroc-yellow px-6 py-2 font-semibold text-epiroc-black shadow-soft hover:brightness-95 disabled:opacity-60"
-                disabled={bulkValidRows.length === 0 || bulkCreateParts.isPending}
+                className={`rounded-xl px-6 py-2 font-semibold shadow-soft hover:brightness-95 disabled:opacity-60 ${
+                  replaceMode ? 'bg-red-600 text-white' : 'bg-epiroc-yellow text-epiroc-black'
+                }`}
+                disabled={bulkValidRows.length === 0 || bulkCreateParts.isPending || bulkReplaceParts.isPending}
                 onClick={handleBulkUpload}
               >
-                {bulkCreateParts.isPending ? 'Uploading...' : `Upload ${bulkValidRows.length} part(s)`}
+                {bulkCreateParts.isPending || bulkReplaceParts.isPending
+                  ? 'Uploading...'
+                  : replaceMode
+                  ? `Replace inventory with ${bulkValidRows.length} part(s)`
+                  : `Upload ${bulkValidRows.length} part(s)`}
               </button>
             </div>
           </div>

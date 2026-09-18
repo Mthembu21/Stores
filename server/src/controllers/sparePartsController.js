@@ -158,22 +158,13 @@ async function deleteSparePart(req, res) {
   res.json({ ok: true });
 }
 
-async function bulkCreateSpareParts(req, res) {
-  const rows = Array.isArray(req.body.parts) ? req.body.parts : [];
-
-  if (rows.length === 0) {
-    throw new ApiError(400, 'No parts provided');
-  }
-  if (rows.length > 2000) {
-    throw new ApiError(400, 'Too many rows in one batch (max 2000)');
-  }
-
-  const store = await getDefaultStoreId();
+// Shared by the additive and replace bulk-import endpoints: validate every row in
+// memory (no DB calls) and build the doc to insert, or collect a per-row error.
+function validateBulkRows(rows, store) {
   const seenPartNumbers = new Set();
   const errors = [];
   const prepared = []; // { rowNum, explicitPartNumber, doc }
 
-  // Pass 1: validate every row in memory — no DB calls yet.
   for (let i = 0; i < rows.length; i += 1) {
     const row = rows[i] || {};
     const rowNum = i + 1;
@@ -250,6 +241,22 @@ async function bulkCreateSpareParts(req, res) {
     }
   }
 
+  return { prepared, errors };
+}
+
+async function bulkCreateSpareParts(req, res) {
+  const rows = Array.isArray(req.body.parts) ? req.body.parts : [];
+
+  if (rows.length === 0) {
+    throw new ApiError(400, 'No parts provided');
+  }
+  if (rows.length > 2000) {
+    throw new ApiError(400, 'Too many rows in one batch (max 2000)');
+  }
+
+  const store = await getDefaultStoreId();
+  const { prepared, errors } = validateBulkRows(rows, store);
+
   // Pass 2: one query to find any part numbers that already exist, instead of one per row.
   const explicitNumbers = prepared.map((p) => p.explicitPartNumber).filter(Boolean);
   const existing = explicitNumbers.length
@@ -291,6 +298,76 @@ async function bulkCreateSpareParts(req, res) {
     errors,
     createdCount: created.length,
     errorCount: errors.length,
+  });
+}
+
+// Full daily-refresh import: the uploaded file is treated as the complete, current
+// state of whichever part type(s) it contains (e.g. the ERP's full Returnable-parts
+// balance report) — so existing parts of those same type(s) are cleared first and
+// replaced with exactly what's in this upload, rather than merged in alongside them.
+async function bulkReplaceSpareParts(req, res) {
+  const rows = Array.isArray(req.body.parts) ? req.body.parts : [];
+
+  if (rows.length === 0) {
+    throw new ApiError(400, 'No parts provided');
+  }
+  if (rows.length > 2000) {
+    throw new ApiError(400, 'Too many rows in one batch (max 2000)');
+  }
+
+  const store = await getDefaultStoreId();
+  const { prepared, errors } = validateBulkRows(rows, store);
+
+  if (prepared.length === 0) {
+    // Nothing valid to replace the inventory with — leave existing data untouched
+    // rather than wiping it out for nothing.
+    return res.status(400).json({ created: [], errors, createdCount: 0, errorCount: errors.length });
+  }
+
+  const partTypesInFile = [...new Set(prepared.map((p) => p.doc.partType))];
+  await SparePart.deleteMany({ partType: { $in: partTypesInFile } });
+
+  // Everything of these type(s) was just cleared, so only guard against an explicit
+  // part number colliding with a surviving part of the *other* type.
+  const explicitNumbers = prepared.map((p) => p.explicitPartNumber).filter(Boolean);
+  const existing = explicitNumbers.length
+    ? await SparePart.find({ partNumber: { $in: explicitNumbers } }).select('partNumber').lean()
+    : [];
+  const existingSet = new Set(existing.map((e) => e.partNumber));
+
+  const toInsert = [];
+  for (const p of prepared) {
+    if (p.explicitPartNumber) {
+      if (existingSet.has(p.explicitPartNumber)) {
+        errors.push({ row: p.rowNum, partNumber: p.explicitPartNumber, message: `Part number already exists: ${p.explicitPartNumber}` });
+        continue;
+      }
+      p.doc.partNumber = p.explicitPartNumber;
+    } else {
+      p.doc.partNumber = await getNextSequence('sparePartNumber', 'SP');
+    }
+    toInsert.push(p.doc);
+  }
+
+  let created = [];
+  if (toInsert.length > 0) {
+    try {
+      created = await SparePart.insertMany(toInsert, { ordered: false });
+    } catch (bulkErr) {
+      created = Array.isArray(bulkErr.insertedDocs) ? bulkErr.insertedDocs : [];
+      const failedCount = toInsert.length - created.length;
+      if (failedCount > 0) {
+        errors.push({ row: 0, partNumber: '', message: `${failedCount} row(s) failed to save: ${bulkErr.message}` });
+      }
+    }
+  }
+
+  res.status(201).json({
+    created,
+    errors,
+    createdCount: created.length,
+    errorCount: errors.length,
+    replacedTypes: partTypesInFile,
   });
 }
 
@@ -380,6 +457,7 @@ module.exports = {
   updateSparePart,
   deleteSparePart,
   bulkCreateSpareParts,
+  bulkReplaceSpareParts,
   restockSparePart,
   getConsumablesTracking,
 };

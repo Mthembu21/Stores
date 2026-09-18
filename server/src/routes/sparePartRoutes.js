@@ -6,6 +6,7 @@ const {
   updateSparePart,
   deleteSparePart,
   bulkCreateSpareParts,
+  bulkReplaceSpareParts,
   restockSparePart,
   getConsumablesTracking,
 } = require('../controllers/sparePartsController');
@@ -23,6 +24,7 @@ router.get('/consumables', getConsumablesTracking);
 router.get('/:id', getSparePart);
 router.post('/', createSparePart);
 router.post('/bulk', bulkCreateSpareParts);
+router.post('/bulk-replace', bulkReplaceSpareParts);
 router.post('/:id/restock', restockSparePart);
 router.patch('/:id', updateSparePart);
 router.delete('/:id', deleteSparePart);

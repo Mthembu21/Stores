@@ -72,6 +72,29 @@ export function useBulkCreateSpareParts() {
   });
 }
 
+export function useBulkReplaceSpareParts() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (parts) => {
+      const { data } = await http.post('/spare-parts/bulk-replace', { parts });
+      return data;
+    },
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ['spare-parts'], exact: false });
+      qc.invalidateQueries({ queryKey: ['parts-dashboard'] });
+      qc.invalidateQueries({ queryKey: ['consumables-tracking'] });
+      if (data.createdCount > 0) {
+        toast.success(`Inventory replaced: ${data.createdCount} part(s) loaded${data.errorCount ? `, ${data.errorCount} skipped` : ''}`);
+      } else {
+        toast.error('No parts were valid — existing inventory left unchanged');
+      }
+    },
+    onError: (err) => {
+      toast.error(err?.response?.data?.message || 'Bulk replace failed');
+    },
+  });
+}
+
 export function useUpdateSparePart() {
   const qc = useQueryClient();
   return useMutation({
