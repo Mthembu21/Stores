@@ -2,7 +2,10 @@ const mongoose = require('mongoose');
 
 const sparePartSchema = new mongoose.Schema(
   {
-    partNumber: { type: String, required: true, unique: true, trim: true },
+    // Unique per storage location, not globally — the same part number can have a
+    // separate stock record at each bin/location it's physically kept in (see the
+    // compound index below).
+    partNumber: { type: String, required: true, trim: true },
     partDescription: { type: String, required: true, trim: true },
     partType: {
       type: String,
@@ -37,6 +40,8 @@ const sparePartSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+sparePartSchema.index({ partNumber: 1, storageLocation: 1 }, { unique: true });
 
 sparePartSchema.virtual('stockStatus').get(function stockStatus() {
   if (this.stockOnHand <= 0) return 'Out';

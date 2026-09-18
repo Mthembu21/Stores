@@ -500,7 +500,8 @@ export default function PartsInventoryPage() {
         {bulkSourceRowCount !== null && bulkSourceRowCount !== bulkRows.length && (
           <div className="text-xs text-slate-500">
             Combined {bulkSourceRowCount} source row(s) into {bulkRows.length} part(s) — rows sharing the same Part
-            Number were merged (quantities summed; pool-tracked equipment counted as units not checked out).
+            Number AND Location were merged (quantities summed; pool-tracked equipment counted as units not checked
+            out). The same part at different locations stays as separate rows.
           </div>
         )}
 

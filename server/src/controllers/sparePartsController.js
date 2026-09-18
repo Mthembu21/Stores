@@ -75,9 +75,9 @@ async function createSparePart(req, res) {
   let finalPartNumber = partNumber ? String(partNumber).trim() : '';
 
   if (finalPartNumber) {
-    const exists = await SparePart.findOne({ partNumber: finalPartNumber });
+    const exists = await SparePart.findOne({ partNumber: finalPartNumber, storageLocation: storageLocation || '' });
     if (exists) {
-      throw new ApiError(409, 'Part number already exists');
+      throw new ApiError(409, 'That part number already has a record at this storage location');
     }
   } else {
     finalPartNumber = await getNextSequence('sparePartNumber', 'SP');
@@ -144,7 +144,14 @@ async function updateSparePart(req, res) {
     part.allocatableStock = part.stockOnHand;
   }
 
-  await part.save();
+  try {
+    await part.save();
+  } catch (err) {
+    if (err.code === 11000) {
+      throw new ApiError(409, 'That part number already has a record at this storage location');
+    }
+    throw err;
+  }
   res.json({ part });
 }
 
@@ -158,10 +165,16 @@ async function deleteSparePart(req, res) {
   res.json({ ok: true });
 }
 
+function partLocationKey(partNumber, storageLocation) {
+  return `${partNumber}|${String(storageLocation || '').trim().toLowerCase()}`;
+}
+
 // Shared by the additive and replace bulk-import endpoints: validate every row in
 // memory (no DB calls) and build the doc to insert, or collect a per-row error.
 function validateBulkRows(rows, store) {
-  const seenPartNumbers = new Set();
+  // Same part number is fine on multiple rows as long as each is a different
+  // storage location — that's a separate stock record per bin, not a duplicate.
+  const seenPartNumberLocations = new Set();
   const errors = [];
   const prepared = []; // { rowNum, explicitPartNumber, doc }
 
@@ -204,11 +217,13 @@ function validateBulkRows(rows, store) {
       }
 
       const explicitPartNumber = row.partNumber ? String(row.partNumber).trim() : '';
+      const rowLocation = String(row.storageLocation || '').trim().toLowerCase();
       if (explicitPartNumber) {
-        if (seenPartNumbers.has(explicitPartNumber)) {
-          throw new Error(`Duplicate part number in file: ${explicitPartNumber}`);
+        const key = partLocationKey(explicitPartNumber, rowLocation);
+        if (seenPartNumberLocations.has(key)) {
+          throw new Error(`Duplicate part number + location in file: ${explicitPartNumber} @ ${rowLocation || '(none)'}`);
         }
-        seenPartNumbers.add(explicitPartNumber);
+        seenPartNumberLocations.add(key);
       }
 
       const status = ['Active', 'Obsolete'].includes(row.status) ? row.status : 'Active';
@@ -257,19 +272,20 @@ async function bulkCreateSpareParts(req, res) {
   const store = await getDefaultStoreId();
   const { prepared, errors } = validateBulkRows(rows, store);
 
-  // Pass 2: one query to find any part numbers that already exist, instead of one per row.
+  // Pass 2: one query to find any (part number, location) pairs that already exist,
+  // instead of one per row.
   const explicitNumbers = prepared.map((p) => p.explicitPartNumber).filter(Boolean);
   const existing = explicitNumbers.length
-    ? await SparePart.find({ partNumber: { $in: explicitNumbers } }).select('partNumber').lean()
+    ? await SparePart.find({ partNumber: { $in: explicitNumbers } }).select('partNumber storageLocation').lean()
     : [];
-  const existingSet = new Set(existing.map((e) => e.partNumber));
+  const existingSet = new Set(existing.map((e) => partLocationKey(e.partNumber, e.storageLocation)));
 
   // Pass 3: assign part numbers (auto-sequence only where needed) and build the insert list.
   const toInsert = [];
   for (const p of prepared) {
     if (p.explicitPartNumber) {
-      if (existingSet.has(p.explicitPartNumber)) {
-        errors.push({ row: p.rowNum, partNumber: p.explicitPartNumber, message: `Part number already exists: ${p.explicitPartNumber}` });
+      if (existingSet.has(partLocationKey(p.explicitPartNumber, p.doc.storageLocation))) {
+        errors.push({ row: p.rowNum, partNumber: p.explicitPartNumber, message: `Part number already exists at this location: ${p.explicitPartNumber}` });
         continue;
       }
       p.doc.partNumber = p.explicitPartNumber;
@@ -328,18 +344,18 @@ async function bulkReplaceSpareParts(req, res) {
   await SparePart.deleteMany({ partType: { $in: partTypesInFile } });
 
   // Everything of these type(s) was just cleared, so only guard against an explicit
-  // part number colliding with a surviving part of the *other* type.
+  // (part number, location) pair colliding with a surviving part of the *other* type.
   const explicitNumbers = prepared.map((p) => p.explicitPartNumber).filter(Boolean);
   const existing = explicitNumbers.length
-    ? await SparePart.find({ partNumber: { $in: explicitNumbers } }).select('partNumber').lean()
+    ? await SparePart.find({ partNumber: { $in: explicitNumbers } }).select('partNumber storageLocation').lean()
     : [];
-  const existingSet = new Set(existing.map((e) => e.partNumber));
+  const existingSet = new Set(existing.map((e) => partLocationKey(e.partNumber, e.storageLocation)));
 
   const toInsert = [];
   for (const p of prepared) {
     if (p.explicitPartNumber) {
-      if (existingSet.has(p.explicitPartNumber)) {
-        errors.push({ row: p.rowNum, partNumber: p.explicitPartNumber, message: `Part number already exists: ${p.explicitPartNumber}` });
+      if (existingSet.has(partLocationKey(p.explicitPartNumber, p.doc.storageLocation))) {
+        errors.push({ row: p.rowNum, partNumber: p.explicitPartNumber, message: `Part number already exists at this location: ${p.explicitPartNumber}` });
         continue;
       }
       p.doc.partNumber = p.explicitPartNumber;

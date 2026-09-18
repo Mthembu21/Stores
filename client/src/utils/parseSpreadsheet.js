@@ -93,16 +93,19 @@ function isPoolLocation(location) {
 }
 
 // Some exports list the same Part Number on multiple rows — one per bin/lot it's
-// stocked in, or one per physical unit for pool-tracked equipment. Combine those
-// into a single row per part number: quantities summed, locations joined. A group
-// where any row sits in a pool location is instead counted as units — Stock On
-// Hand = number of units, Allocatable = units not currently checked out.
+// stocked in, or one per physical unit for pool-tracked equipment. Each distinct
+// (Part Number, Location) pair becomes its own inventory record — a part at two
+// different bins stays as two separate rows, so the storeman can see exactly which
+// bin has how much rather than one merged, location-ambiguous total. Only rows that
+// share BOTH the same part number AND the same location get combined (true
+// duplicates — e.g. the same bin listed twice, or two units in the same pool state).
 export function aggregateByPartNumber(rows) {
   const order = [];
   const groups = new Map();
 
   rows.forEach((row, i) => {
-    const key = row.partNumber ? row.partNumber.trim() : `__row-${i}__`;
+    const locationKey = String(row.storageLocation || '').trim().toLowerCase();
+    const key = row.partNumber ? `${row.partNumber.trim()}|${locationKey}` : `__row-${i}__`;
     if (!groups.has(key)) {
       groups.set(key, []);
       order.push(key);
@@ -112,47 +115,36 @@ export function aggregateByPartNumber(rows) {
 
   return order.map((key) => {
     const group = groups.get(key);
-    if (group.length === 1) return group[0];
+    const isPool = isPoolLocation(group[0].storageLocation);
+    const isPoolOut = String(group[0].storageLocation || '').trim().toLowerCase() === 'pool_out';
 
-    const anyPool = group.some((r) => isPoolLocation(r.storageLocation));
+    if (group.length === 1 && !isPool) return group[0];
+
     let stockOnHand = 0;
     let allocatableStock = 0;
-    const locations = new Set();
-    const poolLocationTally = new Map();
 
-    if (anyPool) {
+    if (isPool) {
+      // Pool-tracked equipment is counted as units, not a raw on-hand quantity —
+      // a blank On-hand cell means "1 unit present". POOL_OUT units aren't
+      // allocatable; every other pool state is.
       for (const r of group) {
-        const qty = r.stockOnHand === '' || r.stockOnHand === undefined ? 1 : Number(r.stockOnHand) || 1;
-        stockOnHand += qty;
-        const loc = String(r.storageLocation || '').trim() || 'UNSPECIFIED';
-        poolLocationTally.set(loc, (poolLocationTally.get(loc) || 0) + qty);
-        if (loc.toLowerCase() !== 'pool_out') {
-          allocatableStock += qty;
-        }
+        stockOnHand += r.stockOnHand === '' || r.stockOnHand === undefined ? 1 : Number(r.stockOnHand) || 1;
       }
+      allocatableStock = isPoolOut ? 0 : stockOnHand;
     } else {
       for (const r of group) {
         const qty = r.stockOnHand === '' || r.stockOnHand === undefined ? 0 : Number(r.stockOnHand) || 0;
         stockOnHand += qty;
         allocatableStock += r.allocatableStock === '' || r.allocatableStock === undefined ? qty : Number(r.allocatableStock) || 0;
-        if (r.storageLocation) locations.add(r.storageLocation);
       }
     }
 
     allocatableStock = Math.max(0, Math.min(allocatableStock, stockOnHand));
 
-    // For pool-tracked equipment, show a per-state breakdown (e.g. "POOL_READY (2),
-    // POOL_OUT (1)") rather than just one row's location, since units can be spread
-    // across multiple pool states at once.
-    const poolLocationSummary = [...poolLocationTally.entries()]
-      .map(([loc, qty]) => `${loc} (${qty})`)
-      .join(', ');
-
     return {
       ...group[0],
       stockOnHand: String(stockOnHand),
       allocatableStock: String(allocatableStock),
-      storageLocation: anyPool ? poolLocationSummary : [...locations].join('; '),
     };
   });
 }
