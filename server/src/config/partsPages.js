@@ -9,6 +9,7 @@ const PARTS_PAGE_KEYS = [
   'spare-parts/returns',
   'spare-parts/low-stock',
   'spare-parts/to-order',
+  'spare-parts/non-stock-items',
   'spare-parts/movements',
   'spare-parts/kpi',
   'spare-parts/users',

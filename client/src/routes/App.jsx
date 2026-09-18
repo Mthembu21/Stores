@@ -13,6 +13,7 @@ import StoreIssuesPage from '../screens/StoreIssuesPage';
 import PartReturnsPage from '../screens/PartReturnsPage';
 import LowStockPage from '../screens/LowStockPage';
 import PartsToOrderPage from '../screens/PartsToOrderPage';
+import NonStockItemsPage from '../screens/NonStockItemsPage';
 import StockMovementsPage from '../screens/StockMovementsPage';
 import KpiTrackerPage from '../screens/KpiTrackerPage';
 import PartsUsersPage from '../screens/PartsUsersPage';
@@ -130,6 +131,14 @@ export default function App() {
           element={
             <RequireRole roles={MODULE_ROLES.spareParts} pageKey="spare-parts/to-order">
               <PartsToOrderPage />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="spare-parts/non-stock-items"
+          element={
+            <RequireRole roles={MODULE_ROLES.spareParts} pageKey="spare-parts/non-stock-items">
+              <NonStockItemsPage />
             </RequireRole>
           }
         />

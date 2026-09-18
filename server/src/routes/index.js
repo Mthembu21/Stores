@@ -18,6 +18,7 @@ const { kpiEntryRoutes } = require('./kpiEntryRoutes');
 const { partsPeopleRoutes } = require('./partsPeopleRoutes');
 const { machineRoutes } = require('./machineRoutes');
 const { partRequestRoutes } = require('./partRequestRoutes');
+const { nonStockItemRoutes } = require('./nonStockItemRoutes');
 
 const router = express.Router();
 
@@ -43,5 +44,6 @@ router.use('/kpi-entries', kpiEntryRoutes);
 router.use('/parts-people', partsPeopleRoutes);
 router.use('/machines', machineRoutes);
 router.use('/part-requests', partRequestRoutes);
+router.use('/non-stock-items', nonStockItemRoutes);
 
 module.exports = router;

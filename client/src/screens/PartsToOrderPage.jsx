@@ -3,6 +3,7 @@ import { Table } from '../components/Table';
 import { useStoreIssues } from '../services/storeIssues';
 import { useSpareParts } from '../services/spareParts';
 import { usePartRequests, useCreatePartRequest, useUpdatePartRequest, useDeletePartRequest } from '../services/partRequests';
+import { useNonStockItems } from '../services/nonStockItems';
 import { formatDateTime } from '../utils/format';
 import { flattenIssueItems } from '../utils/storeIssues';
 import toast from 'react-hot-toast';
@@ -22,6 +23,9 @@ export default function PartsToOrderPage() {
 
   const { data: partsData } = useSpareParts({ partType: 'Returnable' });
   const parts = partsData?.parts || [];
+
+  const { data: nonStockData } = useNonStockItems();
+  const nonStockItems = nonStockData?.items || [];
 
   const [statusFilter, setStatusFilter] = useState('Open');
   const { data: requestsData, isLoading: requestsLoading, isError: requestsError } = usePartRequests(
@@ -43,23 +47,37 @@ export default function PartsToOrderPage() {
   const [requestorName, setRequestorName] = useState('');
   const [notes, setNotes] = useState('');
 
+  const combinedCatalog = useMemo(
+    () => [
+      ...parts.map((p) => ({ ...p, _key: `stock:${p._id}`, _source: 'stock' })),
+      ...nonStockItems.map((p) => ({ ...p, _key: `nonstock:${p._id}`, _source: 'nonStock' })),
+    ],
+    [parts, nonStockItems]
+  );
+
   const filteredParts = useMemo(() => {
     const q = partSearch.trim().toLowerCase();
     if (!q) return [];
-    return parts
+    return combinedCatalog
       .filter((p) => {
         const num = String(p.partNumber || '').toLowerCase();
         const desc = String(p.partDescription || '').toLowerCase();
         return num.includes(q) || desc.includes(q);
       })
       .slice(0, 20);
-  }, [parts, partSearch]);
+  }, [combinedCatalog, partSearch]);
 
-  const selectedPart = parts.find((p) => p._id === selectedPartId);
+  const selectedPart = combinedCatalog.find((p) => p._key === selectedPartId);
 
   function handleSelectPart(part) {
-    setSelectedPartId(part._id);
+    setSelectedPartId(part._key);
     setPartSearch(`${part.partNumber} — ${part.partDescription}`);
+    if (part._source === 'nonStock' && !notes.trim()) {
+      const bits = [];
+      if (part.supplier) bits.push(`Supplier: ${part.supplier}`);
+      if (part.leadTimeDays !== null && part.leadTimeDays !== undefined) bits.push(`Lead time: ${part.leadTimeDays}d`);
+      if (bits.length) setNotes(bits.join(', '));
+    }
   }
 
   function resetFlagForm() {
@@ -207,11 +225,18 @@ export default function PartsToOrderPage() {
                   ) : (
                     filteredParts.map((p) => (
                       <div
-                        key={p._id}
+                        key={p._key}
                         className="p-2 text-sm border-b border-slate-100 cursor-pointer hover:bg-blue-50"
                         onMouseDown={() => handleSelectPart(p)}
                       >
-                        <div className="font-medium text-slate-900">{p.partNumber}</div>
+                        <div className="font-medium text-slate-900">
+                          {p.partNumber}
+                          {p._source === 'nonStock' && (
+                            <span className="ml-2 text-[10px] font-semibold uppercase tracking-wide text-epiroc-yellow bg-epiroc-yellow/15 px-1.5 py-0.5 rounded">
+                              Not normally stocked
+                            </span>
+                          )}
+                        </div>
                         <div className="text-xs text-slate-500">{p.partDescription}</div>
                       </div>
                     ))

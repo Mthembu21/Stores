@@ -81,6 +81,9 @@ export default function DashboardLayout() {
                 {hasPartsPageAccess(user, 'spare-parts/to-order') && (
                   <SideLink to="/spare-parts/to-order">Parts To Order</SideLink>
                 )}
+                {hasPartsPageAccess(user, 'spare-parts/non-stock-items') && (
+                  <SideLink to="/spare-parts/non-stock-items">Non-Stock Items</SideLink>
+                )}
                 {hasPartsPageAccess(user, 'spare-parts/movements') && (
                   <SideLink to="/spare-parts/movements">Stock Movements</SideLink>
                 )}
