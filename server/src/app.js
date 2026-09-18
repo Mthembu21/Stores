@@ -8,13 +8,14 @@ const { errorHandler } = require('./middleware/errorHandler');
 
 const app = express();
 
-app.use(express.json());
-
 const allowedOriginsFromEnv = (process.env.CORS_ORIGIN || '')
   .split(',')
   .map((s) => s.trim())
   .filter(Boolean);
 
+// CORS must run before body parsing — otherwise a request body-parser rejects (e.g.
+// too large) errors out before CORS headers are ever attached, and the browser
+// misreports the real error as a CORS failure instead of the actual cause.
 app.use(
   cors({
     origin: (origin, callback) => {
@@ -32,6 +33,10 @@ app.use(
     credentials: true,
   })
 );
+
+// Bulk import endpoints (spare parts, non-stock items) can post thousands of rows as
+// JSON — well above Express's 100kb default.
+app.use(express.json({ limit: '10mb' }));
 
 if (process.env.NODE_ENV !== 'test') {
   app.use(morgan('dev'));
