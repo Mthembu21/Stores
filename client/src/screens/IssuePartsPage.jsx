@@ -62,6 +62,7 @@ export default function IssuePartsPage() {
 
   const [machineNumber, setMachineNumber] = useState('');
   const [machineType, setMachineType] = useState('');
+  const [machineSearch, setMachineSearch] = useState('');
   const [showAddMachine, setShowAddMachine] = useState(false);
   const [newMachineNumber, setNewMachineNumber] = useState('');
   const [newMachineType, setNewMachineType] = useState('');
@@ -106,6 +107,22 @@ export default function IssuePartsPage() {
   const [selectedForemanId, setSelectedForemanId] = useState('');
   const [foremanName, setForemanName] = useState('');
   const [foremanZNumber, setForemanZNumber] = useState('');
+
+  const filteredMachines = useMemo(() => {
+    const q = machineSearch.trim().toLowerCase();
+    const matches = !q
+      ? machines
+      : machines.filter((m) => {
+          const num = String(m.machineNumber || '').toLowerCase();
+          const type = String(m.machineType || '').toLowerCase();
+          return num.includes(q) || type.includes(q);
+        });
+    const selected = machines.find((m) => m.machineNumber === machineNumber);
+    if (selected && !matches.some((m) => m._id === selected._id)) {
+      return [selected, ...matches];
+    }
+    return matches;
+  }, [machines, machineSearch, machineNumber]);
 
   function handleSelectMachine(id) {
     const machine = machines.find((m) => m._id === id);
@@ -223,6 +240,7 @@ export default function IssuePartsPage() {
     setPartSearch('');
     setMachineNumber('');
     setMachineType('');
+    setMachineSearch('');
     setShowAddMachine(false);
     setNewMachineNumber('');
     setNewMachineType('');
@@ -514,15 +532,22 @@ export default function IssuePartsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium text-slate-700">Machine number</label>
+              <input
+                type="text"
+                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                value={machineSearch}
+                onChange={(e) => setMachineSearch(e.target.value)}
+                placeholder="Search by machine number or type..."
+              />
               <select
-                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2"
                 value={machines.find((m) => m.machineNumber === machineNumber)?._id || ''}
                 onChange={(e) => handleSelectMachine(e.target.value)}
               >
                 <option value="">Select a machine...</option>
-                {machines.map((m) => (
+                {filteredMachines.map((m) => (
                   <option key={m._id} value={m._id}>
-                    {m.machineNumber}
+                    {m.machineNumber} {m.machineType ? `— ${m.machineType}` : ''}
                   </option>
                 ))}
               </select>
