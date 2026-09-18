@@ -29,11 +29,6 @@ export default function PartsToOrderPage() {
   );
   const requests = requestsData?.requests || [];
 
-  // Stats must reflect true Open state regardless of which status the table above is
-  // currently filtered to, so this is fetched separately from the table's own query.
-  const { data: openRequestsData } = usePartRequests({ status: 'Open' });
-  const openRequests = openRequestsData?.requests || [];
-
   const createRequest = useCreatePartRequest();
   const updateRequest = useUpdatePartRequest();
   const deleteRequest = useDeletePartRequest();
@@ -164,11 +159,6 @@ export default function PartsToOrderPage() {
     [updateRequest, deleteRequest]
   );
 
-  const openCount = openRequests.length;
-  const oldestOpenDays = openRequests.reduce((max, r) => Math.max(max, daysOld(r.createdAt)), 0);
-  const openOverADay = openRequests.filter((r) => daysOld(r.createdAt) >= 1).length;
-  const openOverAWeek = openRequests.filter((r) => daysOld(r.createdAt) >= 7).length;
-
   const fromIssuesColumns = useMemo(
     () => [
       { key: 'issueNumber', header: 'Issue #' },
@@ -191,29 +181,6 @@ export default function PartsToOrderPage() {
         <div className="text-sm text-slate-600">
           Flag parts a technician asked for that aren't in stock, and track outstanding quantities that still need
           to be ordered.
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <div className="rounded-xl bg-white shadow-soft p-4">
-          <div className="text-xs font-semibold text-slate-500">Open requests</div>
-          <div className="text-2xl font-semibold text-epiroc-gray">{openCount}</div>
-        </div>
-        <div className="rounded-xl bg-white shadow-soft p-4 border border-epiroc-yellow/60">
-          <div className="text-xs font-semibold text-slate-500">Still open after a day</div>
-          <div className="text-2xl font-semibold text-epiroc-gray">{openOverADay}</div>
-        </div>
-        <div className="rounded-xl bg-white shadow-soft p-4 border border-red-300">
-          <div className="text-xs font-semibold text-slate-500">Still open after a week</div>
-          <div className="text-2xl font-semibold text-epiroc-gray">{openOverAWeek}</div>
-        </div>
-        <div className="rounded-xl bg-white shadow-soft p-4">
-          <div className="text-xs font-semibold text-slate-500">Oldest open request</div>
-          <div className="text-2xl font-semibold text-epiroc-gray">{oldestOpenDays}d</div>
-        </div>
-        <div className="rounded-xl bg-white shadow-soft p-4">
-          <div className="text-xs font-semibold text-slate-500">Awaiting order (from issues)</div>
-          <div className="text-2xl font-semibold text-epiroc-gray">{fromIssues.length}</div>
         </div>
       </div>
 

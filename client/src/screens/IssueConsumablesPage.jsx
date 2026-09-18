@@ -34,6 +34,7 @@ export default function IssueConsumablesPage() {
 
   const [sparePartId, setSparePartId] = useState('');
   const [consumableSearch, setConsumableSearch] = useState('');
+  const [showConsumableDropdown, setShowConsumableDropdown] = useState(false);
   const [quantity, setQuantity] = useState('1');
   const [selectedRequestorId, setSelectedRequestorId] = useState('');
   const [personName, setPersonName] = useState('');
@@ -48,18 +49,43 @@ export default function IssueConsumablesPage() {
 
   const filteredConsumableParts = useMemo(() => {
     const q = consumableSearch.trim().toLowerCase();
-    const matches = !q
-      ? consumableParts
-      : consumableParts.filter((p) => {
-          const num = String(p.partNumber || '').toLowerCase();
-          const desc = String(p.partDescription || '').toLowerCase();
-          return num.includes(q) || desc.includes(q);
-        });
-    if (selectedPart && !matches.some((p) => p._id === selectedPart._id)) {
-      return [selectedPart, ...matches];
+    if (!q) return consumableParts;
+    return consumableParts.filter((p) => {
+      const num = String(p.partNumber || '').toLowerCase();
+      const desc = String(p.partDescription || '').toLowerCase();
+      return num.includes(q) || desc.includes(q);
+    });
+  }, [consumableParts, consumableSearch]);
+
+  function handleSelectConsumable(id) {
+    const part = consumableParts.find((p) => p._id === id);
+    setSparePartId(id);
+    setConsumableSearch(part ? `${part.partDescription} (${part.partNumber})` : '');
+    setShowConsumableDropdown(false);
+  }
+
+  function handleConsumableSearchFocus() {
+    setShowConsumableDropdown(true);
+    setConsumableSearch('');
+  }
+
+  function handleConsumableSearchBlur() {
+    setTimeout(() => {
+      setShowConsumableDropdown(false);
+      setConsumableSearch((current) => {
+        if (current) return current;
+        return selectedPart ? `${selectedPart.partDescription} (${selectedPart.partNumber})` : '';
+      });
+    }, 150);
+  }
+
+  function handleConsumableSearchChange(value) {
+    setConsumableSearch(value);
+    setShowConsumableDropdown(true);
+    if (!value) {
+      setSparePartId('');
     }
-    return matches;
-  }, [consumableParts, consumableSearch, selectedPart]);
+  }
 
   function handleSelectRequestor(id) {
     setSelectedRequestorId(id);
@@ -132,29 +158,41 @@ export default function IssueConsumablesPage() {
       </div>
 
       <form className="rounded-xl bg-white shadow-soft p-6 space-y-4" onSubmit={handleSubmit}>
-        <div>
+        <div className="relative">
           <label className="text-sm font-medium text-slate-700">Consumable</label>
           <input
             type="text"
             className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
             value={consumableSearch}
-            onChange={(e) => setConsumableSearch(e.target.value)}
-            placeholder="Search by part number or description..."
-          />
-          <select
-            className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2"
-            value={sparePartId}
-            onChange={(e) => setSparePartId(e.target.value)}
-            required
+            onChange={(e) => handleConsumableSearchChange(e.target.value)}
+            onFocus={handleConsumableSearchFocus}
+            onBlur={handleConsumableSearchBlur}
+            placeholder={partsLoading ? 'Loading consumables...' : 'Search by part number or description...'}
+            autoComplete="off"
             disabled={partsLoading}
-          >
-            <option value="">Select consumable...</option>
-            {filteredConsumableParts.map((p) => (
-              <option key={p._id} value={p._id}>
-                {p.partDescription} ({p.partNumber}) — {allocatableOf(p)} {p.unitOfMeasure} available
-              </option>
-            ))}
-          </select>
+          />
+          {showConsumableDropdown && (
+            <div className="absolute z-10 mt-1 w-full max-h-56 overflow-y-auto border border-slate-200 rounded-xl bg-white shadow-soft">
+              {filteredConsumableParts.length === 0 ? (
+                <div className="p-3 text-sm text-slate-500 text-center">No consumables found</div>
+              ) : (
+                filteredConsumableParts.map((p) => (
+                  <div
+                    key={p._id}
+                    className="p-2 text-sm border-b border-slate-100 cursor-pointer hover:bg-blue-50"
+                    onMouseDown={() => handleSelectConsumable(p._id)}
+                  >
+                    <div className="font-medium text-slate-900">
+                      {p.partDescription} <span className="text-xs font-normal text-slate-400">({p.partNumber})</span>
+                    </div>
+                    <div className="text-xs text-slate-500">
+                      {allocatableOf(p)} {p.unitOfMeasure} available
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
