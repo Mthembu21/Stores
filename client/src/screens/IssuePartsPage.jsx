@@ -63,6 +63,7 @@ export default function IssuePartsPage() {
   const [machineNumber, setMachineNumber] = useState('');
   const [machineType, setMachineType] = useState('');
   const [machineSearch, setMachineSearch] = useState('');
+  const [showMachineDropdown, setShowMachineDropdown] = useState(false);
   const [showAddMachine, setShowAddMachine] = useState(false);
   const [newMachineNumber, setNewMachineNumber] = useState('');
   const [newMachineType, setNewMachineType] = useState('');
@@ -110,24 +111,41 @@ export default function IssuePartsPage() {
 
   const filteredMachines = useMemo(() => {
     const q = machineSearch.trim().toLowerCase();
-    const matches = !q
-      ? machines
-      : machines.filter((m) => {
-          const num = String(m.machineNumber || '').toLowerCase();
-          const type = String(m.machineType || '').toLowerCase();
-          return num.includes(q) || type.includes(q);
-        });
-    const selected = machines.find((m) => m.machineNumber === machineNumber);
-    if (selected && !matches.some((m) => m._id === selected._id)) {
-      return [selected, ...matches];
-    }
-    return matches;
-  }, [machines, machineSearch, machineNumber]);
+    if (!q) return machines;
+    return machines.filter((m) => {
+      const num = String(m.machineNumber || '').toLowerCase();
+      const type = String(m.machineType || '').toLowerCase();
+      return num.includes(q) || type.includes(q);
+    });
+  }, [machines, machineSearch]);
 
   function handleSelectMachine(id) {
     const machine = machines.find((m) => m._id === id);
     setMachineNumber(machine ? machine.machineNumber : '');
     setMachineType(machine ? machine.machineType : '');
+    setMachineSearch(machine ? machine.machineNumber : '');
+    setShowMachineDropdown(false);
+  }
+
+  function handleMachineSearchFocus() {
+    setShowMachineDropdown(true);
+    setMachineSearch('');
+  }
+
+  function handleMachineSearchBlur() {
+    setTimeout(() => {
+      setShowMachineDropdown(false);
+      setMachineSearch((current) => (current ? current : machineNumber));
+    }, 150);
+  }
+
+  function handleMachineSearchChange(value) {
+    setMachineSearch(value);
+    setShowMachineDropdown(true);
+    if (!value) {
+      setMachineNumber('');
+      setMachineType('');
+    }
   }
 
   function handleSelectForeman(id) {
@@ -180,10 +198,12 @@ export default function IssuePartsPage() {
           if (machine) {
             setMachineNumber(machine.machineNumber);
             setMachineType(machine.machineType);
+            setMachineSearch(machine.machineNumber);
           }
           setNewMachineNumber('');
           setNewMachineType('');
           setShowAddMachine(false);
+          setShowMachineDropdown(false);
         },
       }
     );
@@ -241,6 +261,7 @@ export default function IssuePartsPage() {
     setMachineNumber('');
     setMachineType('');
     setMachineSearch('');
+    setShowMachineDropdown(false);
     setShowAddMachine(false);
     setNewMachineNumber('');
     setNewMachineType('');
@@ -530,27 +551,36 @@ export default function IssuePartsPage() {
         <div className="space-y-4 border-t border-slate-100 pt-6">
           <div className="text-sm font-semibold text-epiroc-gray">Job information</div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
+            <div className="relative">
               <label className="text-sm font-medium text-slate-700">Machine number</label>
               <input
                 type="text"
                 className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
                 value={machineSearch}
-                onChange={(e) => setMachineSearch(e.target.value)}
+                onChange={(e) => handleMachineSearchChange(e.target.value)}
+                onFocus={handleMachineSearchFocus}
+                onBlur={handleMachineSearchBlur}
                 placeholder="Search by machine number or type..."
+                autoComplete="off"
               />
-              <select
-                className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2"
-                value={machines.find((m) => m.machineNumber === machineNumber)?._id || ''}
-                onChange={(e) => handleSelectMachine(e.target.value)}
-              >
-                <option value="">Select a machine...</option>
-                {filteredMachines.map((m) => (
-                  <option key={m._id} value={m._id}>
-                    {m.machineNumber} {m.machineType ? `— ${m.machineType}` : ''}
-                  </option>
-                ))}
-              </select>
+              {showMachineDropdown && (
+                <div className="absolute z-10 mt-1 w-full max-h-48 overflow-y-auto border border-slate-200 rounded-xl bg-white shadow-soft">
+                  {filteredMachines.length === 0 ? (
+                    <div className="p-3 text-sm text-slate-500 text-center">No machines found</div>
+                  ) : (
+                    filteredMachines.map((m) => (
+                      <div
+                        key={m._id}
+                        className="p-2 text-sm border-b border-slate-100 cursor-pointer hover:bg-blue-50"
+                        onMouseDown={() => handleSelectMachine(m._id)}
+                      >
+                        <div className="font-medium text-slate-900">{m.machineNumber}</div>
+                        {m.machineType && <div className="text-xs text-slate-500">{m.machineType}</div>}
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
               <button
                 type="button"
                 className="mt-1 text-xs font-semibold text-epiroc-gray hover:underline"
