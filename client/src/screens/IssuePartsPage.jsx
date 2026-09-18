@@ -26,9 +26,9 @@ function computeAuto(part, requested) {
 }
 
 export default function IssuePartsPage() {
-  const { data: partsData, isLoading: partsLoading } = useSpareParts();
   // Consumables are issued separately via the Issue Consumables page
-  const parts = useMemo(() => (partsData?.parts || []).filter((p) => p.partType !== 'Consumable'), [partsData]);
+  const { data: partsData, isLoading: partsLoading } = useSpareParts({ partType: 'Returnable' });
+  const parts = useMemo(() => partsData?.parts || [], [partsData]);
   const createIssue = useCreateStoreIssue();
 
   const { data: machinesData } = useMachines();

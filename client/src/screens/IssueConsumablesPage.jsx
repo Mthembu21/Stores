@@ -18,7 +18,7 @@ function allocatableOf(part) {
 }
 
 export default function IssueConsumablesPage() {
-  const { data: partsData, isLoading: partsLoading } = useSpareParts();
+  const { data: partsData, isLoading: partsLoading } = useSpareParts({ partType: 'Consumable' });
   const { data: issuesData, isLoading: issuesLoading, isError: issuesError } = useConsumablePartIssues();
   const createIssue = useCreateConsumablePartIssue();
 
@@ -27,7 +27,7 @@ export default function IssueConsumablesPage() {
   const createPartsPerson = useCreatePartsPerson();
 
   const consumableParts = useMemo(
-    () => (partsData?.parts || []).filter((p) => p.partType === 'Consumable'),
+    () => partsData?.parts || [],
     [partsData]
   );
   const issues = issuesData?.issues || [];

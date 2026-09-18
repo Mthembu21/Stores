@@ -27,7 +27,10 @@ async function listSpareParts(req, res) {
     filter.stockOnHand = { $lte: 0 };
   }
 
-  const parts = await SparePart.find(filter).sort({ partNumber: 1 }).limit(500);
+  // Unlike history-style lists (issues, movements), this is the live catalog that
+  // Issue Parts/Consumables load in full for client-side search — it must never be
+  // silently truncated below the real part count.
+  const parts = await SparePart.find(filter).sort({ partNumber: 1 }).limit(5000);
   res.json({ parts });
 }
 
