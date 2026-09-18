@@ -49,6 +49,17 @@ function issuedAgg(range, isPart) {
   ]);
 }
 
+// What was actually asked for on Issue Parts transactions in the period, regardless
+// of whether stock covered it — compared against issuedAgg's "Issued" total, this is
+// the fulfillment picture (how much of demand we could actually hand over).
+function requestedAgg(range) {
+  return StoreIssue.aggregate([
+    { $match: { issueDate: { $gte: range.start, $lt: range.end } } },
+    { $unwind: '$items' },
+    { $group: { _id: null, total: { $sum: '$items.quantityRequested' } } },
+  ]);
+}
+
 async function getPartsDashboard(req, res) {
   const now = new Date();
   const dayRange = utcDayRange(now);
@@ -67,6 +78,8 @@ async function getPartsDashboard(req, res) {
     consumablesIssuedTodayAgg,
     partsIssuedThisMonthAgg,
     consumablesIssuedThisMonthAgg,
+    partsRequestedTodayAgg,
+    partsRequestedThisMonthAgg,
     partsAwaitingOrder,
     consumablesAwaitingOrder,
     partsReturnedAgg,
@@ -85,6 +98,8 @@ async function getPartsDashboard(req, res) {
     issuedAgg(dayRange, false),
     issuedAgg(monthRange, true),
     issuedAgg(monthRange, false),
+    requestedAgg(dayRange),
+    requestedAgg(monthRange),
     StoreIssue.countDocuments({ 'items.quantityToOrder': { $gt: 0 }, status: { $ne: 'Closed' } }),
     SparePart.countDocuments(needsReorderFilter('Consumable')),
     StockMovement.aggregate([
@@ -118,6 +133,8 @@ async function getPartsDashboard(req, res) {
       consumablesIssuedToday: consumablesIssuedTodayAgg[0]?.total || 0,
       partsIssuedThisMonth: partsIssuedThisMonthAgg[0]?.total || 0,
       consumablesIssuedThisMonth: consumablesIssuedThisMonthAgg[0]?.total || 0,
+      partsRequestedToday: partsRequestedTodayAgg[0]?.total || 0,
+      partsRequestedThisMonth: partsRequestedThisMonthAgg[0]?.total || 0,
       partsAwaitingOrder,
       consumablesAwaitingOrder,
       partsReturned: partsReturnedAgg[0]?.total || 0,

@@ -11,6 +11,10 @@ export default function PartsDashboardPage() {
   const { cards, tables } = data || {};
   const recentIssueLines = useMemo(() => flattenIssueItems(tables?.recentIssues || []), [tables]);
 
+  const fulfillmentRateThisMonth = cards?.partsRequestedThisMonth
+    ? Math.round((cards.partsIssuedThisMonth / cards.partsRequestedThisMonth) * 100)
+    : null;
+
   if (isLoading) {
     return (
       <div className="min-h-[60vh] grid place-items-center">
@@ -43,7 +47,14 @@ export default function PartsDashboardPage() {
           <Card title="Low Stock Parts" value={cards.lowStockParts} tone="warning" />
           <Card title="Out of Stock Parts" value={cards.outOfStockParts} tone="danger" />
           <Card title="Parts Issued Today" value={cards.partsIssuedToday} />
+          <Card title="Parts Requested Today" value={cards.partsRequestedToday} />
           <Card title="Parts Issued This Month" value={cards.partsIssuedThisMonth} />
+          <Card title="Parts Requested This Month" value={cards.partsRequestedThisMonth} />
+          <Card
+            title="Fulfillment Rate (This Month)"
+            value={fulfillmentRateThisMonth === null ? '—' : `${fulfillmentRateThisMonth}%`}
+            tone={fulfillmentRateThisMonth !== null && fulfillmentRateThisMonth < 80 ? 'warning' : undefined}
+          />
           <Card title="Parts Awaiting Order" value={cards.partsAwaitingOrder} tone="warning" />
           <Card title="Parts Returned" value={cards.partsReturned} />
         </div>

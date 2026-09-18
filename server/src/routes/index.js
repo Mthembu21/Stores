@@ -17,6 +17,7 @@ const { partsDashboardRoutes } = require('./partsDashboardRoutes');
 const { kpiEntryRoutes } = require('./kpiEntryRoutes');
 const { partsPeopleRoutes } = require('./partsPeopleRoutes');
 const { machineRoutes } = require('./machineRoutes');
+const { partRequestRoutes } = require('./partRequestRoutes');
 
 const router = express.Router();
 
@@ -41,5 +42,6 @@ router.use('/parts-dashboard', partsDashboardRoutes);
 router.use('/kpi-entries', kpiEntryRoutes);
 router.use('/parts-people', partsPeopleRoutes);
 router.use('/machines', machineRoutes);
+router.use('/part-requests', partRequestRoutes);
 
 module.exports = router;
