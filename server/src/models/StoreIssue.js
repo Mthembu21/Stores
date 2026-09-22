@@ -46,7 +46,7 @@ const storeIssueSchema = new mongoose.Schema(
     machineType: { type: String, trim: true, default: '' },
     serviceOrderNumber: { type: String, required: true, trim: true },
     workOrderNumber: { type: String, trim: true, default: '' },
-    riskAssessmentNumber: { type: String, trim: true, default: '' },
+    riskAssessmentNumber: { type: String, required: true, trim: true },
 
     location: { type: String, trim: true, default: '' },
     section: { type: String, trim: true, default: '' },

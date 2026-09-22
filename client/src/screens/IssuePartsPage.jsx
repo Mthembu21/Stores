@@ -310,6 +310,10 @@ export default function IssuePartsPage() {
       toast.error('Provide the service order number');
       return;
     }
+    if (!riskAssessmentNumber.trim()) {
+      toast.error('Provide the risk assessment number');
+      return;
+    }
     if (!requestorName.trim()) {
       toast.error('Provide the requestor name');
       return;
@@ -626,8 +630,8 @@ export default function IssuePartsPage() {
               <input className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" value={serviceOrderNumber} onChange={(e) => setServiceOrderNumber(e.target.value)} required />
             </div>
             <div>
-              <label className="text-sm font-medium text-slate-700">Risk assessment number (optional)</label>
-              <input className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" value={riskAssessmentNumber} onChange={(e) => setRiskAssessmentNumber(e.target.value)} />
+              <label className="text-sm font-medium text-slate-700">Risk assessment number</label>
+              <input className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" value={riskAssessmentNumber} onChange={(e) => setRiskAssessmentNumber(e.target.value)} required />
             </div>
           </div>
         </div>

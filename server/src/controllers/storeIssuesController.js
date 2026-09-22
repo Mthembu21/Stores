@@ -62,6 +62,7 @@ async function createStoreIssue(req, res) {
 
   if (
     !serviceOrderNumber ||
+    !riskAssessmentNumber ||
     !requestorName ||
     !requestorClockNumber ||
     !foremanName ||
