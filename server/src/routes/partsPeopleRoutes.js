@@ -1,5 +1,5 @@
 const express = require('express');
-const { listPartsPeople, createPartsPerson, deletePartsPerson } = require('../controllers/partsPeopleController');
+const { listPartsPeople, createPartsPerson, updatePartsPerson, deletePartsPerson } = require('../controllers/partsPeopleController');
 const { requireAuth } = require('../middleware/auth');
 const { requireRole } = require('../middleware/requireRole');
 const { Roles } = require('../config/roles');
@@ -11,6 +11,7 @@ router.use(requireRole(Roles.Admin, Roles.PartsStoreman, Roles.Supervisor));
 
 router.get('/', listPartsPeople);
 router.post('/', createPartsPerson);
+router.patch('/:id', updatePartsPerson);
 router.delete('/:id', deletePartsPerson);
 
 module.exports = { partsPeopleRoutes: router };

@@ -30,6 +30,22 @@ export function useCreatePartsPerson() {
   });
 }
 
+export function useUpdatePartsPerson() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...patch }) => {
+      const { data } = await http.patch(`/parts-people/${id}`, patch);
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['parts-people'], exact: false });
+    },
+    onError: (err) => {
+      toast.error(err?.response?.data?.message || 'Could not update person');
+    },
+  });
+}
+
 export function useDeletePartsPerson() {
   const qc = useQueryClient();
   return useMutation({

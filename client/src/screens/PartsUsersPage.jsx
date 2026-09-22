@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Table } from '../components/Table';
-import { usePartsPeople, useCreatePartsPerson, useDeletePartsPerson } from '../services/partsPeople';
+import { usePartsPeople, useCreatePartsPerson, useUpdatePartsPerson, useDeletePartsPerson } from '../services/partsPeople';
 import { useUsers, useCreateUser, useUpdateUser, useDeleteUser } from '../services/users';
 import { PARTS_PAGES } from '../config/partsPages';
 
@@ -63,6 +63,58 @@ function StoremanNameCell({ user, onSave, isPending }) {
         disabled={isPending || !name.trim()}
         onClick={() => {
           onSave(name.trim());
+          setEditing(false);
+        }}
+      >
+        Save
+      </button>
+      <button
+        type="button"
+        className="rounded-lg border border-slate-200 px-2 py-1 text-xs hover:bg-slate-50"
+        onClick={() => setEditing(false)}
+      >
+        Cancel
+      </button>
+    </div>
+  );
+}
+
+function EditableTextCell({ value, onSave, isPending }) {
+  const [text, setText] = useState(value || '');
+  const [editing, setEditing] = useState(false);
+
+  if (!editing) {
+    return (
+      <div className="flex items-center gap-2">
+        <span>{value}</span>
+        <button
+          type="button"
+          className="rounded-lg border border-slate-200 px-2 py-0.5 text-xs hover:bg-slate-50"
+          onClick={() => {
+            setText(value || '');
+            setEditing(true);
+          }}
+        >
+          Edit
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <input
+        className="rounded-lg border border-slate-200 px-2 py-1 text-sm w-28"
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        autoFocus
+      />
+      <button
+        type="button"
+        className="rounded-lg bg-epiroc-yellow px-2 py-1 text-xs font-semibold text-epiroc-black hover:brightness-95 disabled:opacity-60"
+        disabled={isPending || !text.trim()}
+        onClick={() => {
+          onSave(text.trim());
           setEditing(false);
         }}
       >
@@ -155,6 +207,27 @@ export default function PartsUsersPage() {
     );
   }
 
+  // Requestors — simple name + Z number directory, used on Issue Parts / Issue Consumables
+  const { data: requestorsData, isLoading: requestorsLoading } = usePartsPeople('Requestor');
+  const requestors = requestorsData?.people || [];
+  const updatePerson = useUpdatePartsPerson();
+
+  const [requestorName, setRequestorName] = useState('');
+  const [requestorZNumber, setRequestorZNumber] = useState('');
+
+  function handleAddRequestor(e) {
+    e.preventDefault();
+    createPerson.mutate(
+      { name: requestorName.trim(), zNumber: requestorZNumber.trim(), role: 'Requestor' },
+      {
+        onSuccess: () => {
+          setRequestorName('');
+          setRequestorZNumber('');
+        },
+      }
+    );
+  }
+
   // Storemen — real login accounts with configurable per-page access
   const { data: usersData, isLoading: usersLoading } = useUsers();
   const storemen = useMemo(() => (usersData?.users || []).filter((u) => u.role === 'PartsStoreman'), [usersData]);
@@ -192,7 +265,7 @@ export default function PartsUsersPage() {
     <div className="space-y-6 max-w-4xl mx-auto w-full">
       <div>
         <div className="text-2xl font-semibold text-epiroc-gray">Users</div>
-        <div className="text-sm text-slate-600">Manage Foremen and Storemen for the Parts Store.</div>
+        <div className="text-sm text-slate-600">Manage Foremen, Requestors and Storemen for the Parts Store.</div>
       </div>
 
       {/* Foremen */}
@@ -259,6 +332,95 @@ export default function PartsUsersPage() {
               },
             ]}
             rows={foremen}
+            maxHeight="300px"
+          />
+        )}
+      </div>
+
+      {/* Requestors */}
+      <div className="rounded-xl bg-white shadow-soft p-6 max-w-3xl mx-auto space-y-4">
+        <div>
+          <div className="text-sm font-semibold text-epiroc-gray">Add Requestor</div>
+          <div className="text-xs text-slate-500">
+            Name and Z Number only — used for attribution on Issue Parts and Issue Consumables. No login access.
+          </div>
+        </div>
+        <form className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end" onSubmit={handleAddRequestor}>
+          <div>
+            <label className="text-sm font-medium text-slate-700">Name</label>
+            <input
+              className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+              value={requestorName}
+              onChange={(e) => setRequestorName(e.target.value)}
+              required
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-slate-700">Z Number</label>
+            <input
+              className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+              value={requestorZNumber}
+              onChange={(e) => setRequestorZNumber(e.target.value)}
+              required
+            />
+          </div>
+          <button
+            type="submit"
+            className="rounded-xl bg-epiroc-yellow px-4 py-2 font-semibold text-epiroc-black shadow-soft hover:brightness-95 disabled:opacity-60"
+            disabled={createPerson.isPending}
+          >
+            {createPerson.isPending ? 'Adding...' : 'Add Requestor'}
+          </button>
+        </form>
+      </div>
+
+      <div className="max-w-3xl mx-auto">
+        {requestorsLoading ? (
+          <div className="rounded-xl bg-white shadow-soft p-4 text-sm text-slate-600">Loading...</div>
+        ) : (
+          <Table
+            emptyLabel="No requestors added yet"
+            columns={[
+              {
+                key: 'name',
+                header: 'Name',
+                render: (p) => (
+                  <EditableTextCell
+                    value={p.name}
+                    isPending={updatePerson.isPending}
+                    onSave={(name) => updatePerson.mutate({ id: p._id, name })}
+                  />
+                ),
+              },
+              {
+                key: 'zNumber',
+                header: 'Z Number',
+                render: (p) => (
+                  <EditableTextCell
+                    value={p.zNumber}
+                    isPending={updatePerson.isPending}
+                    onSave={(zNumber) => updatePerson.mutate({ id: p._id, zNumber })}
+                  />
+                ),
+              },
+              {
+                key: 'actions',
+                header: '',
+                render: (p) => (
+                  <button
+                    type="button"
+                    className="rounded-lg border border-red-200 text-red-600 px-2 py-0.5 text-xs hover:bg-red-50"
+                    onClick={() => {
+                      if (window.confirm(`Remove ${p.name}?`)) deletePerson.mutate(p._id);
+                    }}
+                    disabled={deletePerson.isPending}
+                  >
+                    Delete
+                  </button>
+                ),
+              },
+            ]}
+            rows={requestors}
             maxHeight="300px"
           />
         )}
