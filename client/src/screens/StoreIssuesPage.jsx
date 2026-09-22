@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Table } from '../components/Table';
 import { useStoreIssues, useUpdateStoreIssue } from '../services/storeIssues';
 import { useMachines, useCreateMachine, useUpdateMachine } from '../services/machines';
@@ -92,18 +92,6 @@ export default function StoreIssuesPage() {
             />
           );
         },
-      },
-      {
-        key: 'print',
-        header: '',
-        render: (i) => (
-          <Link
-            to={`/spare-parts/store-issues/${i.issueId}/print`}
-            className="text-epiroc-gray font-semibold hover:underline"
-          >
-            Print
-          </Link>
-        ),
       },
     ],
     [machinesByNumber, updateStoreIssue, createMachine, updateMachine, selectedIssueId]
