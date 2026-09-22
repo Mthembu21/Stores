@@ -9,21 +9,13 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { KPI_DEFINITIONS } from '../config/kpiDefinitions';
+import { KPI_CATEGORIES, computeCategoryScore } from '../config/kpiDefinitions';
 
-const BAR_COLORS = ['#54565B', '#FFCD00', '#16a34a', '#dc2626', '#7c3aed', '#0891b2', '#ea580c', '#db2777'];
+const BAR_COLORS = ['#54565B', '#FFCD00', '#16a34a', '#dc2626', '#7c3aed'];
 
 function shortDayLabel(iso) {
   const d = new Date(`${iso}T00:00:00`);
   return d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric' });
-}
-
-function achievementPercent(def, actual) {
-  if (actual === null || actual === undefined || actual === '') return null;
-  const num = Number(actual);
-  if (Number.isNaN(num)) return null;
-  const pct = def.direction === 'lower' ? (num <= 0 ? 200 : (def.target / num) * 100) : (num / def.target) * 100;
-  return Math.max(0, Math.min(200, Math.round(pct)));
 }
 
 function CustomTooltip({ active, payload, label }) {
@@ -33,7 +25,7 @@ function CustomTooltip({ active, payload, label }) {
       <div className="font-semibold text-slate-900">{label}</div>
       {payload.map((p) => (
         <div key={p.dataKey} style={{ color: p.color }}>
-          {p.name}: {p.value === null || p.value === undefined ? 'No entry' : `${p.value}% of target`}
+          {p.name}: {p.value === null || p.value === undefined ? 'No entry' : `${p.value}%`}
         </div>
       ))}
     </div>
@@ -46,32 +38,33 @@ export function KpiOverviewChart({ entries, days }) {
   const data = (days || []).map((iso) => {
     const entry = entryByDate.get(iso);
     const row = { label: shortDayLabel(iso) };
-    KPI_DEFINITIONS.forEach((def) => {
-      row[def.key] = achievementPercent(def, entry?.values?.[def.key]);
+    KPI_CATEGORIES.forEach((cat) => {
+      row[cat.key] = entry ? computeCategoryScore(cat, entry.measures) : null;
     });
     return row;
   });
 
   return (
     <div className="rounded-xl bg-white shadow-soft p-4">
-      <div className="text-sm font-semibold text-epiroc-gray">Weekly KPI performance (% of target)</div>
+      <div className="text-sm font-semibold text-epiroc-gray">Weekly KPI performance by category</div>
       <div className="text-xs text-slate-500 mb-2">
-        Each bar is a KPI's actual value as a percentage of its target for that day. The dashed line at 100% is target achieved.
+        Each bar is the category's confirmed/ratio measures for that day, averaged into a percentage. The dashed
+        line at 100% is fully on-target.
       </div>
       <div className="h-96">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-            <YAxis tick={{ fontSize: 11 }} unit="%" domain={[0, 'dataMax']} />
+            <YAxis tick={{ fontSize: 11 }} unit="%" domain={[0, 100]} />
             <Tooltip content={<CustomTooltip />} />
             <Legend wrapperStyle={{ fontSize: 11 }} />
             <ReferenceLine y={100} stroke="#94a3b8" strokeDasharray="4 4" label={{ value: 'Target', fontSize: 10, fill: '#64748b' }} />
-            {KPI_DEFINITIONS.map((def, i) => (
+            {KPI_CATEGORIES.map((cat, i) => (
               <Bar
-                key={def.key}
-                dataKey={def.key}
-                name={def.label}
+                key={cat.key}
+                dataKey={cat.key}
+                name={cat.label}
                 fill={BAR_COLORS[i % BAR_COLORS.length]}
                 radius={[3, 3, 0, 0]}
               />
