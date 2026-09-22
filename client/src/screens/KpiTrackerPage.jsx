@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Table } from '../components/Table';
 import { KpiOverviewChart } from '../components/KpiCharts';
 import { useKpiEntries, useSaveKpiEntry } from '../services/kpiEntries';
 import { KPI_CATEGORIES, computeCategoryScore, computeOverallScore, measureScore } from '../config/kpiDefinitions';
@@ -158,30 +157,6 @@ export default function KpiTrackerPage() {
 
   const overallScore = computeOverallScore(measures);
 
-  const historyColumns = useMemo(
-    () => [
-      { key: 'date', header: 'Date', render: (row) => new Date(row.date).toLocaleDateString() },
-      ...KPI_CATEGORIES.map((cat) => ({
-        key: cat.key,
-        header: cat.label,
-        render: (row) => {
-          const score = computeCategoryScore(cat, row.measures);
-          return <span className={scoreClass(score)}>{scoreLabel(score)}</span>;
-        },
-      })),
-      {
-        key: 'overall',
-        header: 'Overall',
-        render: (row) => {
-          const score = computeOverallScore(row.measures);
-          return <span className={scoreClass(score)}>{scoreLabel(score)}</span>;
-        },
-      },
-      { key: 'recordedBy', header: 'Recorded by', render: (row) => row.recordedBy?.fullName || '' },
-    ],
-    []
-  );
-
   return (
     <div className="space-y-6 max-w-6xl mx-auto w-full">
       <div>
@@ -295,21 +270,6 @@ export default function KpiTrackerPage() {
           <div className="rounded-xl bg-white shadow-soft p-4 text-sm text-slate-600">Could not load KPI history</div>
         ) : (
           <KpiOverviewChart entries={entries} days={last7Days} />
-        )}
-      </div>
-
-      <div className="space-y-3">
-        <div className="text-sm font-semibold text-epiroc-gray">Recent history</div>
-        <div className="text-xs text-slate-500">
-          Each category's percentage is the average of its confirmed checks and ratio measures for that day; count
-          measures (non-conformances, incidents, Zero Harm days) aren't included in the percentage.
-        </div>
-        {isLoading ? (
-          <div className="rounded-xl bg-white shadow-soft p-4 text-sm text-slate-600">Loading KPI history...</div>
-        ) : isError ? (
-          <div className="rounded-xl bg-white shadow-soft p-4 text-sm text-slate-600">Could not load KPI history</div>
-        ) : (
-          <Table emptyLabel="No KPI entries recorded yet" columns={historyColumns} rows={entries} maxHeight="500px" />
         )}
       </div>
     </div>
