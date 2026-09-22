@@ -27,6 +27,58 @@ function PageAccessCheckboxes({ selected, onChange }) {
   );
 }
 
+function StoremanNameCell({ user, onSave, isPending }) {
+  const [name, setName] = useState(user.fullName || '');
+  const [editing, setEditing] = useState(false);
+
+  if (!editing) {
+    return (
+      <div className="flex items-center gap-2">
+        <span>{user.fullName}</span>
+        <button
+          type="button"
+          className="rounded-lg border border-slate-200 px-2 py-0.5 text-xs hover:bg-slate-50"
+          onClick={() => {
+            setName(user.fullName || '');
+            setEditing(true);
+          }}
+        >
+          Edit
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <input
+        className="rounded-lg border border-slate-200 px-2 py-1 text-sm"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        autoFocus
+      />
+      <button
+        type="button"
+        className="rounded-lg bg-epiroc-yellow px-2 py-1 text-xs font-semibold text-epiroc-black hover:brightness-95 disabled:opacity-60"
+        disabled={isPending || !name.trim()}
+        onClick={() => {
+          onSave(name.trim());
+          setEditing(false);
+        }}
+      >
+        Save
+      </button>
+      <button
+        type="button"
+        className="rounded-lg border border-slate-200 px-2 py-1 text-xs hover:bg-slate-50"
+        onClick={() => setEditing(false)}
+      >
+        Cancel
+      </button>
+    </div>
+  );
+}
+
 function StoremanAccessCell({ user, onSave, isPending }) {
   const [selected, setSelected] = useState(user.allowedPages || []);
   const [editing, setEditing] = useState(false);
@@ -269,7 +321,17 @@ export default function PartsUsersPage() {
           <Table
             emptyLabel="No storemen added yet"
             columns={[
-              { key: 'fullName', header: 'Name' },
+              {
+                key: 'fullName',
+                header: 'Name',
+                render: (u) => (
+                  <StoremanNameCell
+                    user={u}
+                    isPending={updateUser.isPending}
+                    onSave={(fullName) => updateUser.mutate({ id: u.id, patch: { fullName } })}
+                  />
+                ),
+              },
               { key: 'zNumber', header: 'Z Number', render: (u) => u.zNumber || u.employeeNumber },
               {
                 key: 'access',
