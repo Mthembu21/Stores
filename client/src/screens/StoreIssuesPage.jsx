@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Table } from '../components/Table';
 import { useStoreIssues, useUpdateStoreIssue } from '../services/storeIssues';
 import { useMachines, useCreateMachine, useUpdateMachine } from '../services/machines';
@@ -9,8 +9,10 @@ import { summarizeIssues } from '../utils/storeIssues';
 const STATUS_OPTIONS = ['Issued', 'Partially Issued', 'Awaiting Order', 'Returned', 'Closed'];
 
 export default function StoreIssuesPage() {
+  const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
+  const [selectedIssueId, setSelectedIssueId] = useState(null);
 
   const filters = useMemo(
     () => ({ search: search || undefined, status: status || undefined }),
@@ -42,6 +44,18 @@ export default function StoreIssuesPage() {
 
   const columns = useMemo(
     () => [
+      {
+        key: 'select',
+        header: '',
+        render: (i) => (
+          <input
+            type="radio"
+            name="selectedIssue"
+            checked={selectedIssueId === i.issueId}
+            onChange={() => setSelectedIssueId(i.issueId)}
+          />
+        ),
+      },
       { key: 'issueNumber', header: 'Issue #' },
       { key: 'machineNumber', header: 'Machine #' },
       { key: 'machineType', header: 'Machine Type' },
@@ -92,17 +106,17 @@ export default function StoreIssuesPage() {
         ),
       },
     ],
-    [machinesByNumber, updateStoreIssue, createMachine, updateMachine]
+    [machinesByNumber, updateStoreIssue, createMachine, updateMachine, selectedIssueId]
   );
 
   return (
-    <div className="space-y-6 w-full max-w-[1800px] mx-auto">
+    <div className="space-y-6 max-w-6xl mx-auto w-full">
       <div>
         <div className="text-2xl font-semibold text-epiroc-gray">Store Issues</div>
         <div className="text-sm text-slate-600">All spare part issues recorded by the Parts Storeman.</div>
       </div>
 
-      <div className="p-3 bg-blue-50 rounded-xl border border-blue-200 grid grid-cols-1 md:grid-cols-3 gap-3">
+      <div className="p-3 bg-blue-50 rounded-xl border border-blue-200 grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
         <div className="md:col-span-2">
           <label className="text-xs font-semibold text-slate-600">Search (issue #, part #, description)</label>
           <input className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2" value={search} onChange={(e) => setSearch(e.target.value)} />
@@ -115,6 +129,16 @@ export default function StoreIssuesPage() {
               <option key={s} value={s}>{s}</option>
             ))}
           </select>
+        </div>
+        <div>
+          <button
+            type="button"
+            disabled={!selectedIssueId}
+            onClick={() => navigate(`/spare-parts/store-issues/${selectedIssueId}/print`)}
+            className="w-full rounded-xl bg-epiroc-yellow px-3 py-2 text-sm font-semibold text-epiroc-black disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Print Selected Issue
+          </button>
         </div>
       </div>
 
