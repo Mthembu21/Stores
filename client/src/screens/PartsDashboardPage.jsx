@@ -1,15 +1,11 @@
-import { useMemo } from 'react';
 import { Card } from '../components/Card';
 import { Table } from '../components/Table';
 import { LowStockChart } from '../components/PartsCharts';
 import { usePartsDashboard } from '../services/partsDashboard';
-import { formatDateTime } from '../utils/format';
-import { flattenIssueItems } from '../utils/storeIssues';
 
 export default function PartsDashboardPage() {
   const { data, isLoading, isError } = usePartsDashboard();
   const { cards, tables } = data || {};
-  const recentIssueLines = useMemo(() => flattenIssueItems(tables?.recentIssues || []), [tables]);
 
   const fulfillmentRateThisMonth = cards?.partsRequestedThisMonth
     ? Math.round((cards.partsIssuedThisMonth / cards.partsRequestedThisMonth) * 100)
@@ -75,47 +71,25 @@ export default function PartsDashboardPage() {
 
       <LowStockChart data={tables?.lowStockParts || []} />
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-        <div className="space-y-3">
-          <div className="text-sm font-semibold text-epiroc-gray">Low Stock Parts</div>
-          <Table
-            emptyLabel="No low stock parts"
-            getRowClassName={(p) => (p.stockOnHand <= 0 ? 'bg-red-50' : 'bg-epiroc-yellow/15')}
-            columns={[
-              { key: 'partNumber', header: 'Part Number' },
-              { key: 'partDescription', header: 'Description' },
-              { key: 'stockOnHand', header: 'Stock On Hand' },
-              { key: 'minimumStockLevel', header: 'Minimum Level' },
-              { key: 'storageLocation', header: 'Location' },
-              {
-                key: 'status',
-                header: 'Status',
-                render: (p) => (p.stockOnHand <= 0 ? 'OUT OF STOCK' : 'LOW STOCK'),
-              },
-            ]}
-            rows={tables?.lowStockParts || []}
-          />
-        </div>
-
-        <div className="space-y-3">
-          <div className="text-sm font-semibold text-epiroc-gray">Recent Issues</div>
-          <Table
-            emptyLabel="No issues yet"
-            columns={[
-              { key: 'issueNumber', header: 'Issue #' },
-              { key: 'partNumber', header: 'Part Number' },
-              { key: 'partDescription', header: 'Description' },
-              { key: 'quantityIssued', header: 'Qty' },
-              { key: 'machineNumber', header: 'Machine #' },
-              { key: 'serviceOrderNumber', header: 'Service Order' },
-              { key: 'workOrderNumber', header: 'Work Order' },
-              { key: 'requestorName', header: 'Requestor', render: (i) => [i.requestorName, i.requestorSurname].filter(Boolean).join(' ') },
-              { key: 'issueDate', header: 'Date', render: (i) => formatDateTime(i.issueDate) },
-              { key: 'status', header: 'Status' },
-            ]}
-            rows={recentIssueLines}
-          />
-        </div>
+      <div className="space-y-3">
+        <div className="text-sm font-semibold text-epiroc-gray">Low Stock Parts</div>
+        <Table
+          emptyLabel="No low stock parts"
+          getRowClassName={(p) => (p.stockOnHand <= 0 ? 'bg-red-50' : 'bg-epiroc-yellow/15')}
+          columns={[
+            { key: 'partNumber', header: 'Part Number' },
+            { key: 'partDescription', header: 'Description' },
+            { key: 'stockOnHand', header: 'Stock On Hand' },
+            { key: 'minimumStockLevel', header: 'Minimum Level' },
+            { key: 'storageLocation', header: 'Location' },
+            {
+              key: 'status',
+              header: 'Status',
+              render: (p) => (p.stockOnHand <= 0 ? 'OUT OF STOCK' : 'LOW STOCK'),
+            },
+          ]}
+          rows={tables?.lowStockParts || []}
+        />
       </div>
     </div>
   );
