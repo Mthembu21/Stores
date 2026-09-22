@@ -2,6 +2,7 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
+  LabelList,
   Legend,
   ReferenceLine,
   ResponsiveContainer,
@@ -16,6 +17,10 @@ const BAR_COLORS = ['#54565B', '#FFCD00', '#16a34a', '#dc2626', '#7c3aed'];
 function shortDayLabel(iso) {
   const d = new Date(`${iso}T00:00:00`);
   return d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric' });
+}
+
+function barLabelFormatter(value) {
+  return value === null || value === undefined ? '' : `${value}%`;
 }
 
 function CustomTooltip({ active, payload, label }) {
@@ -67,7 +72,9 @@ export function KpiOverviewChart({ entries, days }) {
                 name={cat.label}
                 fill={BAR_COLORS[i % BAR_COLORS.length]}
                 radius={[3, 3, 0, 0]}
-              />
+              >
+                <LabelList dataKey={cat.key} position="top" formatter={barLabelFormatter} style={{ fontSize: 10, fill: '#334155' }} />
+              </Bar>
             ))}
           </BarChart>
         </ResponsiveContainer>

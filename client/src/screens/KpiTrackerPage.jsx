@@ -133,6 +133,7 @@ export default function KpiTrackerPage() {
 
   const [selectedDate, setSelectedDate] = useState(todayIso());
   const [measures, setMeasures] = useState({});
+  const [categoryIndex, setCategoryIndex] = useState(0);
 
   const last7Days = useMemo(() => Array.from({ length: 7 }, (_, i) => isoDaysAgo(6 - i)), []);
 
@@ -143,6 +144,7 @@ export default function KpiTrackerPage() {
 
   useEffect(() => {
     setMeasures(existingEntry ? { ...existingEntry.measures } : {});
+    setCategoryIndex(0);
   }, [selectedDate, existingEntry]);
 
   function updateMeasure(key, data) {
@@ -209,12 +211,37 @@ export default function KpiTrackerPage() {
           <div className={`text-xl ${scoreClass(overallScore)}`}>{scoreLabel(overallScore)}</div>
         </div>
 
-        {KPI_CATEGORIES.map((cat) => {
+        <div className="flex flex-wrap gap-2">
+          {KPI_CATEGORIES.map((cat, i) => {
+            const catScore = computeCategoryScore(cat, measures);
+            const active = i === categoryIndex;
+            return (
+              <button
+                key={cat.key}
+                type="button"
+                onClick={() => setCategoryIndex(i)}
+                className={`rounded-xl px-3 py-2 text-xs font-semibold border text-left ${
+                  active ? 'border-epiroc-yellow bg-epiroc-yellow/15 text-epiroc-gray' : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                <div>{i + 1}. {cat.label}</div>
+                <div className={scoreClass(catScore)}>{scoreLabel(catScore)}</div>
+              </button>
+            );
+          })}
+        </div>
+
+        {(() => {
+          const cat = KPI_CATEGORIES[categoryIndex];
           const catScore = computeCategoryScore(cat, measures);
+          const isFirst = categoryIndex === 0;
+          const isLast = categoryIndex === KPI_CATEGORIES.length - 1;
           return (
-            <div key={cat.key} className="space-y-1">
+            <div className="space-y-1">
               <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-                <div className="text-sm font-semibold text-epiroc-gray">{cat.label}</div>
+                <div className="text-sm font-semibold text-epiroc-gray">
+                  {categoryIndex + 1} of {KPI_CATEGORIES.length} — {cat.label}
+                </div>
                 <div className={`text-sm ${scoreClass(catScore)}`}>{scoreLabel(catScore)}</div>
               </div>
               <div>
@@ -227,14 +254,32 @@ export default function KpiTrackerPage() {
                   />
                 ))}
               </div>
+              <div className="flex items-center justify-between pt-3">
+                <button
+                  type="button"
+                  className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-40"
+                  onClick={() => setCategoryIndex((i) => Math.max(0, i - 1))}
+                  disabled={isFirst}
+                >
+                  &larr; Back
+                </button>
+                <button
+                  type="button"
+                  className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-40"
+                  onClick={() => setCategoryIndex((i) => Math.min(KPI_CATEGORIES.length - 1, i + 1))}
+                  disabled={isLast}
+                >
+                  Next &rarr;
+                </button>
+              </div>
             </div>
           );
-        })}
+        })()}
 
-        <div className="flex justify-center pt-2">
+        <div className="flex justify-center pt-2 border-t border-slate-100">
           <button
             type="submit"
-            className="rounded-xl bg-epiroc-yellow px-6 py-2 font-semibold text-epiroc-black shadow-soft hover:brightness-95 disabled:opacity-60"
+            className="rounded-xl bg-epiroc-yellow px-6 py-2 font-semibold text-epiroc-black shadow-soft hover:brightness-95 disabled:opacity-60 mt-4"
             disabled={saveEntry.isPending}
           >
             {saveEntry.isPending ? 'Saving...' : 'Save KPIs'}
