@@ -61,6 +61,7 @@ async function createStoreIssue(req, res) {
     : [];
 
   if (
+    !serviceOrderNumber ||
     !requestorName ||
     !requestorClockNumber ||
     !foremanName ||

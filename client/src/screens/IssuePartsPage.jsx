@@ -306,6 +306,10 @@ export default function IssuePartsPage() {
       toast.error('Add at least one part');
       return;
     }
+    if (!serviceOrderNumber.trim()) {
+      toast.error('Provide the service order number');
+      return;
+    }
     if (!requestorName.trim()) {
       toast.error('Provide the requestor name');
       return;
@@ -619,7 +623,7 @@ export default function IssuePartsPage() {
             </div>
             <div>
               <label className="text-sm font-medium text-slate-700">Service order number</label>
-              <input className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" value={serviceOrderNumber} onChange={(e) => setServiceOrderNumber(e.target.value)} />
+              <input className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" value={serviceOrderNumber} onChange={(e) => setServiceOrderNumber(e.target.value)} required />
             </div>
             <div>
               <label className="text-sm font-medium text-slate-700">Risk assessment number (optional)</label>
