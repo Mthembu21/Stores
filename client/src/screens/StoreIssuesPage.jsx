@@ -96,7 +96,7 @@ export default function StoreIssuesPage() {
   );
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto w-full">
+    <div className="space-y-6 w-full max-w-[1800px] mx-auto">
       <div>
         <div className="text-2xl font-semibold text-epiroc-gray">Store Issues</div>
         <div className="text-sm text-slate-600">All spare part issues recorded by the Parts Storeman.</div>
