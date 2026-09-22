@@ -99,7 +99,8 @@ const storeIssueSchema = new mongoose.Schema(
     // Kept for older records; the current form collects name only (first + surname
     // together, or just a name) and leaves this blank.
     requestorSurname: { type: String, trim: true, default: '' },
-    requestorClockNumber: { type: String, required: true, trim: true },
+    // Kept for older records; the current form no longer collects a requestor clock number.
+    requestorClockNumber: { type: String, trim: true, default: '' },
     requestorContactNumber: { type: String, trim: true, default: '' },
     requestorZNumber: { type: String, trim: true, default: '' },
 

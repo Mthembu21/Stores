@@ -37,7 +37,6 @@ async function createStoreIssue(req, res) {
     items: itemsInput,
     laborEntries: laborEntriesInput,
     requestorName,
-    requestorClockNumber,
     requestorContactNumber,
     requestorZNumber,
     justification,
@@ -64,7 +63,6 @@ async function createStoreIssue(req, res) {
     !serviceOrderNumber ||
     !riskAssessmentNumber ||
     !requestorName ||
-    !requestorClockNumber ||
     !foremanName ||
     !Array.isArray(itemsInput) ||
     itemsInput.length === 0
@@ -195,7 +193,6 @@ async function createStoreIssue(req, res) {
     items,
     laborEntries,
     requestorName,
-    requestorClockNumber,
     requestorContactNumber,
     requestorZNumber: requestorZNumber || '',
     justification,

@@ -27,7 +27,7 @@ function computeAuto(part, requested) {
 
 export default function IssuePartsPage() {
   // Consumables are issued separately via the Issue Consumables page
-  const { data: partsData, isLoading: partsLoading } = useSpareParts({ partType: 'Returnable' });
+  const { data: partsData, isLoading: partsLoading, refetch: refetchParts } = useSpareParts({ partType: 'Returnable' });
   const parts = useMemo(() => partsData?.parts || [], [partsData]);
   const createIssue = useCreateStoreIssue();
 
@@ -99,7 +99,6 @@ export default function IssuePartsPage() {
   const [selectedRequestorId, setSelectedRequestorId] = useState('');
   const [requestorName, setRequestorName] = useState('');
   const [requestorZNumber, setRequestorZNumber] = useState('');
-  const [requestorClockNumber, setRequestorClockNumber] = useState('');
   const [requestorContactNumber, setRequestorContactNumber] = useState('');
   const [showAddRequestor, setShowAddRequestor] = useState(false);
   const [newRequestorName, setNewRequestorName] = useState('');
@@ -290,7 +289,6 @@ export default function IssuePartsPage() {
     setSelectedRequestorId('');
     setRequestorName('');
     setRequestorZNumber('');
-    setRequestorClockNumber('');
     setRequestorContactNumber('');
     setShowAddRequestor(false);
     setNewRequestorName('');
@@ -300,7 +298,7 @@ export default function IssuePartsPage() {
     setForemanZNumber('');
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     if (items.length === 0) {
       toast.error('Add at least one part');
@@ -318,12 +316,48 @@ export default function IssuePartsPage() {
       toast.error('Provide the requestor name');
       return;
     }
-    if (!requestorClockNumber.trim()) {
-      toast.error('Provide the requestor clock number');
-      return;
-    }
     if (!selectedForemanId || !foremanName) {
       toast.error('Select a foreman before issuing');
+      return;
+    }
+
+    // The parts list can go stale while this form is open (e.g. someone reloads the
+    // inventory from a spreadsheet), which swaps part IDs and stock levels underneath
+    // items already added here. Re-sync against the latest data before submitting so we
+    // catch that as a clear message instead of a "Spare part not found" / quantity error
+    // from the server.
+    const { data: freshPartsData } = await refetchParts();
+    const freshByNumber = new Map((freshPartsData?.parts || []).map((p) => [p.partNumber, p]));
+
+    const missingParts = [];
+    const invalidQtyParts = [];
+    for (const item of items) {
+      const freshPart = freshByNumber.get(item.part.partNumber);
+      if (!freshPart) {
+        missingParts.push(item.part.partNumber);
+        continue;
+      }
+      const requestedNum = Number(item.quantityRequested) || 0;
+      const allocatable = allocatableOf(freshPart);
+      const { autoIssued } = computeAuto(freshPart, requestedNum);
+      const issuedNum = item.touched && item.quantityIssued !== '' ? Number(item.quantityIssued) : autoIssued;
+      if (issuedNum < 0 || issuedNum > allocatable || issuedNum > requestedNum) {
+        invalidQtyParts.push(freshPart.partNumber);
+      }
+    }
+
+    if (missingParts.length > 0 || invalidQtyParts.length > 0) {
+      if (missingParts.length > 0) {
+        toast.error(`No longer in the parts list, please remove and re-add: ${missingParts.join(', ')}`);
+      }
+      if (invalidQtyParts.length > 0) {
+        toast.error(`Stock changed, please re-check the issued quantity for: ${invalidQtyParts.join(', ')}`);
+      }
+      setItems((prev) =>
+        prev
+          .filter((item) => freshByNumber.has(item.part.partNumber))
+          .map((item) => ({ ...item, part: freshByNumber.get(item.part.partNumber) }))
+      );
       return;
     }
 
@@ -375,7 +409,6 @@ export default function IssuePartsPage() {
         laborEntries: payloadLaborEntries,
         requestorName,
         requestorZNumber,
-        requestorClockNumber,
         requestorContactNumber,
         foremanName,
         foremanZNumber,
@@ -874,10 +907,6 @@ export default function IssuePartsPage() {
             <div>
               <label className="text-sm font-medium text-slate-700">Requestor Z number</label>
               <input className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 bg-slate-50" value={requestorZNumber} readOnly />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-slate-700">Clock number</label>
-              <input className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" value={requestorClockNumber} onChange={(e) => setRequestorClockNumber(e.target.value)} required />
             </div>
             <div>
               <label className="text-sm font-medium text-slate-700">Contact number (optional)</label>
