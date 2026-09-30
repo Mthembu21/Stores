@@ -6,6 +6,7 @@ const Roles = {
   ToolsStoreman: 'ToolsStoreman',
   PartsStoreman: 'PartsStoreman',
   Supervisor: 'Supervisor',
+  SHEQ: 'SHEQ',
 };
 
 module.exports = { Roles };

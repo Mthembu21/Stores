@@ -8,12 +8,15 @@ import {
   useReturnDispatch,
   useSpecialToolDispatches,
 } from '../services/specialTools';
+import { useMe } from '../services/auth';
 import { formatDateTime } from '../utils/format';
 
 export default function SpecialToolsPage() {
   const { data: toolsData, isLoading: toolsLoading, isError: toolsError } = useTools();
   const { data: usersData } = useUsers();
   const { data: dispatchesData } = useSpecialToolDispatches('Open');
+  const { data: meData } = useMe();
+  const canManage = (meData?.user || meData)?.role !== 'SHEQ';
 
   const updateTool = useUpdateTool();
   const deleteTool = useDeleteTool();
@@ -79,7 +82,7 @@ export default function SpecialToolsPage() {
 
   // Group technicians by department for better organization
   const getTechniciansByDepartment = () => {
-    const nonAdminUsers = users.filter((u) => u.role !== 'Admin');
+    const nonAdminUsers = users.filter((u) => u.role !== 'Admin' && u.role !== 'SHEQ');
     const grouped = nonAdminUsers.reduce((acc, user) => {
       const dept = user.department || 'Unassigned';
       if (!acc[dept]) acc[dept] = [];
@@ -175,14 +178,17 @@ export default function SpecialToolsPage() {
       {
         key: 'toolName',
         header: 'Tool',
-        render: (tool) => (
-          <button 
-            onClick={() => handleEditClick(tool)}
-            className="text-blue-600 hover:text-blue-800 font-medium flex items-center gap-2"
-          >
-            {tool.toolName}
-          </button>
-        ),
+        render: (tool) =>
+          canManage ? (
+            <button
+              onClick={() => handleEditClick(tool)}
+              className="text-blue-600 hover:text-blue-800 font-medium flex items-center gap-2"
+            >
+              {tool.toolName}
+            </button>
+          ) : (
+            tool.toolName
+          ),
       },
       { key: 'toolCode', header: 'Code' },
       { key: 'category', header: 'Category' },
@@ -245,38 +251,42 @@ export default function SpecialToolsPage() {
         header: 'End',
         render: (tool) => (tool.assignmentEndAt ? formatDateTime(tool.assignmentEndAt) : ''),
       },
-      {
-        key: 'actions',
-        header: 'Actions',
-        render: (tool) => (
-          <div className="flex gap-2">
-            <button
-              onClick={() => setAssignToolId(tool._id)}
-              className="rounded-lg bg-green-500 px-3 py-1 text-xs font-semibold text-white hover:bg-green-600"
-            >
-              Assign
-            </button>
-            <button
-              onClick={() => setDispatchToolId(tool._id)}
-              className="rounded-lg bg-blue-500 px-3 py-1 text-xs font-semibold text-white hover:bg-blue-600"
-            >
-              Dispatch
-            </button>
-            <button
-              onClick={() => {
-                if (window.confirm('Are you sure you want to scrap this tool? This action cannot be undone.')) {
-                  deleteTool.mutate(tool._id);
-                }
-              }}
-              className="rounded-lg bg-red-500 px-3 py-1 text-xs font-semibold text-white hover:bg-red-600"
-            >
-              Scrap
-            </button>
-          </div>
-        ),
-      },
+      ...(canManage
+        ? [
+            {
+              key: 'actions',
+              header: 'Actions',
+              render: (tool) => (
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setAssignToolId(tool._id)}
+                    className="rounded-lg bg-green-500 px-3 py-1 text-xs font-semibold text-white hover:bg-green-600"
+                  >
+                    Assign
+                  </button>
+                  <button
+                    onClick={() => setDispatchToolId(tool._id)}
+                    className="rounded-lg bg-blue-500 px-3 py-1 text-xs font-semibold text-white hover:bg-blue-600"
+                  >
+                    Dispatch
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (window.confirm('Are you sure you want to scrap this tool? This action cannot be undone.')) {
+                        deleteTool.mutate(tool._id);
+                      }
+                    }}
+                    className="rounded-lg bg-red-500 px-3 py-1 text-xs font-semibold text-white hover:bg-red-600"
+                  >
+                    Scrap
+                  </button>
+                </div>
+              ),
+            },
+          ]
+        : []),
     ],
-    [users]
+    [users, canManage]
   );
 
   // Early returns after all hooks are called

@@ -18,6 +18,7 @@ import StockMovementsPage from '../screens/StockMovementsPage';
 import KpiTrackerPage from '../screens/KpiTrackerPage';
 import PartsUsersPage from '../screens/PartsUsersPage';
 import IssuePrintPage from '../screens/IssuePrintPage';
+import LegalAppointmentsPage from '../screens/LegalAppointmentsPage';
 import { RequireAuth } from './RequireAuth';
 import { RequireRole } from './RequireRole';
 import HomeRedirect from './HomeRedirect';
@@ -56,8 +57,16 @@ export default function App() {
         <Route
           path="special-tools"
           element={
-            <RequireRole roles={MODULE_ROLES.tools}>
+            <RequireRole roles={MODULE_ROLES.specialTools}>
               <SpecialToolsPage />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="sheq/legal-appointments"
+          element={
+            <RequireRole roles={MODULE_ROLES.sheq}>
+              <LegalAppointmentsPage />
             </RequireRole>
           }
         />

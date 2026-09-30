@@ -7,11 +7,12 @@ const { Roles } = require('../config/roles');
 const router = express.Router();
 
 router.use(requireAuth);
-router.use(requireRole(Roles.Admin, Roles.ToolsStoreman));
 
-router.get('/', listTools);
-router.post('/', createTool);
-router.patch('/:id', updateTool);
-router.delete('/:id', deleteTool);
+// SHEQ needs read access to Tools (the Special Tools page is built on this list)
+// but should not create/edit/delete tools.
+router.get('/', requireRole(Roles.Admin, Roles.ToolsStoreman, Roles.SHEQ), listTools);
+router.post('/', requireRole(Roles.Admin, Roles.ToolsStoreman), createTool);
+router.patch('/:id', requireRole(Roles.Admin, Roles.ToolsStoreman), updateTool);
+router.delete('/:id', requireRole(Roles.Admin, Roles.ToolsStoreman), deleteTool);
 
 module.exports = { toolRoutes: router };

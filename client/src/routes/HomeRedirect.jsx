@@ -17,6 +17,10 @@ export default function HomeRedirect() {
 
   const user = data?.user || data;
 
+  if (user && user.role === 'SHEQ') {
+    return <Navigate to="/sheq/legal-appointments" replace />;
+  }
+
   if (user && !MODULE_ROLES.tools.includes(user.role) && MODULE_ROLES.spareParts.includes(user.role)) {
     // A Storeman restricted to specific pages might not have access to the
     // Parts Dashboard itself — send them to the first page they can open.

@@ -17,6 +17,7 @@ const userSchema = new mongoose.Schema(
         Roles.ToolsStoreman,
         Roles.PartsStoreman,
         Roles.Supervisor,
+        Roles.SHEQ,
       ],
     },
     department: { type: String, trim: true, default: '' },

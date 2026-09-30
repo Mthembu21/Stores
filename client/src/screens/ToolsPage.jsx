@@ -449,7 +449,7 @@ export default function ToolsPage() {
               >
                 <option value="">Select person...</option>
                 {users
-                  .filter((u) => u.role !== 'Admin')
+                  .filter((u) => u.role !== 'Admin' && u.role !== 'SHEQ')
                   .map((u) => (
                     <option key={u.id} value={u.id}>
                       {u.fullName} ({u.role})
@@ -662,7 +662,7 @@ export default function ToolsPage() {
                 >
                   <option value="">Select technician...</option>
                   {users
-                    .filter((u) => u.role !== 'Admin')
+                    .filter((u) => u.role !== 'Admin' && u.role !== 'SHEQ')
                     .map((u) => (
                       <option key={u.id} value={u.id}>
                         {u.fullName} ({u.role})

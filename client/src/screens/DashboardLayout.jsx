@@ -39,6 +39,7 @@ export default function DashboardLayout() {
   const canSeeTools = role === 'Admin' || role === 'ToolsStoreman';
   const canSeeSpareParts = role === 'Admin' || role === 'PartsStoreman' || role === 'Supervisor';
   const canSeeUsers = role === 'Admin' || role === 'ToolsStoreman';
+  const canSeeSheq = role === 'Admin' || role === 'SHEQ';
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -57,6 +58,14 @@ export default function DashboardLayout() {
                 <SideLink to="/tools">Tools Inventory</SideLink>
                 <SideLink to="/special-tools">Special Tools</SideLink>
                 <SideLink to="/consumables">Consumables</SideLink>
+              </>
+            )}
+
+            {canSeeSheq && (
+              <>
+                <NavSection title="SHEQ" />
+                <SideLink to="/sheq/legal-appointments">Legal Appointments</SideLink>
+                {role === 'SHEQ' && <SideLink to="/special-tools">Special Tools</SideLink>}
               </>
             )}
 
