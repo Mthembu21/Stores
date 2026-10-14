@@ -18,10 +18,11 @@ function startOfToday() {
   return d;
 }
 
-function dueStatus(dueDate) {
-  if (!dueDate) return 'Not Set';
+function dueStatus(appointment) {
+  if (appointment.noExpiry) return 'No Expiry';
+  if (!appointment.dueDate) return 'Not Set';
   const today = startOfToday();
-  const due = new Date(dueDate);
+  const due = new Date(appointment.dueDate);
   const diffDays = Math.floor((due - today) / 86_400_000);
   if (diffDays < 0) return 'Overdue';
   if (diffDays <= DUE_SOON_WINDOW_DAYS) return 'Due Soon';
@@ -33,6 +34,7 @@ const STATUS_BADGE = {
   'Due Soon': 'bg-epiroc-yellow/30 text-epiroc-black',
   Scheduled: 'bg-green-100 text-green-700',
   'Not Set': 'bg-slate-100 text-slate-500',
+  'No Expiry': 'bg-blue-100 text-blue-700',
 };
 
 export default function LegalAppointmentsPage() {
@@ -51,6 +53,7 @@ export default function LegalAppointmentsPage() {
     position: '',
     appointmentType: '',
     dueDate: '',
+    noExpiry: false,
   });
 
   const { data, isLoading, isError } = useLegalAppointments({ search: search || undefined });
@@ -89,7 +92,7 @@ export default function LegalAppointmentsPage() {
     let dueSoon = 0;
     let notSet = 0;
     appointments.forEach((a) => {
-      const s = dueStatus(a.dueDate);
+      const s = dueStatus(a);
       if (s === 'Overdue') overdue += 1;
       else if (s === 'Due Soon') dueSoon += 1;
       else if (s === 'Not Set') notSet += 1;
@@ -117,7 +120,7 @@ export default function LegalAppointmentsPage() {
     return appointments.filter((a) => {
       if (appointmentTypeFilter && a.appointmentType !== appointmentTypeFilter) return false;
       if (workshopAreaFilter && a.workshopArea !== workshopAreaFilter) return false;
-      if (statusFilter && dueStatus(a.dueDate) !== statusFilter) return false;
+      if (statusFilter && dueStatus(a) !== statusFilter) return false;
       if (monthFilter) {
         if (!a.dueDate) return false;
         const d = new Date(a.dueDate);
@@ -138,11 +141,12 @@ export default function LegalAppointmentsPage() {
         workshopArea: addForm.workshopArea.trim(),
         position: addForm.position.trim(),
         appointmentType: addForm.appointmentType,
-        dueDate: addForm.dueDate || null,
+        dueDate: addForm.noExpiry ? null : addForm.dueDate || null,
+        noExpiry: addForm.noExpiry,
       },
       {
         onSuccess: () => {
-          setAddForm({ employeeName: '', workshopArea: '', position: '', appointmentType: '', dueDate: '' });
+          setAddForm({ employeeName: '', workshopArea: '', position: '', appointmentType: '', dueDate: '', noExpiry: false });
           setNewEmployeeMode(false);
           setShowAddForm(false);
         },
@@ -180,9 +184,22 @@ export default function LegalAppointmentsPage() {
         render: (a) => (
           <input
             type="date"
-            className="rounded-lg border border-slate-300 px-2 py-1 text-sm"
+            className="rounded-lg border border-slate-300 px-2 py-1 text-sm disabled:bg-slate-100 disabled:text-slate-400"
             value={a.dueDate ? a.dueDate.slice(0, 10) : ''}
+            disabled={a.noExpiry}
             onChange={(e) => updateAppointment.mutate({ id: a._id, dueDate: e.target.value || null })}
+          />
+        ),
+      },
+      {
+        key: 'noExpiry',
+        header: 'No Due Date',
+        render: (a) => (
+          <input
+            type="checkbox"
+            title="This appointment does not expire / has no due date"
+            checked={Boolean(a.noExpiry)}
+            onChange={(e) => updateAppointment.mutate({ id: a._id, noExpiry: e.target.checked })}
           />
         ),
       },
@@ -190,7 +207,7 @@ export default function LegalAppointmentsPage() {
         key: 'status',
         header: 'Status',
         render: (a) => {
-          const s = dueStatus(a.dueDate);
+          const s = dueStatus(a);
           return (
             <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${STATUS_BADGE[s]}`}>
               {s}
@@ -324,10 +341,19 @@ export default function LegalAppointmentsPage() {
               <label className="text-sm font-medium text-slate-700">Due Date (optional)</label>
               <input
                 type="date"
-                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 disabled:bg-slate-100 disabled:text-slate-400"
                 value={addForm.dueDate}
+                disabled={addForm.noExpiry}
                 onChange={(e) => setAddForm((f) => ({ ...f, dueDate: e.target.value }))}
               />
+              <label className="mt-2 flex items-center gap-2 text-xs font-medium text-slate-600">
+                <input
+                  type="checkbox"
+                  checked={addForm.noExpiry}
+                  onChange={(e) => setAddForm((f) => ({ ...f, noExpiry: e.target.checked, dueDate: e.target.checked ? '' : f.dueDate }))}
+                />
+                Does not expire / no due date needed
+              </label>
             </div>
           </div>
           <button
@@ -453,6 +479,7 @@ export default function LegalAppointmentsPage() {
             <option value="Due Soon">Due Soon</option>
             <option value="Scheduled">Scheduled</option>
             <option value="Not Set">Not Set</option>
+            <option value="No Expiry">No Expiry</option>
           </select>
         </div>
       </div>

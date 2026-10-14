@@ -41,6 +41,9 @@ const legalAppointmentSchema = new mongoose.Schema(
     position: { type: String, trim: true, default: '' },
     appointmentType: { type: String, required: true, trim: true, enum: LEGAL_APPOINTMENT_TYPES },
     dueDate: { type: Date, default: null },
+    // When true, this appointment is marked as not requiring a renewal due date
+    // (e.g. a once-off appointment) and is excluded from overdue/due-soon tracking.
+    noExpiry: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

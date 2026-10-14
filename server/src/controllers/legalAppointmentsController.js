@@ -15,7 +15,7 @@ async function listLegalAppointments(req, res) {
 }
 
 async function createLegalAppointment(req, res) {
-  const { employeeName, workshopArea, position, appointmentType, dueDate } = req.body;
+  const { employeeName, workshopArea, position, appointmentType, dueDate, noExpiry } = req.body;
 
   if (!employeeName || !appointmentType) {
     throw new ApiError(400, 'Employee name and appointment type are required');
@@ -32,12 +32,15 @@ async function createLegalAppointment(req, res) {
     throw new ApiError(409, 'This employee already has that appointment on record');
   }
 
+  const isNoExpiry = Boolean(noExpiry);
+
   const appointment = await LegalAppointment.create({
     employeeName: String(employeeName).trim(),
     workshopArea: workshopArea ? String(workshopArea).trim() : '',
     position: position ? String(position).trim() : '',
     appointmentType,
-    dueDate: dueDate ? new Date(dueDate) : null,
+    dueDate: isNoExpiry ? null : dueDate ? new Date(dueDate) : null,
+    noExpiry: isNoExpiry,
   });
 
   res.status(201).json({ appointment });
@@ -45,7 +48,7 @@ async function createLegalAppointment(req, res) {
 
 async function updateLegalAppointment(req, res) {
   const { id } = req.params;
-  const { employeeName, workshopArea, position, dueDate } = req.body;
+  const { employeeName, workshopArea, position, dueDate, noExpiry } = req.body;
 
   const appointment = await LegalAppointment.findById(id);
   if (!appointment) {
@@ -56,6 +59,11 @@ async function updateLegalAppointment(req, res) {
   if (workshopArea !== undefined) appointment.workshopArea = String(workshopArea).trim();
   if (position !== undefined) appointment.position = String(position).trim();
   if (dueDate !== undefined) appointment.dueDate = dueDate ? new Date(dueDate) : null;
+  if (noExpiry !== undefined) {
+    appointment.noExpiry = Boolean(noExpiry);
+    // A due date is meaningless once the appointment is marked as not expiring.
+    if (appointment.noExpiry) appointment.dueDate = null;
+  }
 
   await appointment.save();
   res.json({ appointment });
