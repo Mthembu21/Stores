@@ -1,9 +1,9 @@
 import {
-  Area,
+  Bar,
+  BarChart,
   CartesianGrid,
-  ComposedChart,
+  LabelList,
   Legend,
-  Line,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
@@ -13,18 +13,22 @@ import {
 import { KPI_CATEGORIES, computeCategoryScore } from '../config/kpiDefinitions';
 import { Gauge } from './Gauge';
 
-// A calmer, more cohesive palette than default chart colors — one accent per category.
+// Strictly Epiroc brand colors — yellow plus a gray scale, no outside hues.
 const CATEGORY_COLORS = {
-  receiving: '#2563eb',
-  dispatching: '#FFCD00',
-  picking: '#16a34a',
-  housekeeping: '#7c3aed',
-  safety: '#dc2626',
+  receiving: '#FFCD00',
+  dispatching: '#54565B',
+  picking: '#8A8D93',
+  housekeeping: '#C9A227',
+  safety: '#2B2C2F',
 };
 
 function shortDayLabel(iso) {
   const d = new Date(`${iso}T00:00:00`);
   return d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric' });
+}
+
+function barLabelFormatter(value) {
+  return value === null || value === undefined ? '' : `${value}%`;
 }
 
 function CustomTooltip({ active, payload, label }) {
@@ -67,7 +71,7 @@ export function KpiOverviewChart({ entries, days }) {
         <div>
           <div className="text-sm font-semibold text-epiroc-gray">Weekly KPI performance by category</div>
           <div className="text-xs text-slate-500 mt-0.5">
-            Trend of each category's confirmed/ratio measures, averaged into a daily percentage.
+            Each bar is the category's confirmed/ratio measures for that day, averaged into a percentage.
           </div>
         </div>
         <div className="flex gap-3 flex-wrap">
@@ -79,15 +83,7 @@ export function KpiOverviewChart({ entries, days }) {
 
       <div className="h-80">
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={data} margin={{ top: 10, right: 16, left: -16, bottom: 0 }}>
-            <defs>
-              {KPI_CATEGORIES.map((cat) => (
-                <linearGradient key={cat.key} id={`kpi-fill-${cat.key}`} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={CATEGORY_COLORS[cat.key]} stopOpacity={0.18} />
-                  <stop offset="100%" stopColor={CATEGORY_COLORS[cat.key]} stopOpacity={0} />
-                </linearGradient>
-              ))}
-            </defs>
+          <BarChart data={data} margin={{ top: 16, right: 16, left: -16, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
             <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={{ stroke: '#e2e8f0' }} tickLine={false} />
             <YAxis
@@ -101,30 +97,11 @@ export function KpiOverviewChart({ entries, days }) {
             <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} iconType="circle" />
             <ReferenceLine y={100} stroke="#cbd5e1" strokeDasharray="4 4" />
             {KPI_CATEGORIES.map((cat) => (
-              <Area
-                key={`area-${cat.key}`}
-                type="monotone"
-                dataKey={cat.key}
-                stroke="none"
-                fill={`url(#kpi-fill-${cat.key})`}
-                connectNulls
-                legendType="none"
-              />
+              <Bar key={cat.key} dataKey={cat.key} name={cat.label} fill={CATEGORY_COLORS[cat.key]} radius={[4, 4, 0, 0]} maxBarSize={28}>
+                <LabelList dataKey={cat.key} position="top" formatter={barLabelFormatter} style={{ fontSize: 9, fill: '#334155' }} />
+              </Bar>
             ))}
-            {KPI_CATEGORIES.map((cat) => (
-              <Line
-                key={cat.key}
-                type="monotone"
-                dataKey={cat.key}
-                name={cat.label}
-                stroke={CATEGORY_COLORS[cat.key]}
-                strokeWidth={2.5}
-                dot={{ r: 3, strokeWidth: 0, fill: CATEGORY_COLORS[cat.key] }}
-                activeDot={{ r: 5 }}
-                connectNulls
-              />
-            ))}
-          </ComposedChart>
+          </BarChart>
         </ResponsiveContainer>
       </div>
     </div>
