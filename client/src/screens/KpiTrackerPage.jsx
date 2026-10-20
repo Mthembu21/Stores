@@ -1,18 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { KpiOverviewChart } from '../components/KpiCharts';
 import { useKpiEntries, useSaveKpiEntry } from '../services/kpiEntries';
 import { KPI_CATEGORIES, computeCategoryScore, computeOverallScore, measureScore } from '../config/kpiDefinitions';
 
 function todayIso() {
   const d = new Date();
-  const tzOffsetMs = d.getTimezoneOffset() * 60000;
-  return new Date(d.getTime() - tzOffsetMs).toISOString().slice(0, 10);
-}
-
-function isoDaysAgo(daysAgo) {
-  const d = new Date();
-  d.setDate(d.getDate() - daysAgo);
   const tzOffsetMs = d.getTimezoneOffset() * 60000;
   return new Date(d.getTime() - tzOffsetMs).toISOString().slice(0, 10);
 }
@@ -127,15 +119,13 @@ function MeasureRow({ def, data, onChange }) {
 }
 
 export default function KpiTrackerPage() {
-  const { data, isLoading, isError } = useKpiEntries(60);
+  const { data } = useKpiEntries(60);
   const entries = data?.entries || [];
   const saveEntry = useSaveKpiEntry();
 
   const [selectedDate, setSelectedDate] = useState(todayIso());
   const [measures, setMeasures] = useState({});
   const [categoryIndex, setCategoryIndex] = useState(0);
-
-  const last7Days = useMemo(() => Array.from({ length: 7 }, (_, i) => isoDaysAgo(6 - i)), []);
 
   const existingEntry = useMemo(
     () => entries.find((e) => dateOnly(e.date) === selectedDate),
@@ -270,17 +260,6 @@ export default function KpiTrackerPage() {
           </button>
         </div>
       </form>
-
-      <div className="space-y-3">
-        <div className="text-sm font-semibold text-epiroc-gray">Weekly progress by category</div>
-        {isLoading ? (
-          <div className="rounded-xl bg-white shadow-soft p-4 text-sm text-slate-600">Loading KPI history...</div>
-        ) : isError ? (
-          <div className="rounded-xl bg-white shadow-soft p-4 text-sm text-slate-600">Could not load KPI history</div>
-        ) : (
-          <KpiOverviewChart entries={entries} days={last7Days} />
-        )}
-      </div>
     </div>
   );
 }
