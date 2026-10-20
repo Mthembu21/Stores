@@ -12,7 +12,7 @@ export default function StoreIssuesPage() {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
-  const [selectedIssueId, setSelectedIssueId] = useState(null);
+  const [selectedIds, setSelectedIds] = useState(() => new Set());
 
   const filters = useMemo(
     () => ({ search: search || undefined, status: status || undefined }),
@@ -42,17 +42,33 @@ export default function StoreIssuesPage() {
     }
   }
 
+  function toggleSelected(id) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  const allSelected = rows.length > 0 && rows.every((r) => selectedIds.has(r.issueId));
+
+  function toggleSelectAll() {
+    setSelectedIds(allSelected ? new Set() : new Set(rows.map((r) => r.issueId)));
+  }
+
   const columns = useMemo(
     () => [
       {
         key: 'select',
-        header: '',
+        header: (
+          <input type="checkbox" checked={allSelected} onChange={toggleSelectAll} title="Select all" />
+        ),
         render: (i) => (
           <input
-            type="radio"
-            name="selectedIssue"
-            checked={selectedIssueId === i.issueId}
-            onChange={() => setSelectedIssueId(i.issueId)}
+            type="checkbox"
+            checked={selectedIds.has(i.issueId)}
+            onChange={() => toggleSelected(i.issueId)}
           />
         ),
       },
@@ -94,7 +110,7 @@ export default function StoreIssuesPage() {
         },
       },
     ],
-    [machinesByNumber, updateStoreIssue, createMachine, updateMachine, selectedIssueId]
+    [machinesByNumber, updateStoreIssue, createMachine, updateMachine, selectedIds, allSelected, rows]
   );
 
   return (
@@ -121,11 +137,11 @@ export default function StoreIssuesPage() {
         <div>
           <button
             type="button"
-            disabled={!selectedIssueId}
-            onClick={() => navigate(`/spare-parts/store-issues/${selectedIssueId}/print`)}
+            disabled={selectedIds.size === 0}
+            onClick={() => navigate(`/spare-parts/store-issues/print?ids=${[...selectedIds].join(',')}`)}
             className="w-full rounded-xl bg-epiroc-yellow px-3 py-2 text-sm font-semibold text-epiroc-black disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Print Selected Issue
+            Print Selected ({selectedIds.size})
           </button>
         </div>
       </div>

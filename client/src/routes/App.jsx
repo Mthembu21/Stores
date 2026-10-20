@@ -19,6 +19,7 @@ import KpiTrackerPage from '../screens/KpiTrackerPage';
 import KpiVisualsPage from '../screens/KpiVisualsPage';
 import PartsUsersPage from '../screens/PartsUsersPage';
 import IssuePrintPage from '../screens/IssuePrintPage';
+import IssuesBulkPrintPage from '../screens/IssuesBulkPrintPage';
 import LegalAppointmentsPage from '../screens/LegalAppointmentsPage';
 import { RequireAuth } from './RequireAuth';
 import { RequireRole } from './RequireRole';
@@ -192,6 +193,17 @@ export default function App() {
           <RequireAuth>
             <RequireRole roles={MODULE_ROLES.spareParts} pageKey="spare-parts/store-issues">
               <IssuePrintPage />
+            </RequireRole>
+          </RequireAuth>
+        }
+      />
+
+      <Route
+        path="spare-parts/store-issues/print"
+        element={
+          <RequireAuth>
+            <RequireRole roles={MODULE_ROLES.spareParts} pageKey="spare-parts/store-issues">
+              <IssuesBulkPrintPage />
             </RequireRole>
           </RequireAuth>
         }

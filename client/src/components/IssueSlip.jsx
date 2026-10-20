@@ -1,0 +1,348 @@
+import epirocLogo from './logo.png';
+
+function dateOnly(value) {
+  if (!value) return '';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleDateString();
+}
+
+function hasText(v) {
+  return v !== null && v !== undefined && String(v).trim() !== '';
+}
+
+function Field({ label, value }) {
+  return (
+    <div className="field">
+      <div className="field-label">{label}</div>
+      <div className="field-value">{hasText(value) ? value : ' '}</div>
+    </div>
+  );
+}
+
+function Section({ title, children }) {
+  return (
+    <div className="section">
+      <div className="section-title">{title}</div>
+      <div className="section-body">{children}</div>
+    </div>
+  );
+}
+
+export const ISSUE_SLIP_STYLES = `
+  .print-page {
+    width: 190mm;
+    min-height: 277mm;
+    margin: 8mm auto;
+    background: #fff;
+    color: #111;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 11.5pt;
+    line-height: 1.6;
+  }
+  .print-toolbar {
+    max-width: 190mm;
+    margin: 0 auto 8px auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .print-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 2px solid #003b71;
+    padding-bottom: 6px;
+    margin-bottom: 9px;
+  }
+  .print-header .brand {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+  .print-header .brand img {
+    height: 25pt;
+    width: auto;
+    display: block;
+  }
+  .print-header h1 {
+    font-size: 14.5pt;
+    font-weight: 700;
+    color: #003b71;
+    margin: 0;
+  }
+  .print-header .sub {
+    font-size: 10pt;
+    font-weight: 600;
+    margin-top: 2px;
+  }
+  .print-header .meta {
+    text-align: right;
+    font-size: 9.5pt;
+  }
+  .print-header .meta .issue-number {
+    font-size: 12pt;
+    font-weight: 700;
+  }
+  .section {
+    border: 1px solid #94a3b8;
+    margin-bottom: 10px;
+    page-break-inside: avoid;
+  }
+  .section-title {
+    background: #e2e8f0;
+    font-weight: 700;
+    font-size: 9.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    padding: 7px 10px;
+    border-bottom: 1px solid #94a3b8;
+  }
+  .section-body {
+    padding: 12px 14px;
+  }
+  .grid {
+    display: grid;
+    gap: 14px 20px;
+  }
+  .grid-2 { grid-template-columns: repeat(2, 1fr); }
+  .grid-3 { grid-template-columns: repeat(3, 1fr); }
+  .grid-4 { grid-template-columns: repeat(4, 1fr); }
+  .field-label {
+    font-size: 8.5pt;
+    color: #475569;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .field-value {
+    font-size: 11.5pt;
+    font-weight: 600;
+    border-bottom: 1px solid #cbd5e1;
+    min-height: 18pt;
+    padding-bottom: 4px;
+  }
+  table.print-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 10.5pt;
+  }
+  table.print-table th, table.print-table td {
+    border: 1px solid #94a3b8;
+    padding: 6px 8px;
+    text-align: left;
+  }
+  table.print-table th {
+    background: #f1f5f9;
+    font-size: 9pt;
+    text-transform: uppercase;
+  }
+  .checkbox-row {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 9px;
+  }
+  .checkbox-row span {
+    font-size: 10.5pt;
+  }
+  .signature-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+  }
+  .signature-box {
+    border-top: 1px solid #111;
+    margin-top: 26px;
+    padding-top: 5px;
+    font-size: 9.5pt;
+  }
+  .print-page-break {
+    page-break-after: always;
+  }
+  @media print {
+    .no-print { display: none !important; }
+    .print-page { margin: 0 auto; }
+    @page { size: A4; margin: 10mm; }
+  }
+`;
+
+// The printable content for one issue — reused by both the single-issue print page
+// and the bulk (multi-select) print page.
+export function IssueSlip({ issue }) {
+  const hasMaintenance =
+    hasText(issue.dateStarted) ||
+    hasText(issue.dateCompleted) ||
+    hasText(issue.timeStarted) ||
+    hasText(issue.timeCompleted) ||
+    hasText(issue.engineHours) ||
+    hasText(issue.powerPackHours) ||
+    hasText(issue.percussionHours) ||
+    hasText(issue.extraHours);
+
+  const nature = issue.natureOfDowntime || {};
+  const hasDowntime =
+    nature.damage || nature.breakdown || nature.warranty || nature.inspection ||
+    hasText(issue.possibleCausesOfFailure) || hasText(issue.workPerformed);
+
+  const hasComponentInfo = hasText(issue.serialNumberIssued) || hasText(issue.serialNumberReturned);
+
+  const laborEntries = issue.laborEntries || [];
+
+  return (
+    <>
+      <div className="print-header">
+        <div className="brand">
+          <img src={epirocLogo} alt="Epiroc" />
+          <div>
+            <h1>Epiroc South Africa (Pty) Ltd</h1>
+            <div className="sub">Unplanned Maintenance Work Order &mdash; Parts Issue</div>
+          </div>
+        </div>
+        <div className="meta">
+          <div className="issue-number">{issue.issueNumber}</div>
+          <div>Status: {issue.status}</div>
+          <div>{dateOnly(issue.issueDate)}</div>
+        </div>
+      </div>
+
+      <Section title="Machine information">
+        <div className="grid grid-4">
+          <Field label="Machine number" value={issue.machineNumber} />
+          <Field label="Machine type" value={issue.machineType} />
+          <Field label="Service order number" value={issue.serviceOrderNumber} />
+          <Field label="Risk assessment number" value={issue.riskAssessmentNumber} />
+        </div>
+      </Section>
+
+      <Section title="Machine area / location">
+        <div className="grid grid-3">
+          <Field label="Location" value={issue.location} />
+          <Field label="Section" value={issue.section} />
+          <Field label="Responsible foreman" value={issue.responsibleForeman} />
+        </div>
+      </Section>
+
+      {hasMaintenance && (
+        <Section title="Maintenance executed / hour meter readings">
+          <div className="grid grid-4">
+            <Field label="Date started" value={dateOnly(issue.dateStarted)} />
+            <Field label="Date completed" value={dateOnly(issue.dateCompleted)} />
+            <Field label="Time started" value={issue.timeStarted} />
+            <Field label="Time completed" value={issue.timeCompleted} />
+            <Field label="Engine hrs" value={issue.engineHours} />
+            <Field label="Power pack hrs" value={issue.powerPackHours} />
+            <Field label="Percussion 2 hrs" value={issue.percussionHours} />
+            <Field label="Extra hrs" value={issue.extraHours} />
+          </div>
+        </Section>
+      )}
+
+      {hasDowntime && (
+        <Section title="Nature of downtime">
+          <div className="checkbox-row">
+            <span>{nature.damage ? '☑' : '☐'} Damage</span>
+            <span>{nature.breakdown ? '☑' : '☐'} Break down</span>
+            <span>{nature.warranty ? '☑' : '☐'} Warranty</span>
+            <span>{nature.inspection ? '☑' : '☐'} Inspection</span>
+          </div>
+          <div className="grid grid-2">
+            <Field label="Possible causes of failure" value={issue.possibleCausesOfFailure} />
+            <Field label="Work performed" value={issue.workPerformed} />
+          </div>
+        </Section>
+      )}
+
+      {hasComponentInfo && (
+        <Section title="Component / equipment information">
+          <div className="grid grid-2">
+            <Field label="Serial number (issued)" value={issue.serialNumberIssued} />
+            <Field label="Serial number (returned)" value={issue.serialNumberReturned} />
+          </div>
+        </Section>
+      )}
+
+      <Section title="Parts issued">
+        <table className="print-table">
+          <thead>
+            <tr>
+              <th>Part number</th>
+              <th>Description</th>
+              <th>Qty issued</th>
+              <th>Qty to order</th>
+              <th>Qty returned</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(issue.items || []).map((item) => (
+              <tr key={item._id}>
+                <td>{item.partNumber}</td>
+                <td>{item.partDescription}</td>
+                <td>{item.quantityIssued}</td>
+                <td>{item.quantityToOrder}</td>
+                <td>{item.quantityReturned}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </Section>
+
+      {laborEntries.length > 0 && (
+        <Section title="Labour">
+          <table className="print-table">
+            <thead>
+              <tr>
+                <th>Clock #</th>
+                <th>Name</th>
+                <th>Surname</th>
+                <th>Position</th>
+                <th>Total hrs</th>
+              </tr>
+            </thead>
+            <tbody>
+              {laborEntries.map((l, i) => (
+                <tr key={i}>
+                  <td>{l.clockNumber}</td>
+                  <td>{l.name}</td>
+                  <td>{l.surname}</td>
+                  <td>{l.position}</td>
+                  <td>{l.totalHours ?? ''}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Section>
+      )}
+
+      <Section title="Sign-off">
+        <div className="signature-grid">
+          <div>
+            <div className="field-label">Spares issued to (Requestor)</div>
+            <div className="field-value">
+              {[issue.requestorName, issue.requestorSurname].filter(hasText).join(' ')}
+              {hasText(issue.requestorZNumber) ? ` (${issue.requestorZNumber})` : ''}
+              {hasText(issue.requestorClockNumber) ? ` (Clock #${issue.requestorClockNumber})` : ''}
+            </div>
+            <div className="signature-box">Signature</div>
+          </div>
+          <div>
+            <div className="field-label">Foreman</div>
+            <div className="field-value">
+              {hasText(issue.foremanName)
+                ? `${[issue.foremanName, issue.foremanSurname].filter(hasText).join(' ')}${hasText(issue.foremanZNumber) ? ` (${issue.foremanZNumber})` : ''}`
+                : ' '}
+            </div>
+            <div className="signature-box">Signature</div>
+          </div>
+          <div>
+            <div className="field-label">Storeman</div>
+            <div className="field-value">
+              {hasText(issue.storemanName)
+                ? `${[issue.storemanName, issue.storemanSurname].filter(hasText).join(' ')}${hasText(issue.storemanZNumber) ? ` (${issue.storemanZNumber})` : ''}`
+                : ' '}
+            </div>
+            <div className="signature-box">Signature</div>
+          </div>
+        </div>
+      </Section>
+    </>
+  );
+}
