@@ -16,6 +16,7 @@ import PartsToOrderPage from '../screens/PartsToOrderPage';
 import NonStockItemsPage from '../screens/NonStockItemsPage';
 import StockMovementsPage from '../screens/StockMovementsPage';
 import KpiTrackerPage from '../screens/KpiTrackerPage';
+import KpiVisualsPage from '../screens/KpiVisualsPage';
 import PartsUsersPage from '../screens/PartsUsersPage';
 import IssuePrintPage from '../screens/IssuePrintPage';
 import LegalAppointmentsPage from '../screens/LegalAppointmentsPage';
@@ -164,6 +165,14 @@ export default function App() {
           element={
             <RequireRole roles={MODULE_ROLES.spareParts} pageKey="spare-parts/kpi">
               <KpiTrackerPage />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="spare-parts/kpi/visuals"
+          element={
+            <RequireRole roles={MODULE_ROLES.spareParts} pageKey="spare-parts/kpi">
+              <KpiVisualsPage />
             </RequireRole>
           }
         />

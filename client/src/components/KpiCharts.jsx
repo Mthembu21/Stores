@@ -1,9 +1,9 @@
 import {
-  Bar,
-  BarChart,
+  Area,
   CartesianGrid,
-  LabelList,
+  ComposedChart,
   Legend,
+  Line,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
@@ -11,26 +11,36 @@ import {
   YAxis,
 } from 'recharts';
 import { KPI_CATEGORIES, computeCategoryScore } from '../config/kpiDefinitions';
+import { Gauge } from './Gauge';
 
-const BAR_COLORS = ['#54565B', '#FFCD00', '#16a34a', '#dc2626', '#7c3aed'];
+// A calmer, more cohesive palette than default chart colors — one accent per category.
+const CATEGORY_COLORS = {
+  receiving: '#2563eb',
+  dispatching: '#FFCD00',
+  picking: '#16a34a',
+  housekeeping: '#7c3aed',
+  safety: '#dc2626',
+};
 
 function shortDayLabel(iso) {
   const d = new Date(`${iso}T00:00:00`);
   return d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric' });
 }
 
-function barLabelFormatter(value) {
-  return value === null || value === undefined ? '' : `${value}%`;
-}
-
 function CustomTooltip({ active, payload, label }) {
   if (!active || !payload || payload.length === 0) return null;
   return (
-    <div className="rounded-lg bg-white shadow-soft border border-slate-200 p-3 text-xs space-y-1">
-      <div className="font-semibold text-slate-900">{label}</div>
+    <div className="rounded-xl bg-white shadow-soft border border-slate-200 p-3 text-xs space-y-1.5 min-w-[160px]">
+      <div className="font-semibold text-slate-900 pb-1 border-b border-slate-100">{label}</div>
       {payload.map((p) => (
-        <div key={p.dataKey} style={{ color: p.color }}>
-          {p.name}: {p.value === null || p.value === undefined ? 'No entry' : `${p.value}%`}
+        <div key={p.dataKey} className="flex items-center justify-between gap-3">
+          <span className="flex items-center gap-1.5 text-slate-600">
+            <span className="inline-block w-2 h-2 rounded-full" style={{ background: p.color }} />
+            {p.name}
+          </span>
+          <span className="font-semibold" style={{ color: p.color }}>
+            {p.value === null || p.value === undefined ? '—' : `${p.value}%`}
+          </span>
         </div>
       ))}
     </div>
@@ -49,34 +59,72 @@ export function KpiOverviewChart({ entries, days }) {
     return row;
   });
 
+  const latest = data[data.length - 1] || {};
+
   return (
-    <div className="rounded-xl bg-white shadow-soft p-4">
-      <div className="text-sm font-semibold text-epiroc-gray">Weekly KPI performance by category</div>
-      <div className="text-xs text-slate-500 mb-2">
-        Each bar is the category's confirmed/ratio measures for that day, averaged into a percentage. The dashed
-        line at 100% is fully on-target.
+    <div className="rounded-xl bg-white shadow-soft p-5 space-y-4">
+      <div className="flex items-start justify-between flex-wrap gap-4">
+        <div>
+          <div className="text-sm font-semibold text-epiroc-gray">Weekly KPI performance by category</div>
+          <div className="text-xs text-slate-500 mt-0.5">
+            Trend of each category's confirmed/ratio measures, averaged into a daily percentage.
+          </div>
+        </div>
+        <div className="flex gap-3 flex-wrap">
+          {KPI_CATEGORIES.map((cat) => (
+            <Gauge key={cat.key} value={latest[cat.key] ?? null} size={60} strokeWidth={6} label={cat.label} />
+          ))}
+        </div>
       </div>
-      <div className="h-96">
+
+      <div className="h-80">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-            <YAxis tick={{ fontSize: 11 }} unit="%" domain={[0, 100]} />
+          <ComposedChart data={data} margin={{ top: 10, right: 16, left: -16, bottom: 0 }}>
+            <defs>
+              {KPI_CATEGORIES.map((cat) => (
+                <linearGradient key={cat.key} id={`kpi-fill-${cat.key}`} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={CATEGORY_COLORS[cat.key]} stopOpacity={0.18} />
+                  <stop offset="100%" stopColor={CATEGORY_COLORS[cat.key]} stopOpacity={0} />
+                </linearGradient>
+              ))}
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+            <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={{ stroke: '#e2e8f0' }} tickLine={false} />
+            <YAxis
+              tick={{ fontSize: 11, fill: '#64748b' }}
+              unit="%"
+              domain={[0, 100]}
+              axisLine={false}
+              tickLine={false}
+            />
             <Tooltip content={<CustomTooltip />} />
-            <Legend wrapperStyle={{ fontSize: 11 }} />
-            <ReferenceLine y={100} stroke="#94a3b8" strokeDasharray="4 4" label={{ value: 'Target', fontSize: 10, fill: '#64748b' }} />
-            {KPI_CATEGORIES.map((cat, i) => (
-              <Bar
+            <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} iconType="circle" />
+            <ReferenceLine y={100} stroke="#cbd5e1" strokeDasharray="4 4" />
+            {KPI_CATEGORIES.map((cat) => (
+              <Area
+                key={`area-${cat.key}`}
+                type="monotone"
+                dataKey={cat.key}
+                stroke="none"
+                fill={`url(#kpi-fill-${cat.key})`}
+                connectNulls
+                legendType="none"
+              />
+            ))}
+            {KPI_CATEGORIES.map((cat) => (
+              <Line
                 key={cat.key}
+                type="monotone"
                 dataKey={cat.key}
                 name={cat.label}
-                fill={BAR_COLORS[i % BAR_COLORS.length]}
-                radius={[3, 3, 0, 0]}
-              >
-                <LabelList dataKey={cat.key} position="top" formatter={barLabelFormatter} style={{ fontSize: 10, fill: '#334155' }} />
-              </Bar>
+                stroke={CATEGORY_COLORS[cat.key]}
+                strokeWidth={2.5}
+                dot={{ r: 3, strokeWidth: 0, fill: CATEGORY_COLORS[cat.key] }}
+                activeDot={{ r: 5 }}
+                connectNulls
+              />
             ))}
-          </BarChart>
+          </ComposedChart>
         </ResponsiveContainer>
       </div>
     </div>

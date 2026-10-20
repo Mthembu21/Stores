@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { KpiOverviewChart } from '../components/KpiCharts';
 import { useKpiEntries, useSaveKpiEntry } from '../services/kpiEntries';
 import { KPI_CATEGORIES, computeCategoryScore, computeOverallScore, measureScore } from '../config/kpiDefinitions';
@@ -159,12 +160,20 @@ export default function KpiTrackerPage() {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto w-full">
-      <div>
-        <div className="text-2xl font-semibold text-epiroc-gray">Daily KPI Tracker</div>
-        <div className="text-sm text-slate-600">
-          Confirm today's checks and counts per category — percentages are calculated automatically from what you
-          confirm, not typed in.
+      <div className="flex items-start justify-between flex-wrap gap-3">
+        <div>
+          <div className="text-2xl font-semibold text-epiroc-gray">Daily KPI Tracker</div>
+          <div className="text-sm text-slate-600">
+            Confirm today's checks and counts per category — percentages are calculated automatically from what you
+            confirm, not typed in.
+          </div>
         </div>
+        <Link
+          to="/spare-parts/kpi/visuals"
+          className="rounded-xl bg-epiroc-yellow px-4 py-2 text-sm font-semibold text-epiroc-black shadow-soft hover:brightness-95"
+        >
+          KPI Visuals
+        </Link>
       </div>
 
       <form className="max-w-3xl mx-auto w-full rounded-xl bg-white shadow-soft p-6 space-y-6" onSubmit={handleSave}>
