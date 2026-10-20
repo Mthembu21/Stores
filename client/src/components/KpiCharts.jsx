@@ -13,13 +13,14 @@ import {
 import { KPI_CATEGORIES, computeCategoryScore } from '../config/kpiDefinitions';
 import { Gauge } from './Gauge';
 
-// Strictly Epiroc brand colors — yellow plus a gray scale, no outside hues.
+// Epiroc yellow as the lead accent, plus a distinct color per other category —
+// Safety is always red, matching the universal safety/danger convention.
 const CATEGORY_COLORS = {
   receiving: '#FFCD00',
-  dispatching: '#54565B',
-  picking: '#8A8D93',
-  housekeeping: '#C9A227',
-  safety: '#2B2C2F',
+  dispatching: '#2563EB',
+  picking: '#16A34A',
+  housekeeping: '#7C3AED',
+  safety: '#DC2626',
 };
 
 function shortDayLabel(iso) {
@@ -81,7 +82,7 @@ export function KpiOverviewChart({ entries, days }) {
         </div>
       </div>
 
-      <div className="h-80">
+      <div className="h-[30rem]">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 16, right: 16, left: -16, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
@@ -95,7 +96,13 @@ export function KpiOverviewChart({ entries, days }) {
             />
             <Tooltip content={<CustomTooltip />} />
             <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} iconType="circle" />
-            <ReferenceLine y={100} stroke="#cbd5e1" strokeDasharray="4 4" />
+            <ReferenceLine
+              y={100}
+              stroke="#54565B"
+              strokeDasharray="6 4"
+              strokeWidth={1.5}
+              label={{ value: 'Target — 100%', position: 'insideTopRight', fontSize: 11, fill: '#54565B', fontWeight: 600 }}
+            />
             {KPI_CATEGORIES.map((cat) => (
               <Bar key={cat.key} dataKey={cat.key} name={cat.label} fill={CATEGORY_COLORS[cat.key]} radius={[4, 4, 0, 0]} maxBarSize={28}>
                 <LabelList dataKey={cat.key} position="top" formatter={barLabelFormatter} style={{ fontSize: 9, fill: '#334155' }} />
