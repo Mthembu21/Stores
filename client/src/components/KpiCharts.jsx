@@ -13,13 +13,14 @@ import {
 import { KPI_CATEGORIES, computeCategoryScore } from '../config/kpiDefinitions';
 import { Gauge } from './Gauge';
 
-// Epiroc yellow as the lead accent, plus a distinct color per other category —
-// Safety is always red, matching the universal safety/danger convention.
+// A curated palette rather than five competing primary colors: Epiroc yellow as the
+// one bright accent, a dark neutral, a calm teal and a warm taupe alongside it, and
+// red reserved for Safety only, where it actually carries meaning.
 const CATEGORY_COLORS = {
   receiving: '#FFCD00',
-  dispatching: '#2563EB',
-  picking: '#16A34A',
-  housekeeping: '#7C3AED',
+  dispatching: '#3B4252',
+  picking: '#5B8C85',
+  housekeeping: '#A8A29E',
   safety: '#DC2626',
 };
 
