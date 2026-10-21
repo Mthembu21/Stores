@@ -7,6 +7,9 @@ import {
   useCreateLegalAppointment,
   useUpdateLegalAppointment,
   useDeleteLegalAppointment,
+  useUploadLegalAppointmentDocument,
+  useDeleteLegalAppointmentDocument,
+  openLegalAppointmentDocument,
 } from '../services/legalAppointments';
 
 const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -37,6 +40,78 @@ const STATUS_BADGE = {
   'No Expiry': 'bg-blue-100 text-blue-700',
 };
 
+const MAX_DOCUMENT_BYTES = 10 * 1024 * 1024;
+
+function formatFileSize(bytes) {
+  if (!bytes) return '';
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function DocumentCell({ appointment, uploadDocument, deleteDocument }) {
+  const doc = appointment.document;
+  const isUploading = uploadDocument.isPending && uploadDocument.variables?.id === appointment._id;
+
+  function handleFileChange(e) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (file.size > MAX_DOCUMENT_BYTES) {
+      window.alert('File is too large — the maximum is 10 MB.');
+      return;
+    }
+    if (doc && !window.confirm(`Replace "${doc.fileName}" with "${file.name}"?`)) return;
+    uploadDocument.mutate({ id: appointment._id, file });
+  }
+
+  const uploadLabel = (
+    <label className="cursor-pointer text-xs font-semibold text-epiroc-gray hover:underline">
+      {isUploading ? 'Uploading...' : doc ? 'Replace' : '+ Upload'}
+      <input type="file" className="hidden" disabled={isUploading} onChange={handleFileChange} />
+    </label>
+  );
+
+  if (!doc) return uploadLabel;
+
+  return (
+    <div className="min-w-[10rem] space-y-1">
+      <div className="truncate text-xs text-slate-700 max-w-[14rem]" title={doc.fileName}>
+        {doc.fileName}
+        <span className="text-slate-400"> · {formatFileSize(doc.size)}</span>
+      </div>
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          className="text-xs font-semibold text-blue-700 hover:underline"
+          onClick={() => openLegalAppointmentDocument(appointment)}
+        >
+          View
+        </button>
+        <button
+          type="button"
+          className="text-xs font-semibold text-blue-700 hover:underline"
+          onClick={() => openLegalAppointmentDocument(appointment, { download: true })}
+        >
+          Download
+        </button>
+        {uploadLabel}
+        <button
+          type="button"
+          className="text-xs font-semibold text-red-600 hover:underline"
+          onClick={() => {
+            if (window.confirm(`Remove the document "${doc.fileName}"?`)) {
+              deleteDocument.mutate(appointment._id);
+            }
+          }}
+        >
+          Remove
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function LegalAppointmentsPage() {
   const currentYear = new Date().getFullYear();
   const [year, setYear] = useState(currentYear);
@@ -63,6 +138,8 @@ export default function LegalAppointmentsPage() {
   const createAppointment = useCreateLegalAppointment();
   const updateAppointment = useUpdateLegalAppointment();
   const deleteAppointment = useDeleteLegalAppointment();
+  const uploadDocument = useUploadLegalAppointmentDocument();
+  const deleteDocument = useDeleteLegalAppointmentDocument();
 
   const employees = useMemo(() => {
     const byName = new Map();
@@ -216,6 +293,13 @@ export default function LegalAppointmentsPage() {
         },
       },
       {
+        key: 'document',
+        header: 'Document',
+        render: (a) => (
+          <DocumentCell appointment={a} uploadDocument={uploadDocument} deleteDocument={deleteDocument} />
+        ),
+      },
+      {
         key: 'remove',
         header: '',
         render: (a) => (
@@ -233,7 +317,7 @@ export default function LegalAppointmentsPage() {
         ),
       },
     ],
-    [updateAppointment, deleteAppointment]
+    [updateAppointment, deleteAppointment, uploadDocument, deleteDocument]
   );
 
   return (

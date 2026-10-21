@@ -1,5 +1,6 @@
 const { ApiError } = require('../utils/ApiError');
 const { LegalAppointment, LEGAL_APPOINTMENT_TYPES } = require('../models/LegalAppointment');
+const { LegalAppointmentDocument } = require('../models/LegalAppointmentDocument');
 
 async function listLegalAppointments(req, res) {
   const { search } = req.query;
@@ -76,7 +77,71 @@ async function deleteLegalAppointment(req, res) {
     throw new ApiError(404, 'Legal appointment record not found');
   }
   await appointment.deleteOne();
+  await LegalAppointmentDocument.deleteOne({ appointment: appointment._id });
   res.json({ ok: true });
+}
+
+// The file arrives as the raw request body (see the route's express.raw parser);
+// its name travels URI-encoded in the X-File-Name header and its real MIME type in
+// X-File-Type (the request itself is sent as octet-stream so the global JSON parser
+// never consumes it). Uploading again replaces the existing document.
+async function uploadLegalAppointmentDocument(req, res) {
+  const { id } = req.params;
+  const appointment = await LegalAppointment.findById(id);
+  if (!appointment) {
+    throw new ApiError(404, 'Legal appointment record not found');
+  }
+
+  if (!Buffer.isBuffer(req.body) || req.body.length === 0) {
+    throw new ApiError(400, 'No file was uploaded');
+  }
+
+  let fileName = 'document';
+  try {
+    fileName = decodeURIComponent(req.get('X-File-Name') || '') || fileName;
+  } catch {
+    // Keep the fallback name if the header isn't valid URI encoding.
+  }
+  const mimeType = req.get('X-File-Type') || 'application/octet-stream';
+  const size = req.body.length;
+
+  await LegalAppointmentDocument.findOneAndUpdate(
+    { appointment: appointment._id },
+    { appointment: appointment._id, fileName, mimeType, size, data: req.body },
+    { upsert: true, setDefaultsOnInsert: true }
+  );
+
+  appointment.document = { fileName, mimeType, size, uploadedAt: new Date() };
+  await appointment.save();
+
+  res.json({ appointment });
+}
+
+async function downloadLegalAppointmentDocument(req, res) {
+  const { id } = req.params;
+  const doc = await LegalAppointmentDocument.findOne({ appointment: id });
+  if (!doc) {
+    throw new ApiError(404, 'No document attached to this appointment');
+  }
+
+  res.set('Content-Type', doc.mimeType || 'application/octet-stream');
+  res.set('Content-Length', String(doc.data.length));
+  res.set('Content-Disposition', `inline; filename*=UTF-8''${encodeURIComponent(doc.fileName)}`);
+  res.send(doc.data);
+}
+
+async function deleteLegalAppointmentDocument(req, res) {
+  const { id } = req.params;
+  const appointment = await LegalAppointment.findById(id);
+  if (!appointment) {
+    throw new ApiError(404, 'Legal appointment record not found');
+  }
+
+  await LegalAppointmentDocument.deleteOne({ appointment: appointment._id });
+  appointment.document = null;
+  await appointment.save();
+
+  res.json({ appointment });
 }
 
 module.exports = {
@@ -84,4 +149,7 @@ module.exports = {
   createLegalAppointment,
   updateLegalAppointment,
   deleteLegalAppointment,
+  uploadLegalAppointmentDocument,
+  downloadLegalAppointmentDocument,
+  deleteLegalAppointmentDocument,
 };

@@ -44,6 +44,19 @@ const legalAppointmentSchema = new mongoose.Schema(
     // When true, this appointment is marked as not requiring a renewal due date
     // (e.g. a once-off appointment) and is excluded from overdue/due-soon tracking.
     noExpiry: { type: Boolean, default: false },
+    // Metadata of the attached document; the file itself lives in LegalAppointmentDocument.
+    document: {
+      type: new mongoose.Schema(
+        {
+          fileName: { type: String, trim: true },
+          mimeType: { type: String },
+          size: { type: Number },
+          uploadedAt: { type: Date },
+        },
+        { _id: false }
+      ),
+      default: null,
+    },
   },
   { timestamps: true }
 );
