@@ -16,8 +16,8 @@ export function useMachines() {
 export function useCreateMachine() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ machineNumber, machineType }) => {
-      const { data } = await http.post('/machines', { machineNumber, machineType });
+    mutationFn: async ({ machineNumber, machineType, serviceOrderNumber, onContract }) => {
+      const { data } = await http.post('/machines', { machineNumber, machineType, serviceOrderNumber, onContract });
       return data;
     },
     onSuccess: () => {

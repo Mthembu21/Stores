@@ -1,9 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useSpareParts } from '../services/spareParts';
 import { useCreateStoreIssue } from '../services/storeIssues';
-import { useMachines, useCreateMachine } from '../services/machines';
+import { useMachines, useCreateMachine, useUpdateMachine } from '../services/machines';
 import { usePartsPeople, useCreatePartsPerson } from '../services/partsPeople';
 import { useMe } from '../services/auth';
 
@@ -25,15 +25,38 @@ function computeAuto(part, requested) {
   };
 }
 
+// Prefill job dates/times so the storeman rarely has to type them: started = now,
+// completed = same time 2 days later. Uses local time (not toISOString, which is UTC).
+function defaultJobTimes() {
+  const pad = (n) => String(n).padStart(2, '0');
+  const toDate = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const now = new Date();
+  const completed = new Date(now);
+  completed.setDate(completed.getDate() + 2);
+  const time = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  return { dateStarted: toDate(now), dateCompleted: toDate(completed), timeStarted: time, timeCompleted: time };
+}
+
 export default function IssuePartsPage() {
   // Consumables are issued separately via the Issue Consumables page
   const { data: partsData, isLoading: partsLoading, refetch: refetchParts } = useSpareParts({ partType: 'Returnable' });
   const parts = useMemo(() => partsData?.parts || [], [partsData]);
   const createIssue = useCreateStoreIssue();
+  // Locks the Create issue button from the first click until the save finishes, so
+  // repeated clicks (e.g. while the parts re-check below is running) can't create
+  // duplicate issue slips with different numbers. A ref is used because state updates
+  // aren't visible to a second click fired before the next render.
+  const submittingRef = useRef(false);
+  const [submitting, setSubmitting] = useState(false);
+  function releaseSubmit() {
+    submittingRef.current = false;
+    setSubmitting(false);
+  }
 
   const { data: machinesData } = useMachines();
   const machines = machinesData?.machines || [];
   const createMachine = useCreateMachine();
+  const updateMachine = useUpdateMachine();
 
   const { data: foremenData } = usePartsPeople('Foreman');
   const foremen = foremenData?.people || [];
@@ -67,6 +90,7 @@ export default function IssuePartsPage() {
   const [showAddMachine, setShowAddMachine] = useState(false);
   const [newMachineNumber, setNewMachineNumber] = useState('');
   const [newMachineType, setNewMachineType] = useState('');
+  const [newMachineServiceOrder, setNewMachineServiceOrder] = useState('');
   const [serviceOrderNumber, setServiceOrderNumber] = useState('');
   const [riskAssessmentNumber, setRiskAssessmentNumber] = useState('');
 
@@ -74,10 +98,10 @@ export default function IssuePartsPage() {
   const [section, setSection] = useState('');
   const [responsibleForeman, setResponsibleForeman] = useState('');
 
-  const [dateStarted, setDateStarted] = useState('');
-  const [dateCompleted, setDateCompleted] = useState('');
-  const [timeStarted, setTimeStarted] = useState('');
-  const [timeCompleted, setTimeCompleted] = useState('');
+  const [dateStarted, setDateStarted] = useState(() => defaultJobTimes().dateStarted);
+  const [dateCompleted, setDateCompleted] = useState(() => defaultJobTimes().dateCompleted);
+  const [timeStarted, setTimeStarted] = useState(() => defaultJobTimes().timeStarted);
+  const [timeCompleted, setTimeCompleted] = useState(() => defaultJobTimes().timeCompleted);
 
   const [engineHours, setEngineHours] = useState('');
   const [powerPackHours, setPowerPackHours] = useState('');
@@ -118,10 +142,26 @@ export default function IssuePartsPage() {
     });
   }, [machines, machineSearch]);
 
+  const selectedMachine = useMemo(
+    () => machines.find((m) => m.machineNumber === machineNumber) || null,
+    [machines, machineNumber]
+  );
+  const storedServiceOrder = selectedMachine?.serviceOrderNumber || '';
+  const serviceOrderChanged = Boolean(selectedMachine) && serviceOrderNumber.trim() !== storedServiceOrder;
+
+  function handleSaveServiceOrderToMachine() {
+    if (!selectedMachine) return;
+    updateMachine.mutate(
+      { id: selectedMachine._id, serviceOrderNumber: serviceOrderNumber.trim() },
+      { onSuccess: () => toast.success(`Service order saved to machine ${selectedMachine.machineNumber}`) }
+    );
+  }
+
   function handleSelectMachine(id) {
     const machine = machines.find((m) => m._id === id);
     setMachineNumber(machine ? machine.machineNumber : '');
     setMachineType(machine ? machine.machineType : '');
+    setServiceOrderNumber(machine?.serviceOrderNumber || '');
     setMachineSearch(machine ? machine.machineNumber : '');
     setShowMachineDropdown(false);
   }
@@ -144,6 +184,7 @@ export default function IssuePartsPage() {
     if (!value) {
       setMachineNumber('');
       setMachineType('');
+      setServiceOrderNumber('');
     }
   }
 
@@ -190,17 +231,23 @@ export default function IssuePartsPage() {
       return;
     }
     createMachine.mutate(
-      { machineNumber: newMachineNumber.trim(), machineType: newMachineType.trim() },
+      {
+        machineNumber: newMachineNumber.trim(),
+        machineType: newMachineType.trim(),
+        serviceOrderNumber: newMachineServiceOrder.trim(),
+      },
       {
         onSuccess: (data) => {
           const machine = data?.machine;
           if (machine) {
             setMachineNumber(machine.machineNumber);
             setMachineType(machine.machineType);
+            setServiceOrderNumber(machine.serviceOrderNumber || '');
             setMachineSearch(machine.machineNumber);
           }
           setNewMachineNumber('');
           setNewMachineType('');
+          setNewMachineServiceOrder('');
           setShowAddMachine(false);
           setShowMachineDropdown(false);
         },
@@ -264,15 +311,17 @@ export default function IssuePartsPage() {
     setShowAddMachine(false);
     setNewMachineNumber('');
     setNewMachineType('');
+    setNewMachineServiceOrder('');
     setServiceOrderNumber('');
     setRiskAssessmentNumber('');
     setLocation('');
     setSection('');
     setResponsibleForeman('');
-    setDateStarted('');
-    setDateCompleted('');
-    setTimeStarted('');
-    setTimeCompleted('');
+    const jobTimes = defaultJobTimes();
+    setDateStarted(jobTimes.dateStarted);
+    setDateCompleted(jobTimes.dateCompleted);
+    setTimeStarted(jobTimes.timeStarted);
+    setTimeCompleted(jobTimes.timeCompleted);
     setEngineHours('');
     setPowerPackHours('');
     setPercussionHours('');
@@ -300,6 +349,7 @@ export default function IssuePartsPage() {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    if (submittingRef.current) return;
     if (items.length === 0) {
       toast.error('Add at least one part');
       return;
@@ -326,7 +376,16 @@ export default function IssuePartsPage() {
     // items already added here. Re-sync against the latest data before submitting so we
     // catch that as a clear message instead of a "Spare part not found" / quantity error
     // from the server.
-    const { data: freshPartsData } = await refetchParts();
+    submittingRef.current = true;
+    setSubmitting(true);
+    let freshPartsData;
+    try {
+      ({ data: freshPartsData } = await refetchParts());
+    } catch {
+      toast.error('Could not check the latest stock, please try again');
+      releaseSubmit();
+      return;
+    }
     const freshByNumber = new Map((freshPartsData?.parts || []).map((p) => [p.partNumber, p]));
 
     const missingParts = [];
@@ -353,6 +412,7 @@ export default function IssuePartsPage() {
       if (invalidQtyParts.length > 0) {
         toast.error(`Stock changed, please re-check the issued quantity for: ${invalidQtyParts.join(', ')}`);
       }
+      releaseSubmit();
       setItems((prev) =>
         prev
           .filter((item) => freshByNumber.has(item.part.partNumber))
@@ -418,6 +478,7 @@ export default function IssuePartsPage() {
           setLastCreatedIssue(data?.issue || null);
           resetForm();
         },
+        onSettled: releaseSubmit,
       }
     );
   }
@@ -643,6 +704,12 @@ export default function IssuePartsPage() {
                     value={newMachineType}
                     onChange={(e) => setNewMachineType(e.target.value)}
                   />
+                  <input
+                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                    placeholder="Service order"
+                    value={newMachineServiceOrder}
+                    onChange={(e) => setNewMachineServiceOrder(e.target.value)}
+                  />
                   <button
                     type="button"
                     className="rounded-xl bg-epiroc-yellow px-3 py-2 text-sm font-semibold text-epiroc-black shadow-soft hover:brightness-95 whitespace-nowrap disabled:opacity-60"
@@ -661,6 +728,20 @@ export default function IssuePartsPage() {
             <div>
               <label className="text-sm font-medium text-slate-700">Service order number</label>
               <input className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2" value={serviceOrderNumber} onChange={(e) => setServiceOrderNumber(e.target.value)} required />
+              {serviceOrderChanged && serviceOrderNumber.trim() && (
+                <button
+                  type="button"
+                  className="mt-1 text-xs font-semibold text-epiroc-gray hover:underline disabled:opacity-60"
+                  onClick={handleSaveServiceOrderToMachine}
+                  disabled={updateMachine.isPending}
+                >
+                  {updateMachine.isPending
+                    ? 'Saving...'
+                    : storedServiceOrder
+                      ? `Update service order on machine ${selectedMachine.machineNumber} (currently ${storedServiceOrder})`
+                      : `Save service order to machine ${selectedMachine.machineNumber}`}
+                </button>
+              )}
             </div>
             <div>
               <label className="text-sm font-medium text-slate-700">Risk assessment number</label>
@@ -953,11 +1034,16 @@ export default function IssuePartsPage() {
           <button
             type="submit"
             className="rounded-xl bg-epiroc-yellow px-6 py-2 font-semibold text-epiroc-black shadow-soft hover:brightness-95 disabled:opacity-60"
-            disabled={createIssue.isPending}
+            disabled={submitting || createIssue.isPending}
           >
-            {createIssue.isPending ? 'Creating issue...' : 'Create issue'}
+            {submitting || createIssue.isPending ? 'Creating issue, please wait...' : 'Create issue'}
           </button>
         </div>
+        {(submitting || createIssue.isPending) && (
+          <div className="text-center text-sm text-slate-600">
+            Please wait, the issue slip is being created. Do not click again or leave this page.
+          </div>
+        )}
       </form>
     </div>
   );

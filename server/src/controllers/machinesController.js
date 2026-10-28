@@ -7,7 +7,7 @@ async function listMachines(req, res) {
 }
 
 async function createMachine(req, res) {
-  const { machineNumber, machineType, onContract } = req.body;
+  const { machineNumber, machineType, serviceOrderNumber, onContract } = req.body;
 
   if (!machineNumber) {
     throw new ApiError(400, 'Missing required fields');
@@ -22,6 +22,7 @@ async function createMachine(req, res) {
   const machine = await Machine.create({
     machineNumber: finalMachineNumber,
     machineType: machineType ? String(machineType).trim() : '',
+    serviceOrderNumber: serviceOrderNumber ? String(serviceOrderNumber).trim() : '',
     onContract: Boolean(onContract),
   });
 
@@ -30,7 +31,7 @@ async function createMachine(req, res) {
 
 async function updateMachine(req, res) {
   const { id } = req.params;
-  const { onContract } = req.body;
+  const { onContract, serviceOrderNumber } = req.body;
 
   const machine = await Machine.findById(id);
   if (!machine) {
@@ -39,6 +40,9 @@ async function updateMachine(req, res) {
 
   if (onContract !== undefined) {
     machine.onContract = Boolean(onContract);
+  }
+  if (serviceOrderNumber !== undefined) {
+    machine.serviceOrderNumber = serviceOrderNumber ? String(serviceOrderNumber).trim() : '';
   }
 
   await machine.save();
