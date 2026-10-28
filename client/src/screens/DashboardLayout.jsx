@@ -65,6 +65,7 @@ export default function DashboardLayout() {
               <>
                 <NavSection title="SHEQ" />
                 <SideLink to="/sheq/legal-appointments">Legal Appointments</SideLink>
+                <SideLink to="/sheq/ims-audits">IMS Audit Programme</SideLink>
                 {role === 'SHEQ' && <SideLink to="/special-tools">Special Tools</SideLink>}
               </>
             )}

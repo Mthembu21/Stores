@@ -21,6 +21,7 @@ import PartsUsersPage from '../screens/PartsUsersPage';
 import IssuePrintPage from '../screens/IssuePrintPage';
 import IssuesBulkPrintPage from '../screens/IssuesBulkPrintPage';
 import LegalAppointmentsPage from '../screens/LegalAppointmentsPage';
+import ImsAuditsPage from '../screens/ImsAuditsPage';
 import { RequireAuth } from './RequireAuth';
 import { RequireRole } from './RequireRole';
 import HomeRedirect from './HomeRedirect';
@@ -69,6 +70,14 @@ export default function App() {
           element={
             <RequireRole roles={MODULE_ROLES.sheq}>
               <LegalAppointmentsPage />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="sheq/ims-audits"
+          element={
+            <RequireRole roles={MODULE_ROLES.sheq}>
+              <ImsAuditsPage />
             </RequireRole>
           }
         />

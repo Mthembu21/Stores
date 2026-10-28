@@ -20,6 +20,7 @@ const { machineRoutes } = require('./machineRoutes');
 const { partRequestRoutes } = require('./partRequestRoutes');
 const { nonStockItemRoutes } = require('./nonStockItemRoutes');
 const { legalAppointmentRoutes } = require('./legalAppointmentRoutes');
+const { imsAuditRoutes } = require('./imsAuditRoutes');
 
 const router = express.Router();
 
@@ -47,5 +48,6 @@ router.use('/machines', machineRoutes);
 router.use('/part-requests', partRequestRoutes);
 router.use('/non-stock-items', nonStockItemRoutes);
 router.use('/legal-appointments', legalAppointmentRoutes);
+router.use('/ims-audits', imsAuditRoutes);
 
 module.exports = router;
