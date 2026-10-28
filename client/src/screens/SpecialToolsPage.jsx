@@ -22,10 +22,12 @@ export default function SpecialToolsPage() {
   const deleteTool = useDeleteTool();
   const assignTool = useAssignSpecialTool();
   const dispatchTool = useDispatchSpecialTool();
+  const returnDispatch = useReturnDispatch();
 
   const [editToolId, setEditToolId] = useState('');
   const [assignToolId, setAssignToolId] = useState('');
   const [dispatchToolId, setDispatchToolId] = useState('');
+  const [returnDispatchId, setReturnDispatchId] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
@@ -52,9 +54,14 @@ export default function SpecialToolsPage() {
   });
 
   const [dispatchForm, setDispatchForm] = useState({
-    type: 'Job',
+    type: 'Calibration',
     sentAt: '',
     expectedReturnAt: '',
+    reference: '',
+  });
+
+  const [returnForm, setReturnForm] = useState({
+    returnedAt: '',
     reference: '',
   });
 
@@ -289,6 +296,35 @@ export default function SpecialToolsPage() {
     [users, canManage]
   );
 
+  const dispatchColumns = useMemo(
+    () => [
+      { key: 'toolName', header: 'Tool', render: (d) => d.toolId?.toolName || 'Unknown tool' },
+      { key: 'toolCode', header: 'Code', render: (d) => d.toolId?.toolCode || '' },
+      { key: 'type', header: 'Type' },
+      { key: 'sentAt', header: 'Sent', render: (d) => formatDateTime(d.sentAt) },
+      { key: 'expectedReturnAt', header: 'Expected Return', render: (d) => formatDateTime(d.expectedReturnAt) },
+      { key: 'reference', header: 'Reference' },
+      ...(canManage
+        ? [
+            {
+              key: 'actions',
+              header: '',
+              render: (d) => (
+                <button
+                  type="button"
+                  onClick={() => setReturnDispatchId(d._id)}
+                  className="rounded-lg bg-green-500 px-3 py-1 text-xs font-semibold text-white hover:bg-green-600"
+                >
+                  Mark Returned
+                </button>
+              ),
+            },
+          ]
+        : []),
+    ],
+    [canManage]
+  );
+
   // Early returns after all hooks are called
   if (toolsLoading) return <div>Loading...</div>;
   if (toolsError || !toolsData) return <div>Error loading tools</div>;
@@ -367,6 +403,20 @@ export default function SpecialToolsPage() {
             maxHeight="500px"
           />
         )}
+      </div>
+
+      <div className="rounded-xl bg-white shadow-soft p-6">
+        <div className="text-sm font-semibold text-epiroc-gray">Away for Calibration / Inspection</div>
+        <div className="text-xs text-slate-500 mt-1">
+          Mark a tool as returned once it's back from calibration/inspection — last/next due dates update automatically.
+        </div>
+        <div className="mt-3">
+          <Table
+            emptyLabel="No tools currently away for calibration or inspection"
+            columns={dispatchColumns}
+            rows={dispatches}
+          />
+        </div>
       </div>
 
       {/* Edit Tool Modal */}
@@ -761,9 +811,8 @@ export default function SpecialToolsPage() {
                   onChange={(e) => setDispatchForm({ ...dispatchForm, type: e.target.value })}
                   required
                 >
-                  <option value="Job">Job</option>
-                  <option value="Maintenance">Maintenance</option>
                   <option value="Calibration">Calibration</option>
+                  <option value="Inspection">Inspection</option>
                 </select>
               </div>
               <div>
@@ -810,11 +859,79 @@ export default function SpecialToolsPage() {
                   onClick={() => {
                     setDispatchToolId('');
                     setDispatchForm({
-                      type: 'Job',
+                      type: 'Calibration',
                       sentAt: '',
                       expectedReturnAt: '',
                       reference: '',
                     });
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Mark Returned Modal */}
+      {returnDispatchId && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-xl max-w-md w-full">
+            <h2 className="text-xl font-semibold mb-4">Mark Tool Returned</h2>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                returnDispatch.mutate(
+                  {
+                    dispatchId: returnDispatchId,
+                    returnedAt: returnForm.returnedAt,
+                    reference: returnForm.reference,
+                  },
+                  {
+                    onSuccess: () => {
+                      setReturnDispatchId('');
+                      setReturnForm({ returnedAt: '', reference: '' });
+                    },
+                  }
+                );
+              }}
+              className="space-y-4"
+            >
+              <div>
+                <label className="block text-sm font-medium text-slate-700">Returned Date</label>
+                <input
+                  type="datetime-local"
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                  value={returnForm.returnedAt}
+                  onChange={(e) => setReturnForm({ ...returnForm, returnedAt: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700">Reference/Certificate Number</label>
+                <input
+                  type="text"
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                  value={returnForm.reference}
+                  onChange={(e) => setReturnForm({ ...returnForm, reference: e.target.value })}
+                  placeholder="e.g. CAL-CERT-001"
+                />
+              </div>
+              <div className="flex gap-3">
+                <button
+                  type="submit"
+                  className="flex-1 rounded-xl bg-epiroc-yellow px-4 py-2 font-semibold text-epiroc-black hover:brightness-95 disabled:opacity-60"
+                  disabled={returnDispatch.isPending}
+                >
+                  {returnDispatch.isPending ? 'Updating...' : 'Mark Returned'}
+                </button>
+                <button
+                  type="button"
+                  className="flex-1 rounded-xl border border-slate-200 px-4 py-2 font-semibold text-slate-700 hover:bg-slate-50"
+                  onClick={() => {
+                    setReturnDispatchId('');
+                    setReturnForm({ returnedAt: '', reference: '' });
                   }}
                 >
                   Cancel
