@@ -37,11 +37,30 @@ export function useUpdateLegalAppointment() {
       const { data } = await http.patch(`/legal-appointments/${id}`, patch);
       return data;
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['legal-appointments'] });
+    // Apply the change to the cached list straight away so the checkbox, date and
+    // status badge react immediately; roll back if the server rejects it.
+    onMutate: async ({ id, ...patch }) => {
+      await qc.cancelQueries({ queryKey: ['legal-appointments'] });
+      const previous = qc.getQueriesData({ queryKey: ['legal-appointments'] });
+      const optimistic = { ...patch };
+      if (patch.noExpiry) optimistic.dueDate = null;
+      if (patch.dueDate) optimistic.noExpiry = false;
+      qc.setQueriesData({ queryKey: ['legal-appointments'] }, (old) =>
+        old?.appointments
+          ? { ...old, appointments: old.appointments.map((a) => (a._id === id ? { ...a, ...optimistic } : a)) }
+          : old
+      );
+      return { previous };
     },
-    onError: (err) => {
+    onSuccess: () => {
+      toast.success('Appointment updated');
+    },
+    onError: (err, _vars, context) => {
+      context?.previous?.forEach(([key, data]) => qc.setQueryData(key, data));
       toast.error(err?.response?.data?.message || 'Could not update appointment');
+    },
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: ['legal-appointments'] });
     },
   });
 }

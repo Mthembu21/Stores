@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Bar, BarChart, Cell, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { Card } from '../components/Card';
 import { Table } from '../components/Table';
@@ -109,6 +109,64 @@ function DocumentCell({ appointment, uploadDocument, deleteDocument }) {
         </button>
       </div>
     </div>
+  );
+}
+
+// A typed date only counts once all of it is in (a 4-digit year); otherwise
+// half-typed values like year 0002 would get saved on every keystroke.
+function isCompleteDate(value) {
+  const year = Number(value.slice(0, 4));
+  return /^\d{4}-\d{2}-\d{2}$/.test(value) && year >= 1900 && year <= 2200;
+}
+
+function DueDateCell({ appointment, updateAppointment }) {
+  const savedValue = appointment.dueDate ? appointment.dueDate.slice(0, 10) : '';
+  const [value, setValue] = useState(savedValue);
+  const [isEditing, setIsEditing] = useState(false);
+  const saveTimer = useRef(null);
+
+  // Pick up changes from the server (e.g. "No Due Date" ticked) unless mid-edit.
+  useEffect(() => {
+    if (!isEditing) setValue(savedValue);
+  }, [savedValue, isEditing]);
+
+  useEffect(() => () => clearTimeout(saveTimer.current), []);
+
+  function save(next) {
+    clearTimeout(saveTimer.current);
+    if (next === savedValue) return;
+    if (next && !isCompleteDate(next)) return;
+    updateAppointment.mutate({ id: appointment._id, dueDate: next || null });
+  }
+
+  return (
+    <input
+      type="date"
+      className="rounded-lg border border-slate-300 px-2 py-1 text-sm disabled:bg-slate-100 disabled:text-slate-400"
+      value={value}
+      disabled={appointment.noExpiry}
+      onFocus={() => setIsEditing(true)}
+      onChange={(e) => {
+        const next = e.target.value;
+        setValue(next);
+        clearTimeout(saveTimer.current);
+        // Calendar picks and fully typed dates save after a short pause.
+        if (!next || isCompleteDate(next)) {
+          saveTimer.current = setTimeout(() => save(next), 800);
+        }
+      }}
+      onBlur={() => {
+        setIsEditing(false);
+        if (value && !isCompleteDate(value)) {
+          setValue(savedValue);
+          return;
+        }
+        save(value);
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') e.currentTarget.blur();
+      }}
+    />
   );
 }
 
@@ -258,15 +316,7 @@ export default function LegalAppointmentsPage() {
       {
         key: 'dueDate',
         header: 'Due Date',
-        render: (a) => (
-          <input
-            type="date"
-            className="rounded-lg border border-slate-300 px-2 py-1 text-sm disabled:bg-slate-100 disabled:text-slate-400"
-            value={a.dueDate ? a.dueDate.slice(0, 10) : ''}
-            disabled={a.noExpiry}
-            onChange={(e) => updateAppointment.mutate({ id: a._id, dueDate: e.target.value || null })}
-          />
-        ),
+        render: (a) => <DueDateCell key={a._id} appointment={a} updateAppointment={updateAppointment} />,
       },
       {
         key: 'noExpiry',
@@ -573,7 +623,12 @@ export default function LegalAppointmentsPage() {
       ) : isError ? (
         <div className="rounded-xl bg-white shadow-soft p-4 text-sm text-slate-600">Could not load legal appointments</div>
       ) : (
-        <Table emptyLabel="No appointments match these filters" columns={columns} rows={filteredRows} maxHeight="600px" />
+        <Table
+          emptyLabel="No appointments match these filters"
+          columns={columns}
+          rows={filteredRows.map((a) => ({ ...a, id: a._id }))}
+          maxHeight="600px"
+        />
       )}
     </div>
   );

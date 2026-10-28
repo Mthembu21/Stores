@@ -2,6 +2,16 @@ const { ApiError } = require('../utils/ApiError');
 const { LegalAppointment, LEGAL_APPOINTMENT_TYPES } = require('../models/LegalAppointment');
 const { LegalAppointmentDocument } = require('../models/LegalAppointmentDocument');
 
+// Accepts a YYYY-MM-DD string (or anything Date can parse); empty clears the date.
+function parseDueDate(value) {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    throw new ApiError(400, 'Invalid due date');
+  }
+  return date;
+}
+
 async function listLegalAppointments(req, res) {
   const { search } = req.query;
 
@@ -40,7 +50,7 @@ async function createLegalAppointment(req, res) {
     workshopArea: workshopArea ? String(workshopArea).trim() : '',
     position: position ? String(position).trim() : '',
     appointmentType,
-    dueDate: isNoExpiry ? null : dueDate ? new Date(dueDate) : null,
+    dueDate: isNoExpiry ? null : parseDueDate(dueDate),
     noExpiry: isNoExpiry,
   });
 
@@ -59,7 +69,11 @@ async function updateLegalAppointment(req, res) {
   if (employeeName !== undefined) appointment.employeeName = String(employeeName).trim();
   if (workshopArea !== undefined) appointment.workshopArea = String(workshopArea).trim();
   if (position !== undefined) appointment.position = String(position).trim();
-  if (dueDate !== undefined) appointment.dueDate = dueDate ? new Date(dueDate) : null;
+  if (dueDate !== undefined) {
+    appointment.dueDate = parseDueDate(dueDate);
+    // Setting a real due date means the appointment does expire after all.
+    if (appointment.dueDate) appointment.noExpiry = false;
+  }
   if (noExpiry !== undefined) {
     appointment.noExpiry = Boolean(noExpiry);
     // A due date is meaningless once the appointment is marked as not expiring.
