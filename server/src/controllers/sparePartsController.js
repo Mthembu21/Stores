@@ -344,6 +344,14 @@ async function bulkReplaceSpareParts(req, res) {
   }
 
   const partTypesInFile = [...new Set(prepared.map((p) => p.doc.partType))];
+
+  // The ERP file knows nothing about returns booked in as Damaged/Faulty, so carry that
+  // count over to the re-created part at the same part number + location.
+  const damagedBefore = await SparePart.find({ partType: { $in: partTypesInFile }, damagedStock: { $gt: 0 } })
+    .select('partNumber storageLocation damagedStock')
+    .lean();
+  const damagedByKey = new Map(damagedBefore.map((d) => [partLocationKey(d.partNumber, d.storageLocation), d.damagedStock]));
+
   await SparePart.deleteMany({ partType: { $in: partTypesInFile } });
 
   // Everything of these type(s) was just cleared, so only guard against an explicit
@@ -365,6 +373,8 @@ async function bulkReplaceSpareParts(req, res) {
     } else {
       p.doc.partNumber = await getNextSequence('sparePartNumber', 'SP');
     }
+    const damaged = damagedByKey.get(partLocationKey(p.doc.partNumber, p.doc.storageLocation));
+    if (damaged) p.doc.damagedStock = damaged;
     toInsert.push(p.doc);
   }
 

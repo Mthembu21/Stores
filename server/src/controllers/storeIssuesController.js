@@ -2,6 +2,7 @@ const { ApiError } = require('../utils/ApiError');
 const { StoreIssue } = require('../models/StoreIssue');
 const { SparePart } = require('../models/SparePart');
 const { StockMovement } = require('../models/StockMovement');
+const { PartReturn } = require('../models/PartReturn');
 const { getNextSequence } = require('../utils/sequence');
 const { getDefaultStoreId } = require('../utils/defaultStore');
 const { deriveItemStatus, deriveOverallStatus } = require('../utils/storeIssueStatus');
@@ -249,13 +250,38 @@ async function createStoreIssue(req, res) {
   res.status(201).json({ issue: populated });
 }
 
+// Adds each issue's returns (oldest first) so the slip can show what came back against it.
+async function withReturns(issues) {
+  const ids = issues.map((i) => i._id);
+  const returns = ids.length
+    ? await PartReturn.find({ storeIssue: { $in: ids } }).sort({ returnDate: 1 }).lean()
+    : [];
+  const byIssue = new Map();
+  for (const r of returns) {
+    const key = String(r.storeIssue);
+    if (!byIssue.has(key)) byIssue.set(key, []);
+    byIssue.get(key).push(r);
+  }
+  return issues.map((i) => ({ ...i.toJSON(), returns: byIssue.get(String(i._id)) || [] }));
+}
+
+function escapeRegex(text) {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 async function listStoreIssues(req, res) {
   const { status, search } = req.query;
   const filter = {};
   if (status) filter.status = status;
   if (search) {
-    const re = new RegExp(String(search).trim(), 'i');
-    filter.$or = [{ issueNumber: re }, { 'items.partNumber': re }, { 'items.partDescription': re }];
+    const re = new RegExp(escapeRegex(String(search).trim()), 'i');
+    filter.$or = [
+      { issueNumber: re },
+      { machineNumber: re },
+      { serviceOrderNumber: re },
+      { 'items.partNumber': re },
+      { 'items.partDescription': re },
+    ];
   }
 
   const issues = await StoreIssue.find(filter)
@@ -264,7 +290,7 @@ async function listStoreIssues(req, res) {
     .populate('items.sparePart')
     .populate('issuedBy');
 
-  res.json({ issues });
+  res.json({ issues: await withReturns(issues) });
 }
 
 async function getStoreIssue(req, res) {
@@ -272,7 +298,8 @@ async function getStoreIssue(req, res) {
   if (!issue) {
     throw new ApiError(404, 'Store issue not found');
   }
-  res.json({ issue });
+  const [withReturnsIssue] = await withReturns([issue]);
+  res.json({ issue: withReturnsIssue });
 }
 
 async function updateStoreIssue(req, res) {
@@ -296,6 +323,13 @@ async function deleteStoreIssue(req, res) {
   const issue = await StoreIssue.findById(req.params.id);
   if (!issue) {
     throw new ApiError(404, 'Store issue not found');
+  }
+
+  // Returns already moved stock (some of it into damaged stock) against this slip;
+  // deleting the slip would leave them pointing at nothing.
+  const returnCount = await PartReturn.countDocuments({ storeIssue: issue._id });
+  if (returnCount > 0) {
+    throw new ApiError(409, `${issue.issueNumber} has ${returnCount} return(s) recorded against it and can't be deleted`);
   }
 
   // Deleting an issue means it never happened — restore whatever stock it took out

@@ -1,11 +1,12 @@
 import { useMemo, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useSpareParts } from '../services/spareParts';
 import { useCreateStoreIssue } from '../services/storeIssues';
 import { useMachines, useCreateMachine, useUpdateMachine } from '../services/machines';
 import { usePartsPeople, useCreatePartsPerson } from '../services/partsPeople';
 import { useMe } from '../services/auth';
+import { ReturnPartsForm } from '../components/ReturnPartsForm';
 
 function nextKey() {
   return `line-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -38,6 +39,9 @@ function defaultJobTimes() {
 }
 
 export default function IssuePartsPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const isReturnTab = searchParams.get('tab') === 'return';
+
   // Consumables are issued separately via the Issue Consumables page
   const { data: partsData, isLoading: partsLoading, refetch: refetchParts } = useSpareParts({ partType: 'Returnable' });
   const parts = useMemo(() => partsData?.parts || [], [partsData]);
@@ -488,11 +492,34 @@ export default function IssuePartsPage() {
       <div>
         <div className="text-2xl font-semibold text-epiroc-gray">Issue Parts</div>
         <div className="text-sm text-slate-600">
-          Add one or more returnable parts, capture job details and quantities. Consumables are issued
-          separately on the Issue Consumables page.
+          {isReturnTab
+            ? 'Book previously issued parts back in against their original issue slip.'
+            : 'Add one or more returnable parts, capture job details and quantities. Consumables are issued separately on the Issue Consumables page.'}
         </div>
       </div>
 
+      <div className="inline-flex rounded-xl bg-slate-100 p-1">
+        {[
+          { key: 'issue', label: 'Issue parts' },
+          { key: 'return', label: 'Return parts' },
+        ].map((t) => (
+          <button
+            key={t.key}
+            type="button"
+            className={`rounded-lg px-4 py-1.5 text-sm font-semibold ${
+              (t.key === 'return') === isReturnTab ? 'bg-white text-epiroc-black shadow-soft' : 'text-slate-600 hover:text-slate-900'
+            }`}
+            onClick={() => setSearchParams(t.key === 'return' ? { tab: 'return' } : {}, { replace: true })}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {isReturnTab ? (
+        <ReturnPartsForm />
+      ) : (
+      <>
       {lastCreatedIssue && (
         <div className="rounded-xl bg-green-50 border border-green-200 p-4 flex items-center justify-between flex-wrap gap-3">
           <div className="text-sm text-green-800">
@@ -1045,6 +1072,8 @@ export default function IssuePartsPage() {
           </div>
         )}
       </form>
+      </>
+      )}
     </div>
   );
 }

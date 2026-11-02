@@ -26,6 +26,9 @@ const sparePartSchema = new mongoose.Schema(
     // incomplete/pending transactions). null on older records means "not tracked
     // separately yet" — always fall back to stockOnHand, never treat as 0.
     allocatableStock: { type: Number, min: 0, default: null },
+    // Returned as Damaged/Faulty: physically in the store (included in stockOnHand)
+    // but never bookable. Carried over across a full inventory replace.
+    damagedStock: { type: Number, min: 0, default: 0 },
     minimumStockLevel: { type: Number, required: true, min: 0, default: 0 },
     maximumStockLevel: { type: Number, required: true, min: 0, default: 0 },
     unitOfMeasure: { type: String, required: true, trim: true, default: 'EA' },

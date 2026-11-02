@@ -19,7 +19,7 @@ const storeIssueItemSchema = new mongoose.Schema(
     status: {
       type: String,
       required: true,
-      enum: ['Issued', 'Partially Issued', 'Awaiting Order', 'Returned'],
+      enum: ['Issued', 'Partially Issued', 'Awaiting Order', 'Partially Returned', 'Returned'],
       default: 'Awaiting Order',
     },
   },
@@ -125,7 +125,7 @@ const storeIssueSchema = new mongoose.Schema(
     status: {
       type: String,
       required: true,
-      enum: ['Issued', 'Partially Issued', 'Awaiting Order', 'Returned', 'Closed'],
+      enum: ['Issued', 'Partially Issued', 'Awaiting Order', 'Partially Returned', 'Returned', 'Closed'],
       default: 'Awaiting Order',
     },
   },

@@ -1,16 +1,31 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { http } from './http';
+
+export const RETURN_CONDITIONS = ['Good', 'Damaged', 'Faulty'];
+
+export function usePartReturn(id) {
+  return useQuery({
+    queryKey: ['part-return', id],
+    queryFn: async () => {
+      const { data } = await http.get(`/part-returns/${id}`);
+      return data;
+    },
+    enabled: Boolean(id),
+    staleTime: 5_000,
+  });
+}
 
 export function useCreatePartReturn() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ storeIssueId, itemId, quantity, reason }) => {
-      const { data } = await http.post('/part-returns', { storeIssueId, itemId, quantity, reason });
+    mutationFn: async (payload) => {
+      const { data } = await http.post('/part-returns', payload);
       return data;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['store-issues'], exact: false });
+      qc.invalidateQueries({ queryKey: ['store-issue'], exact: false });
       qc.invalidateQueries({ queryKey: ['spare-parts'], exact: false });
       qc.invalidateQueries({ queryKey: ['parts-dashboard'] });
       qc.invalidateQueries({ queryKey: ['stock-movements'], exact: false });

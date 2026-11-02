@@ -10,7 +10,6 @@ import PartsInventoryPage from '../screens/PartsInventoryPage';
 import IssuePartsPage from '../screens/IssuePartsPage';
 import IssueConsumablesPage from '../screens/IssueConsumablesPage';
 import StoreIssuesPage from '../screens/StoreIssuesPage';
-import PartReturnsPage from '../screens/PartReturnsPage';
 import LowStockPage from '../screens/LowStockPage';
 import PartsToOrderPage from '../screens/PartsToOrderPage';
 import NonStockItemsPage from '../screens/NonStockItemsPage';
@@ -19,6 +18,7 @@ import KpiTrackerPage from '../screens/KpiTrackerPage';
 import KpiVisualsPage from '../screens/KpiVisualsPage';
 import PartsUsersPage from '../screens/PartsUsersPage';
 import IssuePrintPage from '../screens/IssuePrintPage';
+import ReturnPrintPage from '../screens/ReturnPrintPage';
 import IssuesBulkPrintPage from '../screens/IssuesBulkPrintPage';
 import LegalAppointmentsPage from '../screens/LegalAppointmentsPage';
 import ImsAuditsPage from '../screens/ImsAuditsPage';
@@ -130,14 +130,8 @@ export default function App() {
             </RequireRole>
           }
         />
-        <Route
-          path="spare-parts/returns"
-          element={
-            <RequireRole roles={MODULE_ROLES.spareParts} pageKey="spare-parts/returns">
-              <PartReturnsPage />
-            </RequireRole>
-          }
-        />
+        {/* Returns now live on the Issue Parts page; keep old links working. */}
+        <Route path="spare-parts/returns" element={<Navigate to="/spare-parts/issue?tab=return" replace />} />
         <Route
           path="spare-parts/low-stock"
           element={
@@ -202,6 +196,17 @@ export default function App() {
           <RequireAuth>
             <RequireRole roles={MODULE_ROLES.spareParts} pageKey="spare-parts/store-issues">
               <IssuePrintPage />
+            </RequireRole>
+          </RequireAuth>
+        }
+      />
+
+      <Route
+        path="spare-parts/returns/:id/print"
+        element={
+          <RequireAuth>
+            <RequireRole roles={MODULE_ROLES.spareParts} pageKey="spare-parts/issue">
+              <ReturnPrintPage />
             </RequireRole>
           </RequireAuth>
         }

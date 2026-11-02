@@ -187,6 +187,20 @@ export function IssueSlip({ issue }) {
 
   const laborEntries = issue.laborEntries || [];
 
+  // One row per returned part, across every return recorded against this slip.
+  const returnLines = (issue.returns || []).flatMap((r) =>
+    (r.items || []).map((item) => ({
+      key: `${r._id}-${item._id}`,
+      returnNumber: r.returnNumber,
+      returnDate: r.returnDate,
+      partNumber: item.partNumber,
+      quantity: item.quantity,
+      condition: item.condition,
+      returnedByName: r.returnedByName,
+      reason: r.reason,
+    }))
+  );
+
   return (
     <>
       <div className="print-header">
@@ -284,6 +298,37 @@ export function IssueSlip({ issue }) {
           </tbody>
         </table>
       </Section>
+
+      {returnLines.length > 0 && (
+        <Section title="Returns against this issue">
+          <table className="print-table">
+            <thead>
+              <tr>
+                <th>Return #</th>
+                <th>Date</th>
+                <th>Part number</th>
+                <th>Qty</th>
+                <th>Condition</th>
+                <th>Returned by</th>
+                <th>Reason</th>
+              </tr>
+            </thead>
+            <tbody>
+              {returnLines.map((l) => (
+                <tr key={l.key}>
+                  <td>{l.returnNumber}</td>
+                  <td>{dateOnly(l.returnDate)}</td>
+                  <td>{l.partNumber}</td>
+                  <td>{l.quantity}</td>
+                  <td>{l.condition}</td>
+                  <td>{l.returnedByName}</td>
+                  <td>{l.reason}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Section>
+      )}
 
       {laborEntries.length > 0 && (
         <Section title="Labour">

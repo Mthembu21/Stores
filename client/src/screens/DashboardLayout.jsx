@@ -84,7 +84,6 @@ export default function DashboardLayout() {
                 {hasPartsPageAccess(user, 'spare-parts/store-issues') && (
                   <SideLink to="/spare-parts/store-issues">Store Issues</SideLink>
                 )}
-                {hasPartsPageAccess(user, 'spare-parts/returns') && <SideLink to="/spare-parts/returns">Returns</SideLink>}
                 {hasPartsPageAccess(user, 'spare-parts/low-stock') && (
                   <SideLink to="/spare-parts/low-stock">Low Stock</SideLink>
                 )}

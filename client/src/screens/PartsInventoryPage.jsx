@@ -149,6 +149,11 @@ export default function PartsInventoryPage() {
         header: 'Allocatable',
         render: (p) => (p.allocatableStock === null || p.allocatableStock === undefined ? p.stockOnHand : p.allocatableStock),
       },
+      {
+        key: 'damagedStock',
+        header: 'Damaged',
+        render: (p) => (p.damagedStock > 0 ? <span className="font-semibold text-red-600">{p.damagedStock}</span> : 0),
+      },
       { key: 'minimumStockLevel', header: 'Min Level' },
       { key: 'maximumStockLevel', header: 'Max Level' },
       { key: 'unitOfMeasure', header: 'UoM' },

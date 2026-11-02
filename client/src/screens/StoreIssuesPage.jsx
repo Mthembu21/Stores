@@ -6,7 +6,7 @@ import { useMachines, useCreateMachine, useUpdateMachine } from '../services/mac
 import { formatDateTime } from '../utils/format';
 import { summarizeIssues } from '../utils/storeIssues';
 
-const STATUS_OPTIONS = ['Issued', 'Partially Issued', 'Awaiting Order', 'Returned', 'Closed'];
+const STATUS_OPTIONS = ['Issued', 'Partially Issued', 'Awaiting Order', 'Partially Returned', 'Returned', 'Closed'];
 
 export default function StoreIssuesPage() {
   const navigate = useNavigate();
