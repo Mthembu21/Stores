@@ -6,6 +6,8 @@ import { useCreateStoreIssue } from '../services/storeIssues';
 import { useMachines, useCreateMachine, useUpdateMachine } from '../services/machines';
 import { usePartsPeople, useCreatePartsPerson } from '../services/partsPeople';
 import { useMe } from '../services/auth';
+import { useNonStockItems } from '../services/nonStockItems';
+import { useCreatePartRequest } from '../services/partRequests';
 import { ReturnPartsForm } from '../components/ReturnPartsForm';
 
 function nextKey() {
@@ -86,6 +88,65 @@ export default function IssuePartsPage() {
       return num.includes(q) || desc.includes(q) || comp.includes(q);
     });
   }, [parts, partSearch]);
+
+  // Non-stock items can't be issued, but showing them in the same search lets the
+  // storeman request one straight onto Parts To Order without leaving this form.
+  // Only searched once something is typed — the catalog runs to thousands of items.
+  const { data: nonStockData } = useNonStockItems();
+  const filteredNonStock = useMemo(() => {
+    const q = partSearch.trim().toLowerCase();
+    if (!q) return [];
+    const stockNumbers = new Set(parts.map((p) => p.partNumber));
+    return (nonStockData?.items || [])
+      .filter((p) => {
+        if (stockNumbers.has(p.partNumber)) return false;
+        const num = String(p.partNumber || '').toLowerCase();
+        const desc = String(p.partDescription || '').toLowerCase();
+        return num.includes(q) || desc.includes(q);
+      })
+      .slice(0, 20);
+  }, [nonStockData, parts, partSearch]);
+
+  const createPartRequest = useCreatePartRequest();
+  const requestingRef = useRef(false);
+  const [requestItem, setRequestItem] = useState(null);
+  const [requestQty, setRequestQty] = useState('1');
+  const [requestNotes, setRequestNotes] = useState('');
+
+  function openRequest(item) {
+    setRequestItem(item);
+    setRequestQty('1');
+    const bits = [];
+    if (item.supplier) bits.push(`Supplier: ${item.supplier}`);
+    if (item.leadTimeDays !== null && item.leadTimeDays !== undefined) bits.push(`Lead time: ${item.leadTimeDays}d`);
+    setRequestNotes(bits.join(', '));
+  }
+
+  function handleSendRequest() {
+    if (requestingRef.current || !requestItem) return;
+    const qty = Number(requestQty);
+    if (!(qty > 0)) {
+      toast.error('Enter a quantity greater than 0');
+      return;
+    }
+    requestingRef.current = true;
+    createPartRequest.mutate(
+      {
+        partNumber: requestItem.partNumber,
+        partDescription: requestItem.partDescription,
+        quantityRequested: qty,
+        machineNumber,
+        requestorName,
+        notes: requestNotes.trim(),
+      },
+      {
+        onSuccess: () => setRequestItem(null),
+        onSettled: () => {
+          requestingRef.current = false;
+        },
+      }
+    );
+  }
 
   const [machineNumber, setMachineNumber] = useState('');
   const [machineType, setMachineType] = useState('');
@@ -556,7 +617,7 @@ export default function IssuePartsPage() {
           <div className="max-h-48 overflow-y-auto border border-slate-200 rounded-xl">
             {partsLoading ? (
               <div className="p-4 text-sm text-slate-500 text-center">Loading parts...</div>
-            ) : filteredParts.length === 0 ? (
+            ) : filteredParts.length === 0 && filteredNonStock.length === 0 ? (
               <div className="p-4 text-sm text-slate-500 text-center">No parts found</div>
             ) : (
               filteredParts.map((part) => (
@@ -582,7 +643,97 @@ export default function IssuePartsPage() {
                 </div>
               ))
             )}
+            {!partsLoading &&
+              filteredNonStock.map((item) => (
+                <div key={`nonstock-${item._id}`} className="p-3 border-b border-slate-100 bg-amber-50/40">
+                  <div className="flex justify-between items-start gap-3">
+                    <div>
+                      <div className="font-medium text-slate-900">
+                        {item.partNumber}{' '}
+                        <span className="ml-1 rounded bg-amber-100 px-1.5 py-0.5 text-xs font-semibold text-amber-800">Non-stock</span>
+                      </div>
+                      <div className="text-sm text-slate-600">{item.partDescription}</div>
+                      {(item.supplier || (item.leadTimeDays !== null && item.leadTimeDays !== undefined)) && (
+                        <div className="text-xs text-slate-500 mt-0.5">
+                          {[item.supplier && `Supplier: ${item.supplier}`, item.leadTimeDays != null && `Lead time: ${item.leadTimeDays}d`]
+                            .filter(Boolean)
+                            .join(' · ')}
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      className="rounded-xl bg-epiroc-yellow px-3 py-1.5 text-xs font-semibold text-epiroc-black shadow-soft hover:brightness-95 whitespace-nowrap"
+                      onClick={() => openRequest(item)}
+                    >
+                      Request
+                    </button>
+                  </div>
+                </div>
+              ))}
           </div>
+
+          {requestItem && (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 space-y-3">
+              <div className="text-sm font-semibold text-slate-900">
+                Request {requestItem.partNumber} — {requestItem.partDescription}
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                <div>
+                  <label className="text-xs font-medium text-slate-700">Quantity</label>
+                  <input
+                    type="number"
+                    min="1"
+                    className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                    value={requestQty}
+                    onChange={(e) => setRequestQty(e.target.value)}
+                    // Enter here would otherwise submit the whole issue form.
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleSendRequest();
+                      }
+                    }}
+                  />
+                </div>
+                <div>
+                  <div className="text-xs font-medium text-slate-700">Machine</div>
+                  <div className="mt-1 py-2 text-slate-700">{machineNumber || <span className="text-slate-400">Not selected yet</span>}</div>
+                </div>
+                <div>
+                  <div className="text-xs font-medium text-slate-700">Requestor</div>
+                  <div className="mt-1 py-2 text-slate-700">{requestorName || <span className="text-slate-400">Not selected yet</span>}</div>
+                </div>
+                <div className="md:col-span-3">
+                  <label className="text-xs font-medium text-slate-700">Notes</label>
+                  <input
+                    className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                    value={requestNotes}
+                    onChange={(e) => setRequestNotes(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') e.preventDefault();
+                    }}
+                  />
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  className="rounded-xl bg-epiroc-yellow px-4 py-2 text-sm font-semibold text-epiroc-black shadow-soft hover:brightness-95 disabled:opacity-60"
+                  onClick={handleSendRequest}
+                  disabled={createPartRequest.isPending}
+                >
+                  {createPartRequest.isPending ? 'Sending...' : 'Send to Parts To Order'}
+                </button>
+                <button type="button" className="text-sm text-slate-600 hover:underline" onClick={() => setRequestItem(null)}>
+                  Cancel
+                </button>
+              </div>
+              <div className="text-xs text-slate-500">
+                Machine and requestor are taken from this form, so select them first if you want them on the request.
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="space-y-3 border-t border-slate-100 pt-6">
