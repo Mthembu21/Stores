@@ -40,6 +40,7 @@ export default function DashboardLayout() {
   const canSeeSpareParts = role === 'Admin' || role === 'PartsStoreman' || role === 'Supervisor';
   const canSeeUsers = role === 'Admin' || role === 'ToolsStoreman';
   const canSeeSheq = role === 'Admin' || role === 'SHEQ';
+  const canSeeDaa = role === 'Admin' || role === 'DAAWarehouse';
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -50,7 +51,7 @@ export default function DashboardLayout() {
           </div>
 
           <nav className="mt-6 space-y-2">
-            <SideLink to="/">Dashboard</SideLink>
+            {role !== 'DAAWarehouse' && <SideLink to="/">Dashboard</SideLink>}
 
             {canSeeTools && (
               <>
@@ -67,6 +68,15 @@ export default function DashboardLayout() {
                 <SideLink to="/sheq/legal-appointments">Legal Appointments</SideLink>
                 <SideLink to="/sheq/ims-audits">IMS Audit Programme</SideLink>
                 {role === 'SHEQ' && <SideLink to="/special-tools">Special Tools</SideLink>}
+              </>
+            )}
+
+            {canSeeDaa && (
+              <>
+                <NavSection title="DAA Warehouse" />
+                <SideLink to="/daa/capture">Daily KPI Capture</SideLink>
+                <SideLink to="/daa/dashboard">KPI Dashboard</SideLink>
+                <SideLink to="/daa/targets">KPI Targets</SideLink>
               </>
             )}
 

@@ -89,7 +89,7 @@ export default function SpecialToolsPage() {
 
   // Group technicians by department for better organization
   const getTechniciansByDepartment = () => {
-    const nonAdminUsers = users.filter((u) => u.role !== 'Admin' && u.role !== 'SHEQ');
+    const nonAdminUsers = users.filter((u) => u.role !== 'Admin' && u.role !== 'SHEQ' && u.role !== 'DAAWarehouse');
     const grouped = nonAdminUsers.reduce((acc, user) => {
       const dept = user.department || 'Unassigned';
       if (!acc[dept]) acc[dept] = [];

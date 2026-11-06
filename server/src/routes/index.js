@@ -21,6 +21,7 @@ const { partRequestRoutes } = require('./partRequestRoutes');
 const { nonStockItemRoutes } = require('./nonStockItemRoutes');
 const { legalAppointmentRoutes } = require('./legalAppointmentRoutes');
 const { imsAuditRoutes } = require('./imsAuditRoutes');
+const { daaKpiRoutes } = require('./daaKpiRoutes');
 
 const router = express.Router();
 
@@ -49,5 +50,6 @@ router.use('/part-requests', partRequestRoutes);
 router.use('/non-stock-items', nonStockItemRoutes);
 router.use('/legal-appointments', legalAppointmentRoutes);
 router.use('/ims-audits', imsAuditRoutes);
+router.use('/daa-kpis', daaKpiRoutes);
 
 module.exports = router;

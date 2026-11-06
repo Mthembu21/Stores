@@ -22,6 +22,9 @@ import ReturnPrintPage from '../screens/ReturnPrintPage';
 import IssuesBulkPrintPage from '../screens/IssuesBulkPrintPage';
 import LegalAppointmentsPage from '../screens/LegalAppointmentsPage';
 import ImsAuditsPage from '../screens/ImsAuditsPage';
+import DaaCapturePage from '../screens/DaaCapturePage';
+import DaaDashboardPage from '../screens/DaaDashboardPage';
+import DaaTargetsPage from '../screens/DaaTargetsPage';
 import { RequireAuth } from './RequireAuth';
 import { RequireRole } from './RequireRole';
 import HomeRedirect from './HomeRedirect';
@@ -78,6 +81,30 @@ export default function App() {
           element={
             <RequireRole roles={MODULE_ROLES.sheq}>
               <ImsAuditsPage />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="daa/capture"
+          element={
+            <RequireRole roles={MODULE_ROLES.daa}>
+              <DaaCapturePage />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="daa/dashboard"
+          element={
+            <RequireRole roles={MODULE_ROLES.daa}>
+              <DaaDashboardPage />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="daa/targets"
+          element={
+            <RequireRole roles={MODULE_ROLES.daa}>
+              <DaaTargetsPage />
             </RequireRole>
           }
         />

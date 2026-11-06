@@ -7,6 +7,8 @@ const Roles = {
   PartsStoreman: 'PartsStoreman',
   Supervisor: 'Supervisor',
   SHEQ: 'SHEQ',
+  // DAA warehouse clerks: only capture and view the DAA warehouse KPIs.
+  DAAWarehouse: 'DAAWarehouse',
 };
 
 module.exports = { Roles };

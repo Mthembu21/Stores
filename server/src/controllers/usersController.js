@@ -13,6 +13,7 @@ const ASSIGNABLE_ROLES = [
   Roles.PartsStoreman,
   Roles.Supervisor,
   Roles.SHEQ,
+  Roles.DAAWarehouse,
 ];
 
 async function listUsers(req, res) {

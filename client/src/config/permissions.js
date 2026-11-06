@@ -1,4 +1,4 @@
-export const APP_ROLES = ['Admin', 'ToolsStoreman', 'PartsStoreman', 'Supervisor', 'SHEQ'];
+export const APP_ROLES = ['Admin', 'ToolsStoreman', 'PartsStoreman', 'Supervisor', 'SHEQ', 'DAAWarehouse'];
 
 export const MODULE_ROLES = {
   tools: ['Admin', 'ToolsStoreman'],
@@ -6,4 +6,5 @@ export const MODULE_ROLES = {
   admin: ['Admin', 'ToolsStoreman'],
   specialTools: ['Admin', 'ToolsStoreman', 'SHEQ'],
   sheq: ['Admin', 'SHEQ'],
+  daa: ['Admin', 'DAAWarehouse'],
 };

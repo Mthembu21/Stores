@@ -79,7 +79,7 @@ export default function ConsumablesPage() {
   const items = itemsData?.items || [];
   const records = recordsData?.records || [];
 
-  const technicians = useMemo(() => users.filter((u) => u.role !== 'Admin' && u.role !== 'SHEQ'), [users]);
+  const technicians = useMemo(() => users.filter((u) => u.role !== 'Admin' && u.role !== 'SHEQ' && u.role !== 'DAAWarehouse'), [users]);
 
   // Add consumable form
   const [newName, setNewName] = useState('');

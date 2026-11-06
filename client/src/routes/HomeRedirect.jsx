@@ -17,6 +17,10 @@ export default function HomeRedirect() {
 
   const user = data?.user || data;
 
+  if (user && user.role === 'DAAWarehouse') {
+    return <Navigate to="/daa/capture" replace />;
+  }
+
   if (user && user.role === 'SHEQ') {
     return <Navigate to="/sheq/legal-appointments" replace />;
   }
